@@ -367,7 +367,7 @@ if __name__ == '__main__':
   loadInfo()
 
   while True:
-
+    retry = False
     # Initialize Basic Group infos
     try:
       group = [g for g in groupy.Group.list() if g.group_id == GROUP_ID][0]
