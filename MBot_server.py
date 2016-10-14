@@ -4,6 +4,7 @@ import sys
 import getopt
 from http.server import BaseHTTPRequestHandler as BaseHandler,HTTPServer
 import groupy
+import groupy.api.endpoint as groupyEP
 import json
 import random
 import time
@@ -11,6 +12,28 @@ import time
 ### ADMINISTRATIVE CONSTANTS ###
 
 DEBUG = 1
+
+
+ADDRESS   = '0.0.0.0'
+PORT1     = 1121
+PORT2     = 1122
+#### THESE (should be) LOADED FROM loadInfo()
+GROUP_ID  = '25833774' # Let's Play Mafia
+MAFIA_ID  = 0 # Mafia group
+MBOT_ID   = 0
+EVIL_MBOT_ID = 0
+####
+
+CALLBACK_URL_MAIN  = 'http://24.59.62.95:'+str(PORT1)
+CALLBACK_URL_MAFIA = 'http://24.59.62.95:'+str(PORT2)
+
+MODERATOR = '43040067'
+
+INTRO     = True
+OUTRO     = True
+NONAME    = ': '
+
+VARIABLES_TO_SAVE = ['GROUP_ID','MAFIA_ID','MBOT_ID','EVIL_MBOT_ID']
 
 ### ADMINISTRATIVE VARIABLES ###
 
@@ -21,23 +44,8 @@ mafia_members = 0
 mbot          = 0
 evil_mbot     = 0
 
-### CONSTANTS ###
 
-ADDRESS   = '0.0.0.0'
-PORT      = 1121
-GROUP_ID  = '25833774' # Let's Play Mafia
-MAFIA_ID  = 0 # Mafia group
-
-CALLBACK_URL_MAIN  = 'http://24.59.62.95:1121'
-CALLBACK_URL_MAFIA = 'http://24.59.62.95:1122'
-
-MBOT_ID   = '15d39f9b8fa70201b12c1dabcb'
-
-MODERATOR = '43040067'
-
-INTRO     = True
-OUTRO     = True
-NONAME    = ': '
+######## GAME VARIABLES ########
 
 # OP KEYWORDS
 ACCESS_KW = '\\'
@@ -83,7 +91,7 @@ START:
 ### FILENAMES ###
 
 NOTES     = './notes'
-LOG       = './log'
+INFO      = './info'
 
 ### Define operations ###
 
@@ -150,7 +158,7 @@ OPS = { VOTE_KW   : vote   ,
 
 ### HANDLER ###
 
-class MHandler(BaseHandler):
+class MainHandler(BaseHandler):
   
   def do_POST(self):
     try:
@@ -175,6 +183,21 @@ class MHandler(BaseHandler):
         cast("{} failed".format(words[0]))
     else:
       cast("Invalid request, (try {ACCESS_KW}{HELP_KW} for help)".format(**locals))
+
+class MafiaHandler(BaseHandler):
+  
+  def do_POST(self):
+    try:
+      # Get contents of the POST
+      length = int(self.headers['Content-length'])
+      content = self.rfile.read(length).decode('utf-8')
+      post = json.loads(content)
+    except KeyError as e:
+      post = {}
+    except ValueError as e:
+      post = {}
+      
+    log("GOT MAFIA POST")
 
 
 ### HELPER FUNCTIONS ###
@@ -255,8 +278,13 @@ def regenGame(notes):
   return  
   
 def cast(message, bot = mbot):
-  bot.post(message)
-  log("CAST: {}".format(message))
+  try:
+    bot.post(message)
+    log("CAST: {}".format(message))
+    return True
+  except Exception as e:
+    log("FAILED TO CAST {}: {}".format(message,e))
+    return False
 
 def loadNotes():
   note = []
@@ -276,6 +304,35 @@ def saveNotes():
     f.close()
   except Exception as e:
     log("Error saving notes: {}".format(e))
+
+def loadInfo():
+  info = []
+  try:
+    f = open(INFO,'r')
+    info = f.readlines()
+    f.close()
+  except Exception as e:
+    log("Error loading info: {}".format(e))
+    return
+
+  # Create local variables
+  for line in info:
+    words = line.split(' ')
+    try:
+      locals()[words[0]] = words[1]
+    except Exception as e:
+      log("Couldn't load info: {}: {}".format(line,e))
+
+def saveInfo():
+  try:
+    f = open(INFO,'w')
+    for var in VARIABLES_TO_SAVE:
+      f.write(var + ' ' + locals()[var])
+    f.close()
+  except FileNotFoundError as e:
+    log("Failed to load info file: {}".format(e))
+  except Exception as e:
+    log("Failed to save info: {}".format(e))
 
 def getName(user_id):
   for member in members:
@@ -305,11 +362,15 @@ if __name__ == '__main__':
   notes = loadNotes()
   regenGame(notes)
 
+  # Read basic info
+
+  loadInfo()
+
   # Initialize Basic Group infos
   try:
     group = [g for g in groupy.Group.list() if g.group_id == GROUP_ID][0]
   except Exception as e:
-    log("Could not find main group, fatal: {}".format(e))
+    log("FATAL: Could not find main group: {}".format(e))
     exit()
 
   # Initialize Mafia Group
@@ -317,21 +378,41 @@ if __name__ == '__main__':
     mafia_group = [g for g in groupy.Group.list() if g.group_id == MAFIA_ID][0]
   except Exception as e:
     if(GameOn):
-      log("Could not find mafia group, but game is started, fatal: {}".format(e))
+      log("FATAL: Could not find mafia group, but game is started: {}".format(e))
       exit()
     else:
       log("Could not find old mafia group, making new group: {}".format(e))
-      mafia_group = groupy.api.endpoint.Groups.create("MAFIA CHAT")['group_id']
+      mafia_group = groupyEP.Groups.create("MAFIA CHAT")['group_id']
 
+  # Initialize Mbot
   try:
-    mbot = [b for b in groupy.Bot.list() if b.bot_id == BOT_ID][0]
+    mbot = [b for b in groupy.Bot.list() if b.bot_id == MBOT_ID][0]
   except Exception as e:
     log("Could not load mbot, will make new mbot")
-    ## TODO
+    try:
+      mbot = groupyEP.Bots.create("M-Bot", group, callback_url=CALLBACK_URL_MAIN)
+    except Exception as e:
+      log("FATAL: Could not make new mbot: {}".format(e))
+      exit()
 
-  m_server = HTTPServer((ADDRESS,PORT),MHandler)
+  # Initialize Evil Mbot
+  try:
+    evil_mbot = [b for b in groupy.Bot.list() if b.bot_id == EVIL_MBOT_ID][0]
+  except Exception as e:
+    log("Could not load evil mbot, will make new evil mbot")
+    try:
+      evil_mbot = groupyEP.Bots.create("Evil M-Bot", group, callback_url=CALLBACK_URL_MAFIA)
+    except Exception as e:
+      log("FATAL: Could not make new evil mbot: {}".format(e))
+      exit()
+
+  saveInfo()
+  
+  main_server = HTTPServer((ADDRESS,PORT1),MainHandler)
+  mafia_server = HTTPServer((ADDRESS,PORT2),MafiaHandler)
   if INTRO: cast('MBOT IS IN THE HOUSE')
   try:
-    kp_server.serve_forever()
+    main_server.serve_forever()
+    mafia_server.serve_forever()
   except:
     if OUTRO: cast('MBot out')
