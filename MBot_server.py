@@ -123,7 +123,7 @@ def vote(post):
 
   if votee == MODERATOR:
     log("Vote failed: Tried to vote for Moderator")
-    cast("HOW DARE YOU",mbot)
+    cast("HOW DARE YOU",group)
     return False
 
   
@@ -143,12 +143,12 @@ def status(post):
       if(votes[voter] == m):
         reply = reply + getName(voter)
     reply = reply + "\n"
-  cast(reply,mbot)
+  cast(reply,group)
   return True
 
 def help_(post):
   log("Help")
-  cast(HELP_MESSAGE,mbot)
+  cast(HELP_MESSAGE,group)
   return True
 
 def start(post):
@@ -198,9 +198,9 @@ class MainHandler(BaseHandler):
         if(not len(words) == 0 and words[0] in OPS):
           log("Type: {}".format(words[0]))
           if not OPS[words[0]](post):
-            cast("{} failed".format(words[0]),mbot)
+            cast("{} failed".format(words[0]),group)
         else:
-          cast("Invalid request, (try {ACCESS_KW}{HELP_KW} for help)".format(**locals),mbot)
+          cast("Invalid request, (try {ACCESS_KW}{HELP_KW} for help)".format(**locals),group)
     except KeyError as e:
       return
 
@@ -216,7 +216,7 @@ def testKillVotes(votee):
   
   # If the number of votes is in the majority, kill
   if len(voters) > int(len(members)/2):
-    cast("The vote to kill {} has passed".format(getName(votee)),mbot)
+    cast("The vote to kill {} has passed".format(getName(votee)),group)
     note("Kill: {}".format(votee))
     if (kill(votee)):
       return True
@@ -235,11 +235,11 @@ def kill(votee):
   # Check win conditions
   if num_mafia == 0:
     GameOn = False
-    cast("TOWN WINS",mbot)
+    cast("TOWN WINS",group)
     return True
   if num_mafia >= (len(players))/2:
     GameOn = False
-    cast("MAFIA WINS",mbot)
+    cast("MAFIA WINS",group)
     return True
   return True
 
@@ -283,21 +283,21 @@ def genGame():
   Time = {'Day' : 1, 'Time' : 'Day'}
 
   cast("The game has started! There are {} people total and {} mafia.\
-        It is the dawn of the first day! Kill someone!",mbot)
+        It is the dawn of the first day! Kill someone!",group)
   return True
 
 def regenGame(notes):
   return  
-  
-def cast(message, bot):
+
+def cast(message, group):
   try:
-    bot.post(message)
-    log("CAST-{}: {}".format(bot.name,message))
+    groupyEP.Messages.create(group.group_id,message)
+    log("CAST-{}: {}".format(group.name,message))
     return True
   except Exception as e:
-    log("FAILED TO CAST-{} {}: {}".format(bot.name,message,e))
+    log("FAILED to CAST-{} {}: {}".format(group.name,message,e))
     return False
-
+  
 def loadNotes():
   note = []
   try:
@@ -446,8 +446,8 @@ if __name__ == '__main__':
   
   main_server = HTTPServer((ADDRESS,PORT1),MainHandler)
   if INTRO: 
-    cast('M-Bot is back online',mbot)
-    cast('Evil M-Bot is back online',evil_mbot)
+    cast('RESUME',group)
+    cast('RESUME',mafia_group)
   try:
 #    _thread.start_new_thread(main_server.serve_forever())
 #    _thread.start_new_thread(mafia_server.serve_forever())
@@ -457,5 +457,5 @@ if __name__ == '__main__':
       pass
   except KeyboardInterrupt as e:
     if OUTRO:
-      cast('M-Bot shutting down',mbot)
-      cast('Evil M-Bot shutting down',evil_mbot)
+      cast('PAUSE',group)
+      cast('PAUSE',mafia_group)
