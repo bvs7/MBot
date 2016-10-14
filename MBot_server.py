@@ -252,8 +252,10 @@ def genGame():
   for mem in mafia_group.members():
     if not mem.user_id == MODERATOR:
       mafia_group.remove(mem)
+
   log("Figure out game size")
   # Refresh Members in the group
+  group.refresh()
   members = group.members()
   # Find how many mafia there should be
   num_mafia = GAME_COUNTS[len(members)-1] # -1 for not Moderator
