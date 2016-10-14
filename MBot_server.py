@@ -12,12 +12,20 @@ import time
 
 DEBUG = 1
 
+### ADMINISTRATIVE VARIABLES ###
+
+group         = 0
+mafia_group   = 0
+members       = 0
+mafia_members = 0
+mbot          = 0
+evil_mbot     = 0
 
 ### CONSTANTS ###
 
 ADDRESS   = '0.0.0.0'
 PORT      = 1121
-GROUP_ID  = '22287829' # TEST
+GROUP_ID  = '25833774' # Let's Play Mafia
 MAFIA_ID  = 0 # Mafia group
 
 CALLBACK_URL_MAIN  = 'http://24.59.62.95:1121'
@@ -191,7 +199,7 @@ def kill(votee):
     if role in MAFIA_ROLES:
       num_mafia = num_mafia - 1
   except Exception as e:
-    log("Failed to kill {}: {}".format(votee,e)
+    log("Failed to kill {}: {}".format(votee,e))
     return False
   # Check win conditions
   if num_mafia == 0:
@@ -242,7 +250,9 @@ def genGame():
 
   cast("The game has started! There are {} people total and {} mafia.\
         It is the dawn of the first day! Kill someone!")
-  
+
+def regenGame(notes):
+  return  
   
 def cast(message, bot = mbot):
   bot.post(message)
@@ -311,7 +321,7 @@ if __name__ == '__main__':
       exit()
     else:
       log("Could not find old mafia group, making new group: {}".format(e))
-      mafia_group = groupy.Groups.create("MAFIA CHAT")['group_id']
+      mafia_group = groupy.api.endpoint.Groups.create("MAFIA CHAT")['group_id']
 
   try:
     mbot = [b for b in groupy.Bot.list() if b.bot_id == BOT_ID][0]
