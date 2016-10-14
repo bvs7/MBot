@@ -191,6 +191,7 @@ def kill(votee):
     if role in MAFIA_ROLES:
       num_mafia = num_mafia - 1
   except Exception as e:
+    log("Failed to kill {}: {}".format(votee,e)
     return False
   # Check win conditions
   if num_mafia == 0:
@@ -245,6 +246,7 @@ def genGame():
   
 def cast(message, bot = mbot):
   bot.post(message)
+  log("CAST: {}".format(message))
 
 def loadNotes():
   note = []
@@ -314,6 +316,8 @@ if __name__ == '__main__':
   try:
     mbot = [b for b in groupy.Bot.list() if b.bot_id == BOT_ID][0]
   except Exception as e:
+    log("Could not load mbot, will make new mbot")
+    ## TODO
 
   m_server = HTTPServer((ADDRESS,PORT),MHandler)
   if INTRO: cast('MBOT IS IN THE HOUSE')
