@@ -1,12 +1,11 @@
 #!/usr/bin/python3
 
-import sys
-import getopt
 from http.server import BaseHTTPRequestHandler as BaseHandler,HTTPServer
 import groupy
 import groupy.api.endpoint as groupyEP
-import json
 import random
+import json
+import _thread # to run both servers at once
 import time
 
 ### ADMINISTRATIVE CONSTANTS ###
@@ -16,7 +15,7 @@ DEBUG = 1
 
 ADDRESS   = '0.0.0.0'
 PORT1     = 1121
-PORT2     = 1122
+PORT2     = 1121
 #### THESE (should be) LOADED FROM loadInfo()
 GROUP_ID  = '25833774' # Let's Play Mafia
 MAFIA_ID  = 0 # Mafia group
@@ -66,7 +65,8 @@ Time   = {'Day':0,'Time':"Day"} # Format Day Number, Day/Night
 num_mafia = 0
 
 # [Num People] : [num mafia]
-GAME_COUNTS  = { 3 : 1,  4 : 1,  5 : 1,  6 : 1,  7 : 1,  8 : 2,  9 : 2,  10 : 3,
+GAME_COUNTS  = {
+                 3 : 1,  4 : 1,  5 : 1,  6 : 1,  7 : 1,  8 : 2,  9 : 2,  10 : 3,
                 11 : 3,  12 : 3, 13 : 3, 14 : 4, 15 : 4, 16 : 4, 17 : 5, 18 : 5,
                 19 : 5,  20 : 5, 21 : 6, 22 : 6, 23 : 6, 24 : 6, 25 : 6, 26 : 6,
                 27 : 6,
@@ -97,6 +97,7 @@ INFO      = './info'
 
 def vote(post):
   log("Vote")
+
   # Ensure Time is Day
   if not Time['Time'] == 'Day' or not GameOn:
     log("Vote Failed: Not Day")
@@ -117,6 +118,14 @@ def vote(post):
   except Exception as e:
     log("Vote Failed: Couldn't get votee: {}".format(e))
     return False
+
+  # Ensure vote is not for moderator
+
+  if votee == MODERATOR:
+    log("Vote failed: Tried to vote for Moderator")
+    cast("HOW DARE YOU",mbot)
+    return False
+
   
   # Change vote
   votes[voter] = votee
@@ -145,7 +154,7 @@ def help_(post):
 def start(post):
   log("Start")
   if not GameOn:
-    genGame()
+    return genGame()
   return False
 
 # This dict routes the command to the correct function
@@ -161,7 +170,7 @@ OPS = { VOTE_KW   : vote   ,
 class MainHandler(BaseHandler):
   
   def do_POST(self):
-    log("Got POST in Main")
+    log("Got POST")
     try:
       # Get contents of the POST
       length = int(self.headers['Content-length'])
@@ -174,6 +183,12 @@ class MainHandler(BaseHandler):
     
     words = []
 
+    if(  post['group_id'] == GROUP_ID): self.do_POST_MAIN(post)
+    elif(post['group_id'] == MAFIA_ID): self.do_POST_MAFIA(post)
+
+
+  def do_POST_MAIN(self,post):
+    log("Got POST in MAIN")
     # Test if we need to do anything
     try:
       if(post['text'][0:len(ACCESS_KW)] == ACCESS_KW):
@@ -189,21 +204,8 @@ class MainHandler(BaseHandler):
     except KeyError as e:
       return
 
-
-class MafiaHandler(BaseHandler):
-  
-  def do_POST(self):
-    try:
-      # Get contents of the POST
-      length = int(self.headers['Content-length'])
-      content = self.rfile.read(length).decode('utf-8')
-      post = json.loads(content)
-    except KeyError as e:
-      post = {}
-    except ValueError as e:
-      post = {}
-      
-    log("GOT MAFIA POST")
+  def do_POST_MAFIA(self,post):
+    log("Got POST in MAFIA")
 
 
 ### HELPER FUNCTIONS ###
@@ -242,23 +244,25 @@ def kill(votee):
   return True
 
 def genGame():
-  
+  log("Generating Game...")
   players = {}
 
   # Clear aux groups
-  for mem in mafia_group:
-    if not mem['user_id'] == MODERATOR:
+  log("Removing all from mafia group")
+  for mem in mafia_group.members():
+    if not mem.user_id == MODERATOR:
       mafia_group.remove(mem)
-
+  log("Figure out game size")
   # Refresh Members in the group
   members = group.members()
   # Find how many mafia there should be
-  num_mafia = GAME_COUNTS[len(members)]
+  num_mafia = GAME_COUNTS[len(members)-1] # -1 for not Moderator
   # Randomly order members
   roles = list(range(len(members)))
   random.shuffle(roles)
 
   # Assign roles
+  log("Assigning roles")
   for i in range(len(members)):
     if roles[i] < num_mafia: # First few are mafia
       players[mem.user_id] = "MAFIA"
@@ -268,7 +272,8 @@ def genGame():
       players[mem.user_id] = "DOCTOR"
     else:
       player[mem.user_id] = "TOWN"
-
+ 
+  log("Adding mafia to groups")
   # add to special groups
   for player in players:
     if players[player] == MAFIA_TEAM:
@@ -279,6 +284,7 @@ def genGame():
 
   cast("The game has started! There are {} people total and {} mafia.\
         It is the dawn of the first day! Kill someone!",mbot)
+  return True
 
 def regenGame(notes):
   return  
@@ -286,10 +292,10 @@ def regenGame(notes):
 def cast(message, bot):
   try:
     bot.post(message)
-    log("CAST: {}".format(message))
+    log("CAST-{}: {}".format(bot.name,message))
     return True
   except Exception as e:
-    log("FAILED TO CAST {}: {}".format(message,e))
+    log("FAILED TO CAST-{} {}: {}".format(bot.name,message,e))
     return False
 
 def loadNotes():
@@ -418,7 +424,7 @@ if __name__ == '__main__':
     except Exception as e:
       log("Could not load evil mbot, will make new evil mbot")
       try:
-        EVIL_MBOT_ID = groupyEP.Bots.create("Evil M-Bot", group.group_id, callback_url=CALLBACK_URL_MAFIA)['bot']['bot_id']
+        EVIL_MBOT_ID = groupyEP.Bots.create("Evil M-Bot", mafia_group.group_id, callback_url=CALLBACK_URL_MAFIA)['bot']['bot_id']
         retry = True
       except Exception as e:
         log("Could not make new evil mbot: {}".format(e))
@@ -439,10 +445,17 @@ if __name__ == '__main__':
   
   
   main_server = HTTPServer((ADDRESS,PORT1),MainHandler)
-  mafia_server = HTTPServer((ADDRESS,PORT2),MafiaHandler)
-  if INTRO: cast('MBOT IS IN THE HOUSE',mbot)
+  if INTRO: 
+    cast('M-Bot is back online',mbot)
+    cast('Evil M-Bot is back online',evil_mbot)
   try:
+#    _thread.start_new_thread(main_server.serve_forever())
+#    _thread.start_new_thread(mafia_server.serve_forever())
     main_server.serve_forever()
-    mafia_server.serve_forever()
-  except:
-    if OUTRO: cast('MBot out',mbot)
+    #mafia_server.serve_forever()
+    while True:
+      pass
+  except KeyboardInterrupt as e:
+    if OUTRO:
+      cast('M-Bot shutting down',mbot)
+      cast('Evil M-Bot shutting down',evil_mbot)
