@@ -134,12 +134,12 @@ def status(post):
       if(votes[voter] == m):
         reply = reply + getName(voter)
     reply = reply + "\n"
-  cast(reply)
+  cast(reply,mbot)
   return True
 
 def help_(post):
   log("Help")
-  cast(HELP_MESSAGE)
+  cast(HELP_MESSAGE,mbot)
   return True
 
 def start(post):
@@ -161,6 +161,7 @@ OPS = { VOTE_KW   : vote   ,
 class MainHandler(BaseHandler):
   
   def do_POST(self):
+    log("Got POST in Main")
     try:
       # Get contents of the POST
       length = int(self.headers['Content-length'])
@@ -170,19 +171,24 @@ class MainHandler(BaseHandler):
       post = {}
     except ValueError as e:
       post = {}
-      
+    
+    words = []
+
     # Test if we need to do anything
     try:
-      if(post['text'][0:len(ACCCESS_KW)] == ACCESS_KW):
+      if(post['text'][0:len(ACCESS_KW)] == ACCESS_KW):
+        log("Is Access")
         words = post['text'][len(ACCESS_KW):].split()
+
+        if(not len(words) == 0 and words[0] in OPS):
+          log("Type: {}".format(words[0]))
+          if not OPS[words[0]](post):
+            cast("{} failed".format(words[0]),mbot)
+        else:
+          cast("Invalid request, (try {ACCESS_KW}{HELP_KW} for help)".format(**locals),mbot)
     except KeyError as e:
       return
 
-    if(words[0] in OPS):
-      if not OPS[words[0]](post):
-        cast("{} failed".format(words[0]))
-    else:
-      cast("Invalid request, (try {ACCESS_KW}{HELP_KW} for help)".format(**locals))
 
 class MafiaHandler(BaseHandler):
   
@@ -208,7 +214,7 @@ def testKillVotes(votee):
   
   # If the number of votes is in the majority, kill
   if len(voters) > int(len(members)/2):
-    cast("The vote to kill {} has passed".format(getName(votee)))
+    cast("The vote to kill {} has passed".format(getName(votee)),mbot)
     note("Kill: {}".format(votee))
     if (kill(votee)):
       return True
@@ -227,11 +233,11 @@ def kill(votee):
   # Check win conditions
   if num_mafia == 0:
     GameOn = False
-    cast("TOWN WINS")
+    cast("TOWN WINS",mbot)
     return True
   if num_mafia >= (len(players))/2:
     GameOn = False
-    cast("MAFIA WINS")
+    cast("MAFIA WINS",mbot)
     return True
   return True
 
@@ -272,12 +278,12 @@ def genGame():
   Time = {'Day' : 1, 'Time' : 'Day'}
 
   cast("The game has started! There are {} people total and {} mafia.\
-        It is the dawn of the first day! Kill someone!")
+        It is the dawn of the first day! Kill someone!",mbot)
 
 def regenGame(notes):
   return  
   
-def cast(message, bot = mbot):
+def cast(message, bot):
   try:
     bot.post(message)
     log("CAST: {}".format(message))
@@ -319,7 +325,7 @@ def loadInfo():
   for line in info:
     words = line.split(' ')
     try:
-      locals()[words[0]] = words[1]
+      globals()[words[0]] = words[1].strip()
     except Exception as e:
       log("Couldn't load info: {}: {}".format(line,e))
 
@@ -327,7 +333,7 @@ def saveInfo():
   try:
     f = open(INFO,'w')
     for var in VARIABLES_TO_SAVE:
-      f.write(var + ' ' + locals()[var])
+      f.write(var + ' ' + str(globals()[var]) + '\n')
     f.close()
   except FileNotFoundError as e:
     log("Failed to load info file: {}".format(e))
@@ -372,7 +378,7 @@ if __name__ == '__main__':
     try:
       group = [g for g in groupy.Group.list() if g.group_id == GROUP_ID][0]
     except Exception as e:
-      log("FATAL: Could not find main group: {}".format(e))
+      log("FATAL: Could not find main group: {}:  {}".format(GROUP_ID,e))
       exit()
 
     # Initialize Mafia Group
@@ -386,7 +392,7 @@ if __name__ == '__main__':
         log("Could not find old mafia group, making new group: {}".format(e))
         MAFIA_ID = groupyEP.Groups.create("MAFIA CHAT")['group_id']
         retry = True
-    print(locals()['GROUP_ID'])
+
     # Initialize Mbot
     try:
       mbot = [b for b in groupy.Bot.list() if b.bot_id == MBOT_ID][0]
@@ -396,8 +402,15 @@ if __name__ == '__main__':
         MBOT_ID = groupyEP.Bots.create("M-Bot", group.group_id, callback_url=CALLBACK_URL_MAIN)['bot']['bot_id']
         retry = True
       except Exception as e:
-        log("FATAL: Could not make new mbot: {}".format(e))
-        exit()
+        log("Could not make new mbot: {}".format(e))
+        try:
+          if e['code'] == 400:
+            log("Deleting old bots")
+            for b in groupyEP.Bots.index():
+              groupyEP.Bots.destroy(b['bot_id'])
+              retry = True
+        except:
+          pass
 
     # Initialize Evil Mbot
     try:
@@ -408,8 +421,17 @@ if __name__ == '__main__':
         EVIL_MBOT_ID = groupyEP.Bots.create("Evil M-Bot", group.group_id, callback_url=CALLBACK_URL_MAFIA)['bot']['bot_id']
         retry = True
       except Exception as e:
-        log("FATAL: Could not make new evil mbot: {}".format(e))
-        exit()
+        log("Could not make new evil mbot: {}".format(e))
+        try:
+          if e['code'] == 400:
+            log("Deleting old bots")
+            for b in groupyEP.Bots.index():
+              groupyEP.Bots.destroy(b['bot_id'])
+              retry = True
+        except:
+          pass
+
+
     saveInfo()
     if not retry:
       break;  
@@ -418,9 +440,9 @@ if __name__ == '__main__':
   
   main_server = HTTPServer((ADDRESS,PORT1),MainHandler)
   mafia_server = HTTPServer((ADDRESS,PORT2),MafiaHandler)
-  if INTRO: cast('MBOT IS IN THE HOUSE')
+  if INTRO: cast('MBOT IS IN THE HOUSE',mbot)
   try:
     main_server.serve_forever()
     mafia_server.serve_forever()
   except:
-    if OUTRO: cast('MBot out')
+    if OUTRO: cast('MBot out',mbot)
