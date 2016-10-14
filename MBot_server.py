@@ -411,7 +411,7 @@ if __name__ == '__main__':
         log("FATAL: Could not make new evil mbot: {}".format(e))
         exit()
 
-    if !retry:
+    if not retry:
       break;  
 
   saveInfo()
