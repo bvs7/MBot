@@ -96,14 +96,12 @@ START:
 def vote(post):
   # Ensure Time is Day
   if not Time['Time'] == 'Day' or not GameOn:
-    log('Someone tried to vote at the wrong time')
     return False
   
   # Get voter
   try:
     voter = str(post['user_id'])
   except Exception as e:
-    log('Could not find voter id')
     return False
   # Get votee
   try:
@@ -111,18 +109,15 @@ def vote(post):
     if not len(mentions) == 1:
       return False
   except Exception as e:
-    log('Could not find votee id')
     return False
 
   # Change vote
   votes[voter] = votee
-  note("{} changed their vote to {}".format(voter,votee))
   testKillVotes(votee)
   return True
 
 def status(post):
   # Output players and who is voting for who
-  log("Status")
   reply = "[Alive]:[Votes]\n"
   for m in members:
     reply = reply + getName(m) + " :"
@@ -139,7 +134,6 @@ def help_(post):
 
 def start(post):
   if not GameOn:
-    note("Starting new game")
     genGame()
   return False
 
@@ -161,36 +155,28 @@ NOTES     = './notes'
 class MHandler(BaseHandler):
   
   def do_POST(self):
-    log('Got POST',1)
     try:
       # Get contents of the POST
       length = int(self.headers['Content-length'])
       content = self.rfile.read(length).decode('utf-8')
       post = json.loads(content)
-      log('Got Contents: {}'.format(post),2)
     except KeyError as e:
-      log('KeyError: {}'.format(e))
       post = {}
     except ValueError as e:
-      log('ValueError (possibly in JSON decoding): {}'.format(e))
       post = {}
-    
-    log('Testing for access')
+      
     # Test if we need to do anything
     try:
       if(post['text'][0:len(ACCCESS_KW)] == ACCESS_KW):
         words = post['text'][len(ACCESS_KW):].split()
     except KeyError as e:
-      log('Couldn\'t test for access: {}'.format(e))
       return
 
     if(words[0] in OPS):
-      if not OPS[words[0]](post):
+      if not OPS[words[0]](post):x
         cast("{} failed".format(words[0]))
     else:
-      cast("Invalid request, (try {ACCESS_KW}{HELP_KW} for help)".format(**locals))
-    
-    log('Finished POST',1)
+      cast("Invalid request, (try {ACCESS_KW}{HELP_KW} for help)".format(**locals)
 
 
 ### HELPER FUNCTIONS ###
@@ -217,7 +203,6 @@ def kill(votee):
     if pc & MAFIA_TEAM > 0:
       num_mafia = num_mafia - 1
   except Exception as e:
-    log("killing failed: {}".format(e))
     return False
   # Check win conditions
   if num_mafia == 0:
@@ -277,27 +262,21 @@ def cast(message, bot = mbot):
   bot.post(message)
 
 def loadNotes():
-  log('Loading Notes')
   note = []
   try:
     f = open(NOTES,'r')
     note = f.readlines()
     f.close()
-    log('Successfullly loaded notes')
   except Exception as e:
-    log('Failed to load notes: {}'.format(e))
   return note
 
 def saveNotes():
-  log('Saving Notes')
   try:
     f = open(NOTES,'w')
     for line in notes:
       f.write(line)
     f.close()
-    log('Successfully saves notes')
   except Exception as e:
-    log('Failed to save notes: {}'.format(e))
 
 def getName(user_id):
   for member in members:
@@ -321,18 +300,16 @@ def note(message):
 if __name__ == '__main__':
 
   group = [g for g in groupy.Group.list() if g.group_id == GROUP_ID][0]
-  mafia_group = [g for g in groupy.Group.list() if g.group_id == MAFIA_ID[0]]
-  cop_group = [g for g in groupy.Group.list() if g.group_id == COP_ID[0]]
-  doc_group = [g for g in groupy.Group.list() if g.group_id == DOC_ID[0]]
+  mafia_group = [g for g in groupy.Group.list() if g.group_id == MAFIA_ID][0]
   members = group.members()
+  mafia_members = mafia_group.members()
   mbot = [b for b in groupy.Bot.list() if b.bot_id == BOT_ID][0]
 
   balances = loadBalances()
   notes = loadNotes()
   kp_server = HTTPServer((ADDRESS,PORT),KPHandler)
-  log('START',1)
-  if INTRO: cast('KPBOT IS IN THE HOUSE')
+  if INTRO: cast('MBOT IS IN THE HOUSE')
   try:
     kp_server.serve_forever()
   except:
-    if OUTRO: cast('kpBot out')
+    if OUTRO: cast('MBot out')
