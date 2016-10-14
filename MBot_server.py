@@ -393,7 +393,7 @@ if __name__ == '__main__':
     except Exception as e:
       log("Could not load mbot, will make new mbot")
       try:
-        MBOT_ID = groupyEP.Bots.create("M-Bot", group, callback_url=CALLBACK_URL_MAIN)['bot']['bot_id']
+        MBOT_ID = groupyEP.Bots.create("M-Bot", group.group_id, callback_url=CALLBACK_URL_MAIN)['bot']['bot_id']
         retry = True
       except Exception as e:
         log("FATAL: Could not make new mbot: {}".format(e))
@@ -405,7 +405,7 @@ if __name__ == '__main__':
     except Exception as e:
       log("Could not load evil mbot, will make new evil mbot")
       try:
-        EVIL_MBOT_ID = groupyEP.Bots.create("Evil M-Bot", group, callback_url=CALLBACK_URL_MAFIA)['bot']['bot_id']
+        EVIL_MBOT_ID = groupyEP.Bots.create("Evil M-Bot", group.group_id, callback_url=CALLBACK_URL_MAFIA)['bot']['bot_id']
         retry = True
       except Exception as e:
         log("FATAL: Could not make new evil mbot: {}".format(e))
