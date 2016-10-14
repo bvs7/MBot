@@ -366,45 +366,53 @@ if __name__ == '__main__':
 
   loadInfo()
 
-  # Initialize Basic Group infos
-  try:
-    group = [g for g in groupy.Group.list() if g.group_id == GROUP_ID][0]
-  except Exception as e:
-    log("FATAL: Could not find main group: {}".format(e))
-    exit()
+  while True:
 
-  # Initialize Mafia Group
-  try:
-    mafia_group = [g for g in groupy.Group.list() if g.group_id == MAFIA_ID][0]
-  except Exception as e:
-    if(GameOn):
-      log("FATAL: Could not find mafia group, but game is started: {}".format(e))
-      exit()
-    else:
-      log("Could not find old mafia group, making new group: {}".format(e))
-      mafia_group = groupyEP.Groups.create("MAFIA CHAT")['group_id']
-
-  # Initialize Mbot
-  try:
-    mbot = [b for b in groupy.Bot.list() if b.bot_id == MBOT_ID][0]
-  except Exception as e:
-    log("Could not load mbot, will make new mbot")
+    # Initialize Basic Group infos
     try:
-      mbot = groupyEP.Bots.create("M-Bot", group, callback_url=CALLBACK_URL_MAIN)
+      group = [g for g in groupy.Group.list() if g.group_id == GROUP_ID][0]
     except Exception as e:
-      log("FATAL: Could not make new mbot: {}".format(e))
+      log("FATAL: Could not find main group: {}".format(e))
       exit()
 
-  # Initialize Evil Mbot
-  try:
-    evil_mbot = [b for b in groupy.Bot.list() if b.bot_id == EVIL_MBOT_ID][0]
-  except Exception as e:
-    log("Could not load evil mbot, will make new evil mbot")
+    # Initialize Mafia Group
     try:
-      evil_mbot = groupyEP.Bots.create("Evil M-Bot", group, callback_url=CALLBACK_URL_MAFIA)
+      mafia_group = [g for g in groupy.Group.list() if g.group_id == MAFIA_ID][0]
     except Exception as e:
-      log("FATAL: Could not make new evil mbot: {}".format(e))
-      exit()
+      if(GameOn):
+        log("FATAL: Could not find mafia group, but game is started: {}".format(e))
+        exit()
+      else:
+        log("Could not find old mafia group, making new group: {}".format(e))
+        MAFIA_ID = groupyEP.Groups.create("MAFIA CHAT")['group_id']
+        retry = True
+
+    # Initialize Mbot
+    try:
+      mbot = [b for b in groupy.Bot.list() if b.bot_id == MBOT_ID][0]
+    except Exception as e:
+      log("Could not load mbot, will make new mbot")
+      try:
+        MBOT_ID = groupyEP.Bots.create("M-Bot", group, callback_url=CALLBACK_URL_MAIN)['bot_id']
+        retry = True
+      except Exception as e:
+        log("FATAL: Could not make new mbot: {}".format(e))
+        exit()
+
+    # Initialize Evil Mbot
+    try:
+      evil_mbot = [b for b in groupy.Bot.list() if b.bot_id == EVIL_MBOT_ID][0]
+    except Exception as e:
+      log("Could not load evil mbot, will make new evil mbot")
+      try:
+        EVIL_MBOT_ID = groupyEP.Bots.create("Evil M-Bot", group, callback_url=CALLBACK_URL_MAFIA)['bot_id']
+        retry = True
+      except Exception as e:
+        log("FATAL: Could not make new evil mbot: {}".format(e))
+        exit()
+
+    if !retry:
+      break;  
 
   saveInfo()
   
