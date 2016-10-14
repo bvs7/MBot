@@ -386,7 +386,7 @@ if __name__ == '__main__':
         log("Could not find old mafia group, making new group: {}".format(e))
         MAFIA_ID = groupyEP.Groups.create("MAFIA CHAT")['group_id']
         retry = True
-
+    print(locals()['GROUP_ID'])
     # Initialize Mbot
     try:
       mbot = [b for b in groupy.Bot.list() if b.bot_id == MBOT_ID][0]
@@ -410,11 +410,11 @@ if __name__ == '__main__':
       except Exception as e:
         log("FATAL: Could not make new evil mbot: {}".format(e))
         exit()
-
+    saveInfo()
     if not retry:
       break;  
 
-  saveInfo()
+  
   
   main_server = HTTPServer((ADDRESS,PORT1),MainHandler)
   mafia_server = HTTPServer((ADDRESS,PORT2),MafiaHandler)
