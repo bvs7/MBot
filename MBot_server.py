@@ -17,10 +17,10 @@ ADDRESS   = '0.0.0.0'
 PORT1     = 1121
 PORT2     = 1121
 #### THESE (should be) LOADED FROM loadInfo()
-GROUP_ID  = '25833774' # Let's Play Mafia
-MAFIA_ID  = 0 # Mafia group
-MBOT_ID   = 0
-EVIL_MBOT_ID = 0
+#GROUP_ID  = '25833774' # Let's Play Mafia
+#MAFIA_ID  = 0 # Mafia group
+#MBOT_ID   = 0
+#EVIL_MBOT_ID = 0
 ####
 
 CALLBACK_URL_MAIN  = 'http://24.59.62.95:'+str(PORT1)
@@ -36,12 +36,12 @@ VARIABLES_TO_SAVE = ['GROUP_ID','MAFIA_ID','MBOT_ID','EVIL_MBOT_ID']
 
 ### ADMINISTRATIVE VARIABLES ###
 
-group         = 0
-mafia_group   = 0
-members       = 0
-mafia_members = 0
-mbot          = 0
-evil_mbot     = 0
+#group         = 0
+#mafia_group   = 0
+#members       = 0
+#mafia_members = 0
+#mbot          = 0
+#evil_mbot     = 0
 
 
 ######## GAME VARIABLES ########
@@ -52,17 +52,18 @@ VOTE_KW   = 'vote'
 STATUS_KW = 'status'
 HELP_KW   = 'help'
 START_KW  = 'start'
+TIME_KW   = 'time'
 
 # ROLES
 TOWN_ROLES = ["TOWN", "COP", "DOCTOR"]
 MAFIA_ROLES = ["MAFIA"]
 
 # GAME STATE VARIABLES
-GameOn = False
 votes  = {}
 players= {}
-Time   = {'Day':0,'Time':"Day"} # Format Day Number, Day/Night
+Time   = {'Day':0,'Time':"Day",'GameOn':False} # Format Day Number, Day/Night
 num_mafia = 0
+num_players = 0
 
 # [Num People] : [num mafia]
 GAME_COUNTS  = {
@@ -95,11 +96,14 @@ INFO      = './info'
 
 ### Define operations ###
 
-def vote(post):
+def vote(post,words):
   log("Vote")
 
+  global Time
+  global votes
+
   # Ensure Time is Day
-  if not Time['Time'] == 'Day' or not GameOn:
+  if not Time['Time'] == 'Day' or not Time['GameOn']:
     log("Vote Failed: Not Day")
     return False
   
@@ -112,9 +116,17 @@ def vote(post):
   # Get votee
   try:
     mentions = [a for a in post['attachments'] if a['type'] == 'mentions']
-    if not len(mentions) == 1:
+    if not len(mentions) <= 1:
       log("Vote Failed: invalid votee count: {}".format(len(mentions)))
       return False
+    elif words[1].lower() == "none":
+      votes.pop(voter)
+      log("Retracted Vote {}".format(voter))
+      cast("Vote retraction successful",group)
+      note("Vote: {} none".format(voter))
+      return True
+    else:
+      votee = mentions[0]['user_ids'][0]
   except Exception as e:
     log("Vote Failed: Couldn't get votee: {}".format(e))
     return False
@@ -130,30 +142,39 @@ def vote(post):
   # Change vote
   votes[voter] = votee
   log("Vote succeeded: {} changed vote to {}".format(voter,votee))
+  note("Vote: {} {}".format(voter,votee))
   testKillVotes(votee)
   return True
 
-def status(post):
+def status(post,words):
   log("Status")
+
+  global members
+
+  reply = "It is {} {}\n".format(Time['Time'],Time['Day'])
+
   # Output players and who is voting for who
-  reply = "[Alive]:[Votes]\n"
+  reply = reply + "[Alive]:[Votes]\n"
   for m in members:
-    reply = reply + getName(m) + " :"
-    for voter in votes:
-      if(votes[voter] == m):
-        reply = reply + getName(voter)
-    reply = reply + "\n"
+    if not m.user_id == MODERATOR:
+      reply = reply + m.nickname + " : "
+      count = 0
+      for voter in votes:
+        if(votes[voter] == m.user_id):
+          count = count + 1
+          reply = reply + getName(voter)+" "
+      reply = reply + str(count) +  "\n"
   cast(reply,group)
   return True
 
-def help_(post):
+def help_(post,words):
   log("Help")
   cast(HELP_MESSAGE,group)
   return True
 
-def start(post):
+def start(post,words):
   log("Start")
-  if not GameOn:
+  if not Time['GameOn']:
     return genGame()
   return False
 
@@ -185,7 +206,7 @@ class MainHandler(BaseHandler):
 
     if(  post['group_id'] == GROUP_ID): self.do_POST_MAIN(post)
     elif(post['group_id'] == MAFIA_ID): self.do_POST_MAFIA(post)
-
+    saveNotes()
 
   def do_POST_MAIN(self,post):
     log("Got POST in MAIN")
@@ -197,10 +218,10 @@ class MainHandler(BaseHandler):
 
         if(not len(words) == 0 and words[0] in OPS):
           log("Type: {}".format(words[0]))
-          if not OPS[words[0]](post):
+          if not OPS[words[0]](post,words):
             cast("{} failed".format(words[0]),group)
         else:
-          cast("Invalid request, (try {ACCESS_KW}{HELP_KW} for help)".format(**locals),group)
+          cast("Invalid request, (try {ACCESS_KW}{HELP_KW} for help)".format(**locals()),group)
     except KeyError as e:
       return
 
@@ -211,40 +232,72 @@ class MainHandler(BaseHandler):
 ### HELPER FUNCTIONS ###
 
 def testKillVotes(votee):
+
+  global votes
+  global num_players
+  global num_mafia
+
   # Get people voting for votee
   voters = [v for v in votes if votes[v] == votee]
-  
+
   # If the number of votes is in the majority, kill
-  if len(voters) > int(len(members)/2):
+  if len(voters) > num_players/2:
     cast("The vote to kill {} has passed".format(getName(votee)),group)
     note("Kill: {}".format(votee))
     if (kill(votee)):
       return True
+  else:
+    cast("Vote successful: {} more vote{}until {} is killed".format(
+          int((num_players)/2+1)-len(voters),
+          " " if int((num_players)/2+1)-len(voters) == 1 else "s ",
+          getName(votee) ) ,group)
   return False
 
 def kill(votee):
+
+  global Time
+  global num_players
+  global num_mafia
+
   # Remove from players
   try:
-    group.remove(getMem(votee))
+    group.remove(getMem(votee,members))
     role = players.pop(votee)
     if role in MAFIA_ROLES:
       num_mafia = num_mafia - 1
+    num_players = num_players - 1
+    note("Kill: {}".format(votee))
   except Exception as e:
     log("Failed to kill {}: {}".format(votee,e))
     return False
   # Check win conditions
   if num_mafia == 0:
-    GameOn = False
+    Time['GameOn'] = False
+    Time['Day'] = 0
+    Time['Time'] = 'Day'
     cast("TOWN WINS",group)
+    note("End: Town")
     return True
-  if num_mafia >= (len(players))/2:
-    GameOn = False
+  if num_mafia >= (num_players)/2:
+    Time['GameOn'] = False
+    Time['Day'] = 0
+    Time['Time'] = 'Day'
     cast("MAFIA WINS",group)
+    note("End: Mafia")
     return True
   return True
 
 def genGame():
   log("Generating Game...")
+  global notes # Clear notes
+  notes = []
+  note("Start")
+  global players
+  global num_players
+  global num_mafia
+  global group
+  global mafia_group
+  
   players = {}
 
   # Clear aux groups
@@ -257,38 +310,87 @@ def genGame():
   # Refresh Members in the group
   group.refresh()
   members = group.members()
+  # Remove MODERATOR
+  members = [m for m in members if not m.user_id == MODERATOR]
+  num_players = len(members)
   # Find how many mafia there should be
-  num_mafia = GAME_COUNTS[len(members)-1] # -1 for not Moderator
+  num_mafia = GAME_COUNTS[num_players] # -1 for not Moderator
   # Randomly order members
-  roles = list(range(len(members)))
+  roles = list(range(num_players))
   random.shuffle(roles)
 
   # Assign roles
   log("Assigning roles")
   for i in range(len(members)):
-    if roles[i] < num_mafia: # First few are mafia
-      players[mem.user_id] = "MAFIA"
-    elif roles[i] == num_mafia: # Then cop
-      players[mem.user_id] = "COP"
-    elif roles[i] == num_mafia+1: # Then Doc
-      players[mem.user_id] = "DOCTOR"
-    else:
-      player[mem.user_id] = "TOWN"
+    mem = members[i]
+    log("Assigning: {}".format(roles[i]))
+    if not mem.user_id == MODERATOR:
+      if roles[i] < num_mafia: # First few are mafia
+        players[mem.user_id] = "MAFIA"
+      elif roles[i] == num_mafia: # Then cop
+        players[mem.user_id] = "COP"
+      elif roles[i] == num_mafia+1: # Then Doc
+        players[mem.user_id] = "DOCTOR"
+      else:
+        players[mem.user_id] = "TOWN"
+      note("Assign: {} {}".format(mem.user_id, players[mem.user_id]))
+      log("Assigning: {} to {}".format(mem.user_id, players[mem.user_id]))
  
   log("Adding mafia to groups")
   # add to special groups
   for player in players:
-    if players[player] == MAFIA_TEAM:
-      mafia_group.add(getMem(player))
+    if players[player] in MAFIA_ROLES:
+      mafia_group.add(getMem(player,members))
       
-  GameOn=True
-  Time = {'Day' : 1, 'Time' : 'Day'}
+  Time['GameOn'] = True
+  Time['Day'] = 1
+  Time['Time'] = 'Day'
+  log("Did time: {} {}".format(Time['Time'],Time['Day']))
 
-  cast("The game has started! There are {} people total and {} mafia.\
-        It is the dawn of the first day! Kill someone!",group)
+
+  cast("The game is afoot! There are {} people total and {} mafia.\
+        It is the dawn of the first day! Kill someone!".format(len(players),num_mafia),
+        group)
   return True
 
 def regenGame(notes):
+
+  global players
+  global votes
+  global Time
+  global num_players
+  global num_mafia
+
+  players = {}
+  votes = {}
+  Time = {'Day':0,'Time':'Day','GameOn':False}
+  num_players = 0
+  num_mafia = 0
+
+  for line in notes:
+    words = line.split()
+    if len(words) > 0:
+      if words[0] == "Assign:":
+        num_players = num_players + 1
+        players[words[1]] = words[2]
+        if(words[2] in MAFIA_ROLES): num_mafia = num_mafia +1
+      elif words[0] == "Vote:":
+        if words[2] == 'none':
+          try:
+            votes.pop(words[1])
+          except: pass
+        else:
+          votes[words[1]] = words[2]
+      elif words[0] == "Kill:":
+        votes = {}
+        try:
+          players.pop(words[1])
+        except: pass
+        Time['Time'] = 'Night'
+      elif words[0] == "Start":
+        Time = {'Day':1,'Time':'Day','GameOn':True}
+      else:
+        log("COULD NOT READ: {}".format(words[0]))
   return  
 
 def cast(message, group):
@@ -355,7 +457,7 @@ def getName(user_id):
   log("Failed to find name of {}".format(user_id))
   return NONAME
 
-def getMem(user_id):
+def getMem(user_id, members):
   for member in members:
     if member.user_id == user_id:
       return member
@@ -366,7 +468,7 @@ def log(message,level=1):
     print(message)
 
 def note(message):
-  notes.insert(0,message+'\n')
+  notes.append(message+'\n')
 
 
 if __name__ == '__main__':
@@ -393,7 +495,7 @@ if __name__ == '__main__':
     try:
       mafia_group = [g for g in groupy.Group.list() if g.group_id == MAFIA_ID][0]
     except Exception as e:
-      if(GameOn):
+      if(Time['GameOn']):
         log("FATAL: Could not find mafia group, but game is started: {}".format(e))
         exit()
       else:
@@ -444,7 +546,8 @@ if __name__ == '__main__':
     if not retry:
       break;  
 
-  
+  members = group.members()
+  mafia_members = mafia_group.members()
   
   main_server = HTTPServer((ADDRESS,PORT1),MainHandler)
   if INTRO: 
@@ -453,11 +556,13 @@ if __name__ == '__main__':
   try:
 #    _thread.start_new_thread(main_server.serve_forever())
 #    _thread.start_new_thread(mafia_server.serve_forever())
+    log("starting")
     main_server.serve_forever()
     #mafia_server.serve_forever()
     while True:
       pass
   except KeyboardInterrupt as e:
+    log("ending")
     if OUTRO:
       cast('PAUSE',group)
       cast('PAUSE',mafia_group)
