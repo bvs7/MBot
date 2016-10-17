@@ -12,7 +12,7 @@ DEBUG = 1
 
 class MafiaGame(BaseHandler):
 
-"""
+  """
 
 ATTRIBUTES: ====================================================================
 
@@ -54,11 +54,7 @@ getGroup(group_id)       Find the group with the group_id.
 getBot(bot_id)           Find the bot with the bot_id.
 
 loadNotes()              Read the notes file and resume the state of the game
-saveNotes()              Save the state of the game in the notes file
-
-
-
-"""
+saveNotes()              Save the state of the game in the notes file """
 
   def __init__(self, i_fname, n_fname):
 
