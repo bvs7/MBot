@@ -125,6 +125,8 @@ def vote(post,words):
       cast("Vote retraction successful",group)
       note("Vote: {} none".format(voter))
       return True
+    elif words[1].lower() == "me":
+      votee = voter
     else:
       votee = mentions[0]['user_ids'][0]
   except Exception as e:
@@ -162,7 +164,7 @@ def status(post,words):
       for voter in votes:
         if(votes[voter] == m.user_id):
           count = count + 1
-          reply = reply + getName(voter)+" "
+          reply = reply + getName(voter)+", "
       reply = reply + str(count) +  "\n"
   cast(reply,group)
   return True
@@ -185,6 +187,27 @@ OPS = { VOTE_KW   : vote   ,
         START_KW  : start  ,
       }
 
+def kill_mafia(post,words):
+  log("Kill")
+
+  global members
+
+  try:
+    kill_num = int(words[1])
+  except Exception as e:
+    log("Failed to kill: {}".format(e))
+    return False
+
+  try:
+    killee = members[kill_num]
+  except Exception as e:
+    log("Failed to kill, unable to get killee: {}".format(e))
+    return False
+
+  if(kill(killee)):
+    toDay()
+    return True
+  return False
 
 ### HANDLER ###
 
@@ -245,6 +268,7 @@ def testKillVotes(votee):
     cast("The vote to kill {} has passed".format(getName(votee)),group)
     note("Kill: {}".format(votee))
     if (kill(votee)):
+      toNight()
       return True
   else:
     cast("Vote successful: {} more vote{}until {} is killed".format(
@@ -267,6 +291,7 @@ def kill(votee):
       num_mafia = num_mafia - 1
     num_players = num_players - 1
     note("Kill: {}".format(votee))
+    group.refresh()
   except Exception as e:
     log("Failed to kill {}: {}".format(votee,e))
     return False
@@ -392,6 +417,39 @@ def regenGame(notes):
       else:
         log("COULD NOT READ: {}".format(words[0]))
   return  
+
+def killOptions():
+
+  global members
+
+  result = "Options are:\n"
+  count = 0
+  members = group.members()
+  members = [m for m in members if not m.user_id == MODERATOR]
+  for m in members:
+    result = results + str(count) + ": " + m.nickname + '\n'
+    count = count + 1
+  return result
+    
+
+def toDay():
+
+  global Time
+  global group
+
+  Time['Time'] = 'Day'
+  Time['Day']  = Time['Day'] + 1
+  cast("Dawn of Day {}. There are {} remaining. Kill Someone!".format(Time['Day'],len(players)),group)
+
+def toNight():
+
+  global Time
+  global mafia_group
+  global group
+
+  Time['Time'] = 'Night'
+  cast("Night approaches, sleep",group)
+  cast("Night is here! Time to kill... {}".format(killOptions()))
 
 def cast(message, group):
   try:
