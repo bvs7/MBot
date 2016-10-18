@@ -40,6 +40,8 @@ MODERATOR        ID of the member we have control over
 time             The time of day (Day/Night)
 day              Which day the game is at. 0 means no game has started
 
+to_kill_in_morning The id of the person who the mafia chose to kill
+
 server           The server that listens for bot posts
 
 quit             "Stop serving and quit"
@@ -82,6 +84,7 @@ saveNotes()              Save the state of the game in the notes file """
     self.playerList = []
     self.playerRoles = {}
     self.playerVotes = {}
+    self.to_kill_in_morning = ""
 
 
     # Restore past State
@@ -283,8 +286,13 @@ Time: [day#] [Day/Night]
 
   def start(self,post={},words=[]):
     """{}{}  - Start a game with the current players"""
-    if not self.day == 0:
-      return startGame()
+    # NOTE: When the day is 0, the following is true:
+    
+    if self.day == 0:
+      self.day = 1
+      self.time = 'Day'
+      # Assign Roles
+      
     return False
 
   def in_(self,post,words=[]):
@@ -440,6 +448,9 @@ Time: [day#] [Day/Night]
       self.time = "Day"
       self.cast("MAFIA WINS",self.mainGroup)
     return True
+
+  def startGame(self):
+    
 
   def toDay(self):
     time = "Day"
