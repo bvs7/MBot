@@ -1,6 +1,6 @@
 #!/usr/bin/python3
 
-import MafiaHandler
+from http.server import BaseHTTPRequestHandler as BaseHandler,HTTPServer
 import groupy
 import groupy.api.endpoint as groupyEP
 import random
@@ -10,7 +10,7 @@ import time
 
 DEBUG = 1
 
-class MafiaGame(BaseHandler):
+class MafiaGame:
 
   """
 
@@ -66,7 +66,7 @@ saveNotes()              Save the state of the game in the notes file """
 
     # Ensure we have all of the info we need, Create neccessary items
     self.checkInfo(['MAIN_GROUP_ID', 'MAFIA_GROUP_ID', 'MAIN_BOT_ID', 'MAFIA_BOT_ID',
-                    'MODERATOR', 'ADDRESS', 'PORT', 'INTRO', 'OUTRO'])
+                    'MODERATOR', 'ADDRESS', 'PORT'])
 
     # Use those values to get Groupy objects
     self.mainGroup  = self.getGroup(self.MAIN_GROUP_ID)
@@ -83,12 +83,13 @@ saveNotes()              Save the state of the game in the notes file """
     self.playerRoles = {}
     self.playerVotes = {}
 
-
     # Restore past State
     self.loadNotes()
 
+  def run(self):
+
     # Setup Server
-    self.server = HTTPServer((self.ADDRESS,self.PORT), self)
+    self.server = HTTPServer((self.ADDRESS,int(self.PORT)), MainHandler)
 
     # Setup routing to the correct commands
     self.setupKW()
@@ -96,16 +97,21 @@ saveNotes()              Save the state of the game in the notes file """
     self.quit = False
 
     # Run Server
-    self.intro(INTRO)
+    self.cast("RESUME",self.mainGroup)
     try:
       _thread.start_new_thread(self.server.serve_forever())
-
       # Allow edits
       while not self.quit:
-        self.processInput()
+        self.getCommand()
     except KeyboardInterrupt:
       pass
-    self.outro(OUTRO)
+    self.cast("PAUSE",self.mainGroup)
+
+  def getCommand(self):
+    i = input()
+    if i in ["q","quit"]:
+      self.quit = True
+    eval(i)
 
 ### INIT HELPER FUNCTIONS ######################################################
 
@@ -169,7 +175,7 @@ saveNotes()              Save the state of the game in the notes file """
     return True
 
 
-""" regenLine
+  """ regenLine
 Notes are saved at the end of each POST:
 
 They include:
@@ -177,7 +183,7 @@ Player: [player_id] [role]
 Vote: [voter_id] [votee_id]
 Time: [day#] [Day/Night]
 
-"""
+  """
   def loadNoteLine(self,line):
     word = line.split()
     if len(word) > 0:
@@ -212,6 +218,7 @@ Time: [day#] [Day/Night]
       
   def vote(self,post,words):
     """{}{} @[player]  - Vote for someone. Once they have a majority of votes they are killed"""
+    self.log("VOTE")
     # Assert time is day
     if not self.time == "Day" or not self.day == 0:
       self.log("Vote Failed: not Day")
@@ -223,38 +230,39 @@ Time: [day#] [Day/Night]
       self.log("Vote failed: couldn't get voter: {}".format(e))
       return False
     # Get votee
-  try:
-    mentions = [a for a in post['attachments'] if a['type'] == 'mentions']
-    if not len(mentions) <= 1:
-      self.log("Vote Failed: invalid votee count: {}".format(len(mentions)))
+    try:
+      mentions = [a for a in post['attachments'] if a['type'] == 'mentions']
+      if not len(mentions) <= 1:
+        self.log("Vote Failed: invalid votee count: {}".format(len(mentions)))
+        return False
+      elif words[1].lower() == "none":
+        if voter in self.playerVotes: del self.playerVotes[voter]
+        self.log("Retracted Vote {}".format(voter))
+        self.cast("Vote retraction successful",self.mainGroup)
+        return True
+      else:
+        votee = mentions[0]['user_ids'][0]
+    except Exception as e:
+      self.log("Vote Failed: Couldn't get votee: {}".format(e))
       return False
-    elif words[1].lower() == "none":
-      if voter in self.playerVotes: del self.playerVotes[voter]
-      self.log("Retracted Vote {}".format(voter))
-      self.cast("Vote retraction successful",self.mainGroup)
-      return True
-    else:
-      votee = mentions[0]['user_ids'][0]
-  except Exception as e:
-    self.log("Vote Failed: Couldn't get votee: {}".format(e))
-    return False
-  # Ensure vote is not for moderator
-  if votee == self.MODERATOR:
-    self.log("Vote failed: Tried to vote for Moderator")
-    self.cast("HOW DARE YOU",self.mainGroup)
-    return False
-  # Check that votee is in game
-  if not votee in playerList:
-    self.log("Vote Failed: votee not playing")
-    return False
-  # Change vote
-  self.playerVotes[voter] = votee
-  self.log("Vote succeeded: {} changed vote to {}".format(voter,votee))
-  self.testKillVotes(votee)
-  return True
+    # Ensure vote is not for moderator
+    if votee == self.MODERATOR:
+      self.log("Vote failed: Tried to vote for Moderator")
+      self.cast("HOW DARE YOU",self.mainGroup)
+      return False
+    # Check that votee is in game
+    if not votee in playerList:
+      self.log("Vote Failed: votee not playing")
+      return False
+    # Change vote
+    self.playerVotes[voter] = votee
+    self.log("Vote succeeded: {} changed vote to {}".format(voter,votee))
+    self.testKillVotes(votee)
+    return True
 
   def status(self,post={},words=[]):
     """{}{}  - Check the status of the game"""
+    self.log("STATUS")
     reply = "It is {} {}\n".format(self.time,self.day)
     if self.day == 0:
       # Display who will be in the game
@@ -273,7 +281,7 @@ Time: [day#] [Day/Night]
               count = count + 1
               reply = reply + self.getName(voter)+" "
           reply = reply + str(count) +  "\n"
-      self.cast(reply,mainGroup)
+    self.cast(reply,self.mainGroup)
     return True
 
   def help_(self,post={},words=[]):
@@ -289,8 +297,9 @@ Time: [day#] [Day/Night]
 
   def in_(self,post,words=[]):
     """{}{}  - Join the next game"""
+    self.log("IN")
     # Ensure the game hasn't started
-    if self.day == 0:
+    if not self.day == 0:
       self.log("In failed: game has started")
       return False
     # Get inquirer
@@ -306,8 +315,9 @@ Time: [day#] [Day/Night]
 
   def out(self,post,words=[]):
     """{}{}  - Leave the next game"""
+    self.log("OUT")
     # Ensure the game hasn't started
-    if self.day == 0:
+    if not self.day == 0:
       self.log("Out failed: game has started")
       return False
     # Get player
@@ -458,11 +468,19 @@ Time: [day#] [Day/Night]
               self.mafiaGroup)
     self.mafia_displayOptions()
 
-  def log(message,level=1):
+  def getName(self,player_id):
+    self.mainGroup.refresh()
+    members = self.mainGroup.members()
+    for m in members:
+      if m.user_id == player_id:
+        return m.nickname
+    return "__"
+
+  def log(self,message,level=1):
     if DEBUG >= level:
       print(message)
 
-  def cast(message,group):
+  def cast(self,message,group):
     try:
       groupyEP.Messages.create(group.group_id,message)
       self.log("CAST-{}: {}".format(group.name,message))
@@ -470,25 +488,12 @@ Time: [day#] [Day/Night]
     except Exception as e:
       self.log("FAILED TO CASE-{} {}: {}".format(group.name,message,e))
       return False
-    
 
-### do_POST FUNCTIONS ##########################################################
-
-  def do_POST(self):
-    try:
-      #get contents of the POST
-      length = int(self.headers['Content-Length'])
-      content = self.rfile.read(length).decode('utf-8')
-      post = json.loads(content)
-    except Exception as e:
-      post = {}
-
+  def do_POST(self,post):
     if(  post['group_id'] == self.MAIN_GROUP_ID): self.do_POST_MAIN(post)
     elif(post['group_id'] == self.MAFIA_GROUP_ID): self.do_POST_MAFIA(post)
-
-    self.saveNotes()
-
-  def do_POST_MAIN(post):
+    
+  def do_POST_MAIN(self,post):
     self.log("Got POST in MAIN")
     # Test if we need to do anything
     try:
@@ -498,9 +503,10 @@ Time: [day#] [Day/Night]
         if(not len(words) == 0 and words[0] in self.OPS):
           self.log("Type: {}".format(words[0]))
           if not self.OPS[words[0]](post,words):
-            cast("{} failed".format(words[0]),group)
+            self.cast("{} failed".format(words[0]),self.mainGroup)
         else:
-          cast("Invalid request, (try {}{} for help)".format(self.ACCESS_KW,"help"),group)
+          self.cast("Invalid request, (try {}{} for help)".format(self.ACCESS_KW,"help"),
+                    self.mainGroup)
     except KeyError as e: pass
 
   def do_POST_MAFIA(self,post):
@@ -513,9 +519,36 @@ Time: [day#] [Day/Night]
         if(not len(words) == 0 and words[0] in self.MOPS):
           self.log("Type: {}".format(words[0]))
           if not self.MOPS[words[0]](post,words):
-            cast("{} failed".format(words[0]),group)
+            self.cast("{} failed".format(words[0]),self.mainGroup)
         else:
-          cast("Invalid request, (try {}{} for help)".format(self.ACCESS_KW,"help"),group)
+          self.cast("Invalid request, (try {}{} for help)".format(self.ACCESS_KW,"help"),
+                    self.mainGroup)
     except KeyError as e: pass
 
-      
+class MainHandler(BaseHandler):
+### do_POST FUNCTIONS ########################################################
+  def do_POST(self):
+    try:
+      #get contents of the POST
+      length = int(self.headers['Content-Length'])
+      content = self.rfile.read(length).decode('utf-8')
+      post = json.loads(content)
+    except Exception as e:
+      post = {}
+
+    do_POST_ALL(post)
+    return
+
+    self.saveNotes()
+
+def do_POST_ALL(post):
+  global m
+  m.do_POST(post)
+
+if __name__ == '__main__':
+
+  global m
+
+  m = MafiaGame("info","notes")
+
+  m.run()
