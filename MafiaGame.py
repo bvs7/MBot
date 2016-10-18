@@ -461,6 +461,13 @@ Time: [day#] [Day/Night]
 
   def startGame(self):
     
+    
+  def endGame(self):
+    self.day = 0
+    self.time = "Day"
+    self.playerVotes.clear()
+    self.playerRoles.clear()
+    
 
   def toDay(self):
     time = "Day"
