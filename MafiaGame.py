@@ -23,6 +23,7 @@ MAFIA_GROUP_ID   The id of the group with just mafia in it
 mafiaGroup
 
 playerList       List of member ids for those who are playing
+savedPlayerList  Initial list of people. To be used in the next game
 playerRoles      Dict from member ids to a string describing their role
 playerVotes      Dict from member ids to member ids of who they are voting for
 
@@ -78,14 +79,8 @@ saveNotes()              Save the state of the game in the notes file """
     self.mafiaBot   = self.getBot(self.MAFIA_BOT_ID)
 
     # Create other state variables
-    self.time = "Day"
-    self.day  = 0
-    self.num_mafia = 0
-    self.playerList = []
-    self.playerRoles = {}
-    self.playerVotes = {}
-    self.to_kill_in_morning = ""
-
+    self.initVars()
+    
     # Restore past State
     self.loadNotes()
 
@@ -109,6 +104,38 @@ saveNotes()              Save the state of the game in the notes file """
     except KeyboardInterrupt:
       pass
     self.cast("PAUSE",self.mainGroup)
+
+  def initVars(self):
+    self.time = "Day"
+    self.day  = 0
+    self.num_mafia = 0
+    self.playerList = []
+    self.playerRoles = {}
+    self.playerVotes = {}
+    self.to_kill_in_morning = ""
+
+    self.MAFIA_ROLES = [ "MAFIA" ]
+    self.TOWN_ROLES  = [ "TOWN", "COP", "DOCTOR" ]
+
+    self.ROLE_EXPLAIN= {
+      "MAFIA" : ("You are MAFIA. You are now part of the mafia chat to talk "
+                 "privately with your co-conspirators. During the day, try not "
+                 "to get killed. During the Night, choose somebody to kill!"),
+      "TOWN"  : ("You are TOWN. You are a normal player in this game, the last "
+                 "line of defense against the mafia scum. Sniff out who the "
+                 "mafia are and convince your fellow town members to kill them "
+                 "during the day!"),
+      "COP"   : ("You are a COP. You are one of the most powerful members of "
+                 "the townspeople. During the night, send a direct message to me "
+                 "with the number of the person you want to investigate, and "
+                 "upon morning, I will tell you whether that person is town or "
+                 "mafia."),
+      "DOCTOR": ("You are a DOCTOR. Your job is to save the townspeople from "
+                 "the mafia scum. During the night, send a direct message to me"
+                 " with the number of the person you want to save. If the mafia"
+                 " targets them, they will have a near death experience, but "
+                 "survive.")
+      }
 
   def getCommand(self):
     i = input()
@@ -297,9 +324,7 @@ Time: [day#] [Day/Night]
     # NOTE: When the day is 0, the following is true:
     
     if self.day == 0:
-      self.day = 1
-      self.time = 'Day'
-      # Assign Roles
+      return self.startGame()
       
     return False
 
@@ -366,6 +391,7 @@ Time: [day#] [Day/Night]
     for player in playerList:
       r = r + str(c) + ": " + self.getName(player) + "\n"
       c = c + 1
+    r = r + str(c) + ": No kill"
     self.cast(r,self.mafiaGroup)
     return True
 
@@ -450,8 +476,6 @@ Time: [day#] [Day/Night]
       return False
     # Check win conditions
     if self.num_mafia == 0:
-      self.day = 0
-      self.time = "Day"
       self.cast("TOWN WINS",self.mainGroup)
     if self.num_mafia >= len(playerList)/2:
       self.day = 0
@@ -459,15 +483,56 @@ Time: [day#] [Day/Night]
       self.cast("MAFIA WINS",self.mainGroup)
     return True
 
+  def gameNumbers(self,num_players):
+    # This could eventually return other things, like the number of masons etc
+    # [Num People] : [num mafia]
+    GAME_COUNTS  = {
+       3 : 1,  4 : 1,  5 : 1,  6 : 1,  7 : 1,  8 : 2,  9 : 2,  10 : 3,
+      11 : 3,  12 : 3, 13 : 3, 14 : 4, 15 : 4, 16 : 4, 17 : 5, 18 : 5,
+      19 : 5,  20 : 5, 21 : 6, 22 : 6, 23 : 6, 24 : 6, 25 : 6, 26 : 6,
+      27 : 6, }
+    return GAME_COUNTS[num_players]
+
   def startGame(self):
-    
+    self.day = 1
+    self.time = "Day"
+    # Assign Roles
+    num_players = len(self.playerList)
+    self.num_mafia = self.gameNumbers(num_players)
+    # First shuffle for assignment
+    random.shuffle(self.playerList)
+    c = 0
+    for player in self.playerList:
+      if c < self.num_mafia:
+        self.playerRoles[player] = "MAFIA"
+      elif c == self.num_mafia:
+        self.playerRoles[player] = "COP"
+      elif c == self.num_mafia + 1:
+        self.playerRoles[player] = "DOCTOR"
+      else:
+        self.playerRoles[player] = "TOWN"
+    # Shuffle again for anonymity
+    random.shuffle(self.playerList)
+    # Send out private messages with roles
+    for player,role in self.playerRoles.items():
+      groupyEP.DirectMessages.create(player,self.ROLE_EXPLAIN[role])
+    # Send out group messages
+    self.cast(("Dawn. Of the game and of this new day. You have all learned "
+               "that scum reside in this town. A scum that you must purge. "
+               "Kill someone!"), self.mainGroup)
+    return True
     
   def endGame(self):
     self.day = 0
     self.time = "Day"
     self.playerVotes.clear()
     self.playerRoles.clear()
-    
+    # Remove all from Mafia Group
+    self.mafiaGroup.refresh()
+    for mem in self.mafiaGroup.members():
+      if not mem.user_id == self.MODERATOR:
+        self.mafiaGroup.remove(mem)
+    return True
 
   def toDay(self):
     time = "Day"
@@ -481,6 +546,7 @@ Time: [day#] [Day/Night]
 
   def toNight(self):
     time = "Night"
+    self.playerVotes.clear()
     self.cast("Night falls and everyone sleeps",self.mainGroup)
     self.cast("As the sky darkens, so too do your intentions. Pick someone to kill",
               self.mafiaGroup)
