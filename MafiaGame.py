@@ -6,7 +6,6 @@ import groupy.api.endpoint as groupyEP
 import random
 import json
 import _thread
-import time
 
 DEBUG = 1
 
@@ -23,7 +22,7 @@ MAFIA_GROUP_ID   The id of the group with just mafia in it
 mafiaGroup
 
 playerList       List of member ids for those who are playing
-savedPlayerList  Initial list of people. To be used in the next game
+savedPlayerRoles Initial roles of people. To be used in the next game
 playerRoles      Dict from member ids to a string describing their role
 playerVotes      Dict from member ids to member ids of who they are voting for
 
@@ -110,6 +109,7 @@ saveNotes()              Save the state of the game in the notes file """
     self.day  = 0
     self.num_mafia = 0
     self.playerList = []
+    self.savedPlayerList = {}
     self.playerRoles = {}
     self.playerVotes = {}
     self.to_kill_in_morning = ""
@@ -220,7 +220,7 @@ Time: [day#] [Day/Night]
       if word[0] == "Player:":
         self.playerList.append(word[1])
         self.playerRoles[word[1]] = word[2]
-        if(word[2] in MAFIA_ROLES): num_mafia = num_mafia + 1
+        if(word[2] in self.MAFIA_ROLES): num_mafia = num_mafia + 1
       elif word[0] == "Vote:":
         self.playerVotes[word[1]] = word[2]
       elif word[0] == "Time:":
@@ -234,7 +234,7 @@ Time: [day#] [Day/Night]
         f.write("Player: " + player + " " + role)
       for voter,votee in self.playerVotes.items():
         f.write("Vote: " + voter + " " + votee)
-      f.write("Time: " + self.day + " " + self.time)
+      f.write("Time: " + str(self.day) + " " + self.time)
       f.close()
     except Exception as e:
       self.log("Failed to save notes: {}".format(e))
@@ -265,6 +265,8 @@ Time: [day#] [Day/Night]
       if not len(mentions) <= 1:
         self.log("Vote Failed: invalid votee count: {}".format(len(mentions)))
         return False
+      elif words[1].lower() == "me":
+        votee = voter
       elif words[1].lower() == "none":
         if voter in self.playerVotes: del self.playerVotes[voter]
         self.log("Retracted Vote {}".format(voter))
@@ -281,7 +283,7 @@ Time: [day#] [Day/Night]
       self.cast("HOW DARE YOU",self.mainGroup)
       return False
     # Check that votee is in game
-    if not votee in playerList:
+    if not votee in self.playerList:
       self.log("Vote Failed: votee not playing")
       return False
     # Change vote
@@ -296,7 +298,7 @@ Time: [day#] [Day/Night]
     reply = "It is {} {}\n".format(self.time,self.day)
     if self.day == 0:
       # Display who will be in the game
-      reply = reply + "Players: (use \in to join)"
+      reply = reply + "Players: (use /in to join)"
       for player in self.playerList:
         reply = reply + "\n" + self.getName(player)
     else:
@@ -322,7 +324,6 @@ Time: [day#] [Day/Night]
   def start(self,post={},words=[]):
     """{}{}  - Start a game with the current players"""
     # NOTE: When the day is 0, the following is true:
-    
     if self.day == 0:
       return self.startGame()
       
@@ -342,8 +343,9 @@ Time: [day#] [Day/Night]
       self.log("In failed: couldn't get voter: {}".format(e))
       return False
     # Add to list
-    self.playerList.append(player)
-    self.cast("{} added to game".format(self.getName(player)),self.mainGroup)
+    if player not in self.playerList:
+      self.playerList.append(player)
+      self.cast("{} added to game".format(self.getName(player)),self.mainGroup)
     return True
 
   def out(self,post,words=[]):
@@ -377,9 +379,10 @@ Time: [day#] [Day/Night]
     try:
       player = self.playerList[int(words[1])]
       if(self.kill(player)):
-        self.cast("It is done",self.mafiaGroup)
-        toDay()
-        return True
+        if(not self.day == 0):
+          self.cast("It is done",self.mafiaGroup)
+          self.toDay()
+          return True
     except Exception as e:
       self.log("Mafia kill failed: {}".format(e))
     return False
@@ -388,7 +391,7 @@ Time: [day#] [Day/Night]
     """{}{}  - List the options to kill and the numbers to use to kill them"""
     r = ""
     c = 0
-    for player in playerList:
+    for player in self.playerList:
       r = r + str(c) + ": " + self.getName(player) + "\n"
       c = c + 1
     r = r + str(c) + ": No kill"
@@ -397,7 +400,7 @@ Time: [day#] [Day/Night]
 
   def setupKW(self):
     # OP KEYWORDS
-    self.ACCESS_KW = '\\'
+    self.ACCESS_KW = '/'
     
     VOTE_KW   = 'vote'
     STATUS_KW = 'status'
@@ -444,23 +447,23 @@ Time: [day#] [Day/Night]
     # Get people voting for votee
     voters = [v for v,vee in self.playerVotes.items() if vee == votee]
     # If the number of votes is in the majority, kill
-    num_players = len(playerList)
+    num_players = len(self.playerList)
     if len(voters) > num_players/2:
       self.cast("The vote to kill {} has passed".format(
                 self.getName(votee)),self.mainGroup)
       if (self.kill(votee)):
-        if not day == 0:
+        if not self.day == 0:
           self.toNight()
         return True
     else:
-      cast("Vote successful: {} more vote{}until {} is killed".format(
+      self.cast("Vote successful: {} more vote{}until {} is killed".format(
            int((num_players)/2+1)-len(voters),
            " " if int((num_players)/2+1)-len(voters) == 1 else "s ",
            self.getName(votee) ) ,self.mainGroup)
       return True
 
   def kill(self,votee):
-    if time == "Night":
+    if self.time == "Night":
       if votee in self.playerList:
         self.to_kill_in_morning = votee
         return True
@@ -477,10 +480,10 @@ Time: [day#] [Day/Night]
     # Check win conditions
     if self.num_mafia == 0:
       self.cast("TOWN WINS",self.mainGroup)
-    if self.num_mafia >= len(playerList)/2:
-      self.day = 0
-      self.time = "Day"
+      self.endGame()
+    if self.num_mafia >= len(self.playerList)/2:
       self.cast("MAFIA WINS",self.mainGroup)
+      self.endGame()
     return True
 
   def gameNumbers(self,num_players):
@@ -505,19 +508,23 @@ Time: [day#] [Day/Night]
     for player in self.playerList:
       if c < self.num_mafia:
         self.playerRoles[player] = "MAFIA"
-      elif c == self.num_mafia:
-        self.playerRoles[player] = "COP"
-      elif c == self.num_mafia + 1:
-        self.playerRoles[player] = "DOCTOR"
+#      elif c == self.num_mafia:
+#        self.playerRoles[player] = "COP"
+#      elif c == self.num_mafia + 1:
+#        self.playerRoles[player] = "DOCTOR"
       else:
         self.playerRoles[player] = "TOWN"
       c = c + 1
       self.log("{} {}".format(self.getName(player),self.playerRoles[player]))
+    # Save players and roles
+    self.savedPlayerRoles = self.playerRoles.copy()
     # Shuffle again for anonymity
     random.shuffle(self.playerList)
     # Send out private messages with roles
     for player,role in self.playerRoles.items():
       groupyEP.DirectMessages.create(player,self.ROLE_EXPLAIN[role])
+      if role in self.MAFIA_ROLES:
+        self.mafiaGroup.add({'user_id':player})
     # Send out group messages
     self.cast(("Dawn. Of the game and of this new day. You have all learned "
                "that scum reside in this town. A scum that you must purge. "
@@ -534,11 +541,19 @@ Time: [day#] [Day/Night]
     for mem in self.mafiaGroup.members():
       if not mem.user_id == self.MODERATOR:
         self.mafiaGroup.remove(mem)
+        self.log("removing {} from mafia chat".format(mem.nickname))
+    # Refresh the old members, also reveal roles
+    r = "GG, here were all the roles:"    
+    self.playerList = []
+    for player,role in self.savedPlayerRoles.items():
+      r = r + "\n" + self.getName(player) + ": " + role
+      self.playerList.append(player)
+    self.cast(r,self.mainGroup)
     return True
 
   def toDay(self):
-    time = "Day"
-    day = day + 1
+    self.time = "Day"
+    self.day = self.day + 1
     self.cast("Uncertainty dawns, as does this day",self.mainGroup)
     if not self.to_kill_in_morning == "":
       if self.kill(self.to_kill_in_morning):
@@ -547,7 +562,7 @@ Time: [day#] [Day/Night]
                   self.mainGroup)
 
   def toNight(self):
-    time = "Night"
+    self.time = "Night"
     self.playerVotes.clear()
     self.cast("Night falls and everyone sleeps",self.mainGroup)
     self.cast("As the sky darkens, so too do your intentions. Pick someone to kill",
@@ -578,6 +593,7 @@ Time: [day#] [Day/Night]
   def do_POST(self,post):
     if(  post['group_id'] == self.MAIN_GROUP_ID): self.do_POST_MAIN(post)
     elif(post['group_id'] == self.MAFIA_GROUP_ID): self.do_POST_MAFIA(post)
+    self.saveNotes()
     
   def do_POST_MAIN(self,post):
     self.log("Got POST in MAIN")
@@ -611,8 +627,8 @@ Time: [day#] [Day/Night]
                     self.mainGroup)
     except KeyError as e: pass
 
+### MainHandler ###############################################################
 class MainHandler(BaseHandler):
-### do_POST FUNCTIONS ########################################################
   def do_POST(self):
     try:
       #get contents of the POST
