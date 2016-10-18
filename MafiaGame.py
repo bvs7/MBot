@@ -250,7 +250,7 @@ Time: [day#] [Day/Night]
     """{}{} @[player]  - Vote for someone. Once they have a majority of votes they are killed"""
     self.log("VOTE")
     # Assert time is day
-    if not self.time == "Day" or not self.day == 0:
+    if not self.time == "Day" or self.day == 0:
       self.log("Vote Failed: not Day")
       return False
     # Get voter
@@ -511,6 +511,8 @@ Time: [day#] [Day/Night]
         self.playerRoles[player] = "DOCTOR"
       else:
         self.playerRoles[player] = "TOWN"
+      c = c + 1
+      self.log("{} {}".format(self.getName(player),self.playerRoles[player]))
     # Shuffle again for anonymity
     random.shuffle(self.playerList)
     # Send out private messages with roles
