@@ -40,7 +40,9 @@ MODERATOR        ID of the member we have control over
 time             The time of day (Day/Night)
 day              Which day the game is at. 0 means no game has started
 
-to_kill_in_morning The id of the person who the mafia chose to kill
+mafia_target     The id of the person who the mafia chose to kill
+cop_target
+doctor_target
 
 server           The server that listens for bot posts
 
@@ -112,7 +114,9 @@ saveNotes()              Save the state of the game in the notes file """
     self.savedPlayerRoles = {}
     self.playerRoles = {}
     self.playerVotes = {}
-    self.to_kill_in_morning = ""
+    self.mafia_target = ""
+    self.cop_target = ""
+    self.doctor_target = ""
 
     self.MAFIA_ROLES = [ "MAFIA" ]
     self.TOWN_ROLES  = [ "TOWN", "COP", "DOCTOR" ]
@@ -138,7 +142,7 @@ saveNotes()              Save the state of the game in the notes file """
       }
 
     self.SAVES = ["time","day","num_mafia","playerList","savedPlayerRoles",
-                  "playerRoles","playerVotes","to_kill_in_morning"
+                  "playerRoles","playerVotes","mafia_target"
                  ]
 
   def getCommand(self):
@@ -358,15 +362,18 @@ saveNotes()              Save the state of the game in the notes file """
 
   def mafia_kill(self,post,words):
     """{}{} [number]  - Kill the player associated with this number (from options)"""
-    try:
-      player = self.playerList[int(words[1])]
-      if(self.kill(player)):
-        if(not self.day == 0):
-          self.cast("It is done",self.mafiaGroup)
-          self.toDay()
-          return True
-    except Exception as e:
-      self.log("Mafia kill failed: {}".format(e))
+    if(not self.day == 0 and self.time == "Night"):
+      try:
+        if int(words[1]) == len(self.playerList):
+          mafia_target = "NONE"
+        else:
+          player = self.playerList[int(words[1])]
+          mafia_target = player
+        self.cast("It is done",self.mafiaGroup)
+        self.toDay()
+        return True
+      except Exception as e:
+        self.log("Mafia kill failed: {}".format(e))
     return False
     
   def mafia_displayOptions(self,post={},words=[]):
@@ -447,7 +454,7 @@ saveNotes()              Save the state of the game in the notes file """
   def kill(self,votee):
     if self.time == "Night":
       if votee in self.playerList:
-        self.to_kill_in_morning = votee
+        self.mafia_target = votee
         return True
     # Remove from players things
     try:
@@ -534,13 +541,15 @@ saveNotes()              Save the state of the game in the notes file """
     return True
 
   def toDay(self):
+    # First check that everyone is done
+
     self.time = "Day"
     self.day = self.day + 1
     self.cast("Uncertainty dawns, as does this day",self.mainGroup)
-    if not self.to_kill_in_morning == "":
-      if self.kill(self.to_kill_in_morning):
+    if not self.mafia_target == "":
+      if self.kill(self.mafia_target):
         self.cast("Tragedy has struck! {} is dead! Someone must pay for this!\
-                  Vote to kill somebody!".format(self.getName(self.to_kill_in_morning)),
+                  Vote to kill somebody!".format(self.getName(self.mafia_target)),
                   self.mainGroup)
 
   def toNight(self):
