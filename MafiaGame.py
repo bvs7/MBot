@@ -193,6 +193,7 @@ saveNotes()              Save the state of the game in the notes file """
 
   def loadNotes(self):    
     try:
+      SAVES
       f = open(self.notes_fname,'r')
       lines = f.readlines()
       f.close()
@@ -227,15 +228,18 @@ Time: [day#] [Day/Night]
         self.day = int(word[1])
         self.time = word[2]
 
+
+############################ TODO save other variables (find easier way?)
   def saveNotes(self):
     try:
-      f = open(self.notes_fname, 'w')
-      for player,role in self.playerRoles.items():
-        f.write("Player: " + player + " " + role)
-      for voter,votee in self.playerVotes.items():
-        f.write("Vote: " + voter + " " + votee)
-      f.write("Time: " + str(self.day) + " " + self.time)
-      f.close()
+#      f = open(self.notes_fname,"w")
+      pickle.dump( SAVES, open(self.notes_fname,"wb"))
+#      f.write("Time: " + str(self.day) + " " + self.time)
+#      for player,role in self.playerRoles.items():
+#        f.write("Player: " + player + " " + role)
+#      for voter,votee in self.playerVotes.items():
+#        f.write("Vote: " + voter + " " + votee)
+#      f.close()
     except Exception as e:
       self.log("Failed to save notes: {}".format(e))
       return False
