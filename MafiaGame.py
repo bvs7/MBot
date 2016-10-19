@@ -94,7 +94,7 @@ saveNotes()              Save the state of the game in the notes file """
     self.quit = False
 
     # Run Server
-    self.cast("RESUME",self.mainGroup)
+    self.intro()
     try:
       _thread.start_new_thread(self.server.serve_forever())
       # Allow edits
@@ -102,7 +102,7 @@ saveNotes()              Save the state of the game in the notes file """
         self.getCommand()
     except KeyboardInterrupt:
       pass
-    self.cast("PAUSE",self.mainGroup)
+    self.outro()
 
   def initVars(self):
     self.time = "Day"
@@ -216,6 +216,12 @@ saveNotes()              Save the state of the game in the notes file """
         self.log("Failed to save {}: {}".format(var,e))
         result = False
     return result
+
+  def intro(self):
+    groupyEP.Groups.update(self.MAIN_GROUP_ID,name="Let's Play Mafia!")
+
+  def outro(self):
+    groupyEP.Groups.update(self.MAIN_GROUP_ID,name="Let's Play Mafia! [PAUSED]")
 
 ### POST FUNCTIONS #############################################################
 
@@ -365,7 +371,7 @@ saveNotes()              Save the state of the game in the notes file """
     
   def mafia_displayOptions(self,post={},words=[]):
     """{}{}  - List the options to kill and the numbers to use to kill them"""
-    r = ""
+    r = "Use {}{} [number] to make a selection\n".format(self.ACCESS_KW,self.KILL_KW)
     c = 0
     for player in self.playerList:
       r = r + str(c) + ": " + self.getName(player) + "\n"
@@ -378,28 +384,28 @@ saveNotes()              Save the state of the game in the notes file """
     # OP KEYWORDS
     self.ACCESS_KW = '/'
     
-    VOTE_KW   = 'vote'
-    STATUS_KW = 'status'
-    HELP_KW   = 'help'
-    START_KW  = 'start'
-    IN_KW     = 'in'
-    OUT_KW    = 'out'
+    self.VOTE_KW   = 'vote'
+    self.STATUS_KW = 'status'
+    self.HELP_KW   = 'help'
+    self.START_KW  = 'start'
+    self.IN_KW     = 'in'
+    self.OUT_KW    = 'out'
 
-    KILL_KW   = 'kill'
-    OPTS_KW   = 'options'
+    self.KILL_KW   = 'kill'
+    self.OPTS_KW   = 'options'
     
     # This dict routes the command to the correct function
-    self.OPS ={ VOTE_KW   : self.vote   ,
-                STATUS_KW : self.status ,
-                HELP_KW   : self.help_  ,
-                START_KW  : self.start  ,
-                IN_KW     : self.in_    ,
-                OUT_KW    : self.out    ,
+    self.OPS ={ self.VOTE_KW   : self.vote   ,
+                self.STATUS_KW : self.status ,
+                self.HELP_KW   : self.help_  ,
+                self.START_KW  : self.start  ,
+                self.IN_KW     : self.in_    ,
+                self.OUT_KW    : self.out    ,
               }
 
-    self.MOPS={ HELP_KW   : self.mafia_help ,
-                KILL_KW   : self.mafia_kill ,
-                OPTS_KW   : self.mafia_displayOptions,
+    self.MOPS={ self.HELP_KW   : self.mafia_help ,
+                self.KILL_KW   : self.mafia_kill ,
+                self.OPTS_KW   : self.mafia_displayOptions,
               }
                 
 
@@ -599,7 +605,7 @@ saveNotes()              Save the state of the game in the notes file """
           if not self.MOPS[words[0]](post,words):
             self.cast("{} failed".format(words[0]),self.mainGroup)
         else:
-          self.cast("Invalid request, (try {}{} for help)".format(self.ACCESS_KW,"help"),
+          self.cast("Invalid request, (try {}{} for help)".format(self.ACCESS_KW,self.HELP_KW),
                     self.mainGroup)
     except KeyError as e: pass
 
