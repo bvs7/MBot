@@ -6,7 +6,6 @@ import groupy.api.endpoint as groupyEP
 import random
 import json
 import _thread
-import pickle
 
 DEBUG = 1
 
@@ -81,7 +80,7 @@ saveNotes()              Save the state of the game in the notes file """
     # Create other state variables
     self.initVars()
     
-    # Restore past State
+    # Restore past State (Must be done after initVars
     self.loadNotes()
 
   def run(self):
@@ -110,7 +109,7 @@ saveNotes()              Save the state of the game in the notes file """
     self.day  = 0
     self.num_mafia = 0
     self.playerList = []
-    self.savedPlayerList = {}
+    self.savedPlayerRoles = {}
     self.playerRoles = {}
     self.playerVotes = {}
     self.to_kill_in_morning = ""
@@ -137,6 +136,10 @@ saveNotes()              Save the state of the game in the notes file """
                  " targets them, they will have a near death experience, but "
                  "survive.")
       }
+
+    self.SAVES = ["time","day","num_mafia","playerList","savedPlayerRoles",
+                  "playerRoles","playerVotes","to_kill_in_morning"
+                 ]
 
   def getCommand(self):
     i = input()
@@ -193,22 +196,26 @@ saveNotes()              Save the state of the game in the notes file """
       self.log("No bot found with id {}".format(bot_id))
 
   def loadNotes(self):    
-    try:
-      self = pickle.load(open(self.notes_fname,"rb"))
-    except Exception as e:
-      self.log("Error loading notes: {}".format(e))
-      return False
-    return True
+    result = True
+    for var in self.SAVES:
+      try:
+        self.__dict__[var] = json.load( open(self.notes_fname+"/"+var,"r") )
+      except Exception as e:
+        self.log("Error loading {}: {}".format(var,e))
+        result = False
+    return result
 
   def saveNotes(self):
     # Save Notes using pickle, or json? Json makes them editable
-    # We'll try pickle for now.
-    try:
-      pickle.dump( self, open(self.notes_fname,"wb"))
-    except Exception as e:
-      self.log("Failed to save notes: {}".format(e))
-      return False
-    return True
+    # Use Json, save each important variable separately
+    result = True
+    for var in self.SAVES:
+      try:
+        json.dump(self.__dict__[var], open(self.notes_fname+"/"+var,"w") )
+      except Exception as e:
+        self.log("Failed to save {}: {}".format(var,e))
+        result = False
+    return result
 
 ### POST FUNCTIONS #############################################################
 
