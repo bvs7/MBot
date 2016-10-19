@@ -6,6 +6,7 @@ import groupy.api.endpoint as groupyEP
 import random
 import json
 import _thread
+import pickle
 
 DEBUG = 1
 
@@ -193,53 +194,17 @@ saveNotes()              Save the state of the game in the notes file """
 
   def loadNotes(self):    
     try:
-      SAVES
-      f = open(self.notes_fname,'r')
-      lines = f.readlines()
-      f.close()
+      self = pickle.load(open(self.notes_fname,"rb"))
     except Exception as e:
       self.log("Error loading notes: {}".format(e))
       return False
-
-    for line in lines:
-      self.loadNoteLine(line)
     return True
 
-
-  """ regenLine
-Notes are saved at the end of each POST:
-
-They include:
-Player: [player_id] [role]
-Vote: [voter_id] [votee_id]
-Time: [day#] [Day/Night]
-
-  """
-  def loadNoteLine(self,line):
-    word = line.split()
-    if len(word) > 0:
-      if word[0] == "Player:":
-        self.playerList.append(word[1])
-        self.playerRoles[word[1]] = word[2]
-        if(word[2] in self.MAFIA_ROLES): num_mafia = num_mafia + 1
-      elif word[0] == "Vote:":
-        self.playerVotes[word[1]] = word[2]
-      elif word[0] == "Time:":
-        self.day = int(word[1])
-        self.time = word[2]
-
-
-############################ TODO save other variables (find easier way?)
   def saveNotes(self):
+    # Save Notes using pickle, or json? Json makes them editable
+    # We'll try pickle for now.
     try:
-#      f = open(self.notes_fname,"w")
-      pickle.dump( SAVES, open(self.notes_fname,"wb"))
-#      f.write("Time: " + str(self.day) + " " + self.time)
-#      for player,role in self.playerRoles.items():
-#        f.write("Player: " + player + " " + role)
-#      for voter,votee in self.playerVotes.items():
-#        f.write("Vote: " + voter + " " + votee)
-#      f.close()
+      pickle.dump( self, open(self.notes_fname,"wb"))
     except Exception as e:
       self.log("Failed to save notes: {}".format(e))
       return False
