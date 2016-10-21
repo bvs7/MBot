@@ -90,7 +90,7 @@ saveNotes()              Save the state of the game in the notes file """
   def run(self):
 
     # Setup Server
-    self.server = HTTPServer((self.ADDRESS,int(self.PORT)), MainHandler)
+    self.server = MafiaServer((self.ADDRESS,int(self.PORT)), MainHandler,self)
 
     # Setup routing to the correct commands
     self.setupKW()
@@ -650,8 +650,23 @@ saveNotes()              Save the state of the game in the notes file """
                     self.mainGroup)
     except KeyError as e: pass
 
+class MafiaServer(HTTPServer):
+
+  def __init__(self, server_address, RequestHandlerClass, Mafia):
+    super().__init__(server_address, RequestHandlerClass)
+    self.m = Mafia
+
+  def finish_request(self, request, client_address):
+    """Finish one request by instantiating RequestHandlerClass."""
+    self.RequestHandlerClass(request, client_address, self, Mafia)
+
 ### MainHandler ###############################################################
 class MainHandler(BaseHandler):
+
+  def __init__(self, request, client_address, server, Mafia):
+    super().__init__(request, client_address, server)
+    self.m = Mafia
+  
   def do_POST(self):
     try:
       #get contents of the POST
@@ -661,16 +676,10 @@ class MainHandler(BaseHandler):
     except Exception as e:
       post = {}
 
-    do_POST_ALL(post)
+    m.do_POST(post)
     return
 
-def do_POST_ALL(post):
-  global m
-  m.do_POST(post)
-
 if __name__ == '__main__':
-
-  global m
 
   m = MafiaGame("info","notes")
 
