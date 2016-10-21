@@ -26,6 +26,8 @@ savedPlayerRoles Initial roles of people. To be used in the next game
 playerRoles      Dict from member ids to a string describing their role
 playerVotes      Dict from member ids to member ids of who they are voting for
 
+recent_ids       Dict from member ids to the most recent dm id from them
+
 num_mafia        The number of mafia remaining in the game
 
 MAIN_BOT_ID      ID of the bot that watches the main group
@@ -98,11 +100,8 @@ saveNotes()              Save the state of the game in the notes file """
     # Run Server
     self.intro()
     try:
-      _thread.start_new_thread(self.server.serve_forever())
-      # Allow edits
-      while not self.quit:
-        self.getCommand()
-    except KeyboardInterrupt:
+     self.server.serve_forever()
+    except KeyboardInterrupt as e:
       pass
     self.outro()
 
@@ -114,6 +113,9 @@ saveNotes()              Save the state of the game in the notes file """
     self.savedPlayerRoles = {}
     self.playerRoles = {}
     self.playerVotes = {}
+
+    self.recent_ids = {}
+
     self.mafia_target = ""
     self.cop_target = ""
     self.doctor_target = ""
@@ -141,15 +143,13 @@ saveNotes()              Save the state of the game in the notes file """
                  "survive.")
       }
 
-    self.SAVES = ["time","day","num_mafia","playerList","savedPlayerRoles",
-                  "playerRoles","playerVotes","mafia_target"
-                 ]
+    self.SAVES = [
+      "time","day","num_mafia","playerList","savedPlayerRoles",
+      "playerRoles","playerVotes","recent_ids","mafia_target"
+    ]
 
-  def getCommand(self):
-    i = input()
-    if i in ["q","quit"]:
-      self.quit = True
-    eval(i)
+  def checkQuit(self):
+    pass
 
 ### INIT HELPER FUNCTIONS ######################################################
 
@@ -267,6 +267,10 @@ saveNotes()              Save the state of the game in the notes file """
     if votee == self.MODERATOR:
       self.log("Vote failed: Tried to vote for Moderator")
       self.cast("HOW DARE YOU",self.mainGroup)
+      return False
+    # Check that voter is in game
+    if not voter in self.playerList:
+      self.log("Vote Failed: voter not playing")
       return False
     # Check that votee is in game
     if not votee in self.playerList:
@@ -568,6 +572,29 @@ saveNotes()              Save the state of the game in the notes file """
         return m.nickname
     return "__"
 
+  def checkDMs(self):
+    for player in self.playerList:
+      if player in self.recent_ids:
+        DMs = self.getDMs(player)
+      else:
+        DMs = self.getDMs(player,all)
+      for DM in DMs:
+        self.do_DM(DM)
+
+  def getDMs(self,player_id,all=False):
+    """Return a list of the most recent messages from player_id"""
+    DMs = []
+    try:
+      if not all:
+        response = groupyEP.DirectMessages.index(player_id,since_id=self.recent_ids[player_id])
+      else:
+        response = groupyEP.DirectMessages.index(player_id)
+      DMs = response['direct_messages']
+      self.recent_ids[player_id] = DMs[0]['id']
+    except Exception as e:
+      self.log("Couldn't get DMs: {}".format(e))
+    return DMs
+
   def log(self,message,level=1):
     if DEBUG >= level:
       print(message)
@@ -581,10 +608,15 @@ saveNotes()              Save the state of the game in the notes file """
       self.log("FAILED TO CASE-{} {}: {}".format(group.name,message,e))
       return False
 
+  def do_DM(self,DM):
+    self.log(DM['text'])
+
   def do_POST(self,post):
     if(  post['group_id'] == self.MAIN_GROUP_ID): self.do_POST_MAIN(post)
     elif(post['group_id'] == self.MAFIA_GROUP_ID): self.do_POST_MAFIA(post)
     self.saveNotes()
+    #self.checkDMs()
+    #self.checkQuit()
     
   def do_POST_MAIN(self,post):
     self.log("Got POST in MAIN")
@@ -631,8 +663,6 @@ class MainHandler(BaseHandler):
 
     do_POST_ALL(post)
     return
-
-    self.saveNotes()
 
 def do_POST_ALL(post):
   global m
