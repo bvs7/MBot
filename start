@@ -1,9 +1,0 @@
-#!/bin/bash
-
-echo "Starting MafiaGame.py"
-
-if tmux has -t Mafia; then
-  echo "Mafia terminal found"
-else
-  tmux new -s Mafia -d "./MafiaGame.py" #Start a new session
-fi

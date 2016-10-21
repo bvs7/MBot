@@ -658,7 +658,7 @@ class MafiaServer(HTTPServer):
 
   def finish_request(self, request, client_address):
     """Finish one request by instantiating RequestHandlerClass."""
-    self.RequestHandlerClass(request, client_address, self, Mafia)
+    self.RequestHandlerClass(request, client_address, self, m)
 
 ### MainHandler ###############################################################
 class MainHandler(BaseHandler):
@@ -678,6 +678,15 @@ class MainHandler(BaseHandler):
 
     m.do_POST(post)
     return
+
+
+def reset(value):
+  try:
+    f = open("reset","w")
+    f.write(str(value))
+    f.close()
+  except:
+   pass
 
 if __name__ == '__main__':
 
