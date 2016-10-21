@@ -6,9 +6,11 @@ import groupy.api.endpoint as groupyEP
 import random
 import json
 import _thread
+import time
 
 DEBUG = 1
 SILENT = True
+RESTART = False
 
 class MafiaGame:
 
@@ -19,19 +21,8 @@ ATTRIBUTES: ====================================================================
 MAIN_GROUP_ID    The id of the group with everyone in it
 mainGroup        The groupy Group object of main group
 
-mainLastMessage  The last message to come from the group
-
 MAFIA_GROUP_ID   The id of the group with just mafia in it
 mafiaGroup
-
-playerList       List of member ids for those who are playing
-savedPlayerRoles Initial roles of people. To be used in the next game
-playerRoles      Dict from member ids to a string describing their role
-playerVotes      Dict from member ids to member ids of who they are voting for
-
-recent_ids       Dict from member ids to the most recent dm id from them
-
-num_mafia        The number of mafia remaining in the game
 
 MAIN_BOT_ID      ID of the bot that watches the main group
 mainBot
@@ -40,17 +31,27 @@ mafiaBot
 
 MODERATOR        ID of the member we have control over
 
-
+STATE ATTRIBUTES: ==============================================================
 
 time             The time of day (Day/Night)
 day              Which day the game is at. 0 means no game has started
 
-cop_alive        "The cop is alive"
-doc_alive        "The doctor is alive"
+playerList       List of member ids for those who are playing
+savedPlayerRoles Initial roles of people.
+playerRoles      Dict from member ids to a string describing their role
+playerVotes      Dict from member ids to member ids of who they are voting for
+nextPlayerList   List of member ids in the next game
+
+recent_ids       Dict from member ids to the most recent dm id from them
+
+num_mafia        The number of mafia remaining in the game
 
 mafia_target     The id of the person who the mafia chose to kill
 cop_target
 doctor_target
+
+cop              Id of the cop
+doctor
 
 server           The server that listens for bot posts
 
@@ -68,17 +69,16 @@ getBot(bot_id)           Find the bot with the bot_id.
 loadNotes()              Read the notes file and resume the state of the game
 saveNotes()              Save the state of the game in the notes file """
 
-  def __init__(self, i_fname, n_fname):
+  def __init__(self, i_fname):
 
     self.info_fname = i_fname
-    self.notes_fname = n_fname
 
     # Load in basic values (id values, etc)
     self.loadInfo()
 
     # Ensure we have all of the info we need, Create neccessary items
     self.checkInfo(['MAIN_GROUP_ID', 'MAFIA_GROUP_ID', 'MAIN_BOT_ID', 'MAFIA_BOT_ID',
-                    'MODERATOR', 'ADDRESS', 'PORT'])
+                    'MODERATOR', 'ADDRESS', 'PORT','NOTES_FNAME'])
 
     # Use those values to get Groupy objects
     self.mainGroup  = self.getGroup(self.MAIN_GROUP_ID)
@@ -107,7 +107,10 @@ saveNotes()              Save the state of the game in the notes file """
     # Run Server
     self.intro()
     try:
-     self.server.serve_forever()
+     _thread.start_new_thread(self.server.serve_forever,())
+     _thread.start_new_thread(self.loopDM,())
+     while True:
+       pass
     except KeyboardInterrupt as e:
       pass
     self.outro()
@@ -123,12 +126,12 @@ saveNotes()              Save the state of the game in the notes file """
 
     self.recent_ids = {}
 
-    self.cop_alive = False
-    self.doc_alive = False
-
     self.mafia_target = ""
     self.cop_target = ""
     self.doctor_target = ""
+
+    self.cop = ""
+    self.doctor = ""
 
     self.MAFIA_ROLES = [ "MAFIA" ]
     self.TOWN_ROLES  = [ "TOWN", "COP", "DOCTOR" ]
@@ -154,12 +157,11 @@ saveNotes()              Save the state of the game in the notes file """
       }
 
     self.SAVES = [
-      "time","day","num_mafia","playerList","savedPlayerRoles",
-      "playerRoles","playerVotes","recent_ids","mafia_target"
+      "time","day","num_mafia","playerList","nextPlayerList",
+      "savedPlayerRoles","playerRoles","playerVotes",
+      "recent_ids","mafia_target","cop_target","doctor_target",
+      "cop","doctor"
     ]
-
-  def checkQuit(self):
-    pass
 
 ### INIT HELPER FUNCTIONS ######################################################
 
@@ -211,9 +213,10 @@ saveNotes()              Save the state of the game in the notes file """
 
   def loadNotes(self):    
     result = True
+    if RESTART: return True
     for var in self.SAVES:
       try:
-        self.__dict__[var] = json.load( open(self.notes_fname+"/"+var,"r") )
+        self.__dict__[var] = json.load( open(self.NOTES_FNAME+"/"+var,"r") )
       except Exception as e:
         self.log("Error loading {}: {}".format(var,e))
         result = False
@@ -240,8 +243,7 @@ saveNotes()              Save the state of the game in the notes file """
       groupyEP.Groups.update(self.MAIN_GROUP_ID,name="Let's Play Mafia! [PAUSED]")
 
 ### POST FUNCTIONS #############################################################
-
-
+      
 ### VOTE -----------------------------------------------------------------------
       
   def vote(self,post,words):
@@ -301,7 +303,7 @@ saveNotes()              Save the state of the game in the notes file """
     if self.day == 0:
       # Display who will be in the game
       reply = reply + "Players: (use /in to join)"
-      for player in self.playerList:
+      for player in self.nextPlayerList:
         reply = reply + "\n" + self.getName(player)
     else:
       # Output players and who is voting for who
@@ -334,10 +336,6 @@ saveNotes()              Save the state of the game in the notes file """
   def in_(self,post,words=[]):
     """{}{}  - Join the next game"""
     self.log("IN")
-    # Ensure the game hasn't started
-    if not self.day == 0:
-      self.log("In failed: game has started")
-      return False
     # Get inquirer
     try:
       player = post['user_id']
@@ -345,18 +343,17 @@ saveNotes()              Save the state of the game in the notes file """
       self.log("In failed: couldn't get voter: {}".format(e))
       return False
     # Add to list
-    if player not in self.playerList:
-      self.playerList.append(player)
-      self.cast("{} added to game".format(self.getName(player)),self.mainGroup)
+    if player not in self.nextPlayerList:
+      self.nextPlayerList.append(player)
+      msg = "{} added to next game:\n".format(self.getName(player))
+      for player in self.nextPlayerList:
+        msg = msg + getName(player) + "\n"
+      self.cast(msg,self.mainGroup)
     return True
 
   def out(self,post,words=[]):
     """{}{}  - Leave the next game"""
     self.log("OUT")
-    # Ensure the game hasn't started
-    if not self.day == 0:
-      self.log("Out failed: game has started")
-      return False
     # Get player
     try:
       player = post['user_id']
@@ -364,7 +361,7 @@ saveNotes()              Save the state of the game in the notes file """
       self.log("Out failed: couldn't get voter: {}".format(e))
       return False
     # try to remove from list:
-    if player in self.playerList: self.playerList.remove(player)
+    if player in self.nextPlayerList: self.nextPlayerList.remove(player)
     self.cast("{} removed from game".format(self.getName(player)),self.mainGroup)
     return True
 
@@ -392,7 +389,7 @@ saveNotes()              Save the state of the game in the notes file """
         self.log("Mafia kill failed: {}".format(e))
     return False
     
-  def mafia_displayOptions(self,post={},words=[]):
+  def mafia_options(self,post={},words=[]):
     """{}{}  - List the options to kill and the numbers to use to kill them"""
     r = "Use {}{} [number] to make a selection\n".format(self.ACCESS_KW,self.TARGET_KW)
     c = 0
@@ -405,9 +402,9 @@ saveNotes()              Save the state of the game in the notes file """
 
   ### DOCTOR FUNCTIONS #########################################################
 
-  def doctor_help(self,DM,words):
+  def doctor_help(self,DM={},words={}):
     """{}{}  - Display this message"""
-    self.sendDM(self.DOC_HELP_MESSAGE, DM['sender_id'])
+    self.sendDM(self.DOC_HELP_MESSAGE, self.doctor)
     return True
 
   def doctor_save(self,DM,words):
@@ -418,17 +415,28 @@ saveNotes()              Save the state of the game in the notes file """
           self.doctor_target = "NONE"
         else:
           self.doctor_target = self.playerList[int(words[1])]
-        self.sendDM("It is done",DM['sender_id'])
+        self.sendDM("It is done",self.doctor)
         self.toDay()
       except Exception as e:
         self.log("Doctor save failed: {}".format(e))
     return False
 
+  def doctor_options(self,DM={},words={}):
+    """{}{}  - List the options to target and the numbers to use to save them"""
+    r = "Use {}{} # to make a selection\n".format(self.ACCESS_KW,self.TARGET_KW)
+    c = 0
+    for player in self.playerList:
+      r = r + str(c) + ": " + self.getName(player) + "\n"
+      c = c + 1
+    r = r + str(c) + ": No kill"
+    self.sendDM(r, self.doctor)
+    return True
+
   ### COP FUNCTIONS ############################################################
 
-  def cop_help(self,DM,words):
+  def cop_help(self,DM={},words={}):
     """{}{}  - Display this message"""
-    self.sendDM(self.COP_HELP_MESSAGE, DM['sender_id'])
+    self.sendDM(self.COP_HELP_MESSAGE, self.cop)
     return True
 
   def cop_investigate(self,DM,words):
@@ -439,22 +447,24 @@ saveNotes()              Save the state of the game in the notes file """
           self.cop_target = "NONE"
         else:
           self.cop_target = self.playerList[int(words[1])]
-        self.sendDM("It is done",DM['sender_id'])
+        self.sendDM("It is done",self.cop)
         self.toDay()
       except Exception as e:
         self.log("Cop investigation failed: {}".format(e))
     return False
 
-  def options(self,DM,words):
-    """{}{}  - List the options to target and the numbers to use to save them"""
+  def cop_options(self,DM,words):
+    """{}{}  - List the options to target and the numbers to use to investigate them"""
     r = "Use {}{} # to make a selection\n".format(self.ACCESS_KW,self.TARGET_KW)
     c = 0
     for player in self.playerList:
       r = r + str(c) + ": " + self.getName(player) + "\n"
       c = c + 1
     r = r + str(c) + ": No kill"
-    self.sendDM(r, DM['sender_id'])
+    self.sendDM(r, self.cop)
     return True
+
+  
 
   def setupKW(self):
     # OP KEYWORDS
@@ -469,6 +479,8 @@ saveNotes()              Save the state of the game in the notes file """
 
     self.TARGET_KW = 'target'
     self.OPTS_KW   = 'options'
+
+    self.RESTART_KW= 'restart'
     
     # This dict routes the command to the correct function
     self.OPS ={ self.VOTE_KW   : self.vote   ,
@@ -481,15 +493,15 @@ saveNotes()              Save the state of the game in the notes file """
 
     self.MOPS={ self.HELP_KW   : self.mafia_help ,
                 self.TARGET_KW : self.mafia_kill ,
-                self.OPTS_KW   : self.mafia_displayOptions,
+                self.OPTS_KW   : self.mafia_options,
               }
 
     self.DOC_OPS = {self.HELP_KW   : self.doctor_help ,
-                    self.OPTS_KW   : self.options ,
+                    self.OPTS_KW   : self.doctor_options ,
                     self.TARGET_KW : self.doctor_save ,
                     }
     self.COP_OPS = {self.HELP_KW   : self.cop_help ,
-                    self.OPTS_KW   : self.options ,
+                    self.OPTS_KW   : self.cop_options ,
                     self.TARGET_KW : self.cop_investigate ,
                     }
 
@@ -574,6 +586,11 @@ saveNotes()              Save the state of the game in the notes file """
   def startGame(self):
     self.day = 1
     self.time = "Day"
+    # Remove Mafia again to make sure
+    self.clearMafia()
+    # Get the next game people
+    self.playerList = self.nextPlayerList.copy()
+    self.nextPlayerList.clear()
     # Assign Roles
     num_players = len(self.playerList)
     self.num_mafia = self.gameNumbers(num_players)
@@ -585,7 +602,6 @@ saveNotes()              Save the state of the game in the notes file """
         self.playerRoles[player] = "MAFIA"
       elif c == self.num_mafia:
         self.playerRoles[player] = "COP"
-        self.cop_alive = True
         self.cop = player
       elif c == self.num_mafia + 1:
         self.playerRoles[player] = "DOCTOR"
@@ -601,7 +617,7 @@ saveNotes()              Save the state of the game in the notes file """
     random.shuffle(self.playerList)
     # Send out private messages with roles
     for player,role in self.playerRoles.items():
-      groupyEP.DirectMessages.create(player,self.ROLE_EXPLAIN[role])
+      self.sendDM(self.ROLE_EXPLAIN[role],player)
       if role in self.MAFIA_ROLES:
         self.mafiaGroup.add({'user_id':player})
     # Send out group messages
@@ -615,43 +631,53 @@ saveNotes()              Save the state of the game in the notes file """
     self.time = "Day"
     self.playerVotes.clear()
     self.playerRoles.clear()
+    self.clearMafia()
+    # Refresh the old members, also reveal roles
+    r = "GG, here were all the roles:"    
+    self.playerList = []
+    for player,role in self.savedPlayerRoles.items():
+      r = r + "\n" + self.getName(player) + ": " + role
+    self.cast(r,self.mainGroup)
+    return True
+
+  def clearMafia(self):
     # Remove all from Mafia Group
     self.mafiaGroup.refresh()
     for mem in self.mafiaGroup.members():
       if not mem.user_id == self.MODERATOR:
         self.mafiaGroup.remove(mem)
         self.log("removing {} from mafia chat".format(mem.nickname))
-    # Refresh the old members, also reveal roles
-    r = "GG, here were all the roles:"    
-    self.playerList = []
-    for player,role in self.savedPlayerRoles.items():
-      r = r + "\n" + self.getName(player) + ": " + role
-      self.playerList.append(player)
-    self.cast(r,self.mainGroup)
-    return True
 
   def toDay(self):
     # First check that everyone is done
-
-    if(self.cop_alive and self.cop_target == "" or
-       self.doc_alive and self.doctor_target == "" or
+    if(self.cop in self.playerList and self.cop_target == "" or
+       self.doc in self.playerList and self.doctor_target == "" or
        self.mafia_target == ""):
       return False
     
-
+    # Go to day
     self.time = "Day"
     self.day = self.day + 1
     self.cast("Uncertainty dawns, as does this day",self.mainGroup)
+    # If mafia has a target
     if not self.mafia_target == "NONE":
-      if self.mafia_target == self.doctor_target:
-        self.cast("Tragedy has struck! {} is ... wait! They've been saved by\
-the doctor! Someone must pay for this! Vote to kill somebody!".format(self.getName(self.mafia_target)))
+      # Doctor is alive and saved the target
+      if self.doctor in self.playerList and self.mafia_target == self.doctor_target:
+        msg = ("Tragedy has struck! {} is ... wait! They've been saved by "
+               "the doctor! Someone must pay for this! Vote to kill "
+               "somebody!").format(self.getName(self.mafia_target))
+        self.cast(msg,self.mainGroup)
+      # Doctor couldn't save the target
       else:
         self.kill(self.mafia_target)
-        self.cast("Tragedy has struck! {} is dead! Someone must pay for this!\
-Vote to kill somebody!".format(self.getName(self.mafia_target)),self.mainGroup)
+        msg = ("Tragedy has struck! {} is dead! Someone must pay for this! "
+               "Vote to kill somebody!").format(self.getName(self.mafia_target))
+        self.cast(msg,self.mainGroup)
 
-    self.sendDM("{} is {}".format(self.getName(self.cop_target),self.playerRoles[self.cop_target]),self.cop)
+    # If cop is still alive and has chosen a target
+    if self.cop in self.playerList and not self.cop_target == "NONE":
+      self.sendDM("{} is {}".format(self.getName(self.cop_target),
+                                    self.playerRoles[self.cop_target]),self.cop)
     
     self.mafia_target = ""
     self.cop_target = ""
@@ -664,7 +690,9 @@ Vote to kill somebody!".format(self.getName(self.mafia_target)),self.mainGroup)
     self.cast("Night falls and everyone sleeps",self.mainGroup)
     self.cast("As the sky darkens, so too do your intentions. Pick someone to kill",
               self.mafiaGroup)
-    self.mafia_displayOptions()
+    self.mafia_options()
+    self.doctor_options()
+    self.cop_options()
 
   def getName(self,player_id):
     self.mainGroup.refresh()
@@ -673,6 +701,11 @@ Vote to kill somebody!".format(self.getName(self.mafia_target)),self.mainGroup)
       if m.user_id == player_id:
         return m.nickname
     return "__"
+
+  def loopDM(self):
+    while True:
+      time.sleep(5)
+      self.checkDMs()
 
   def checkDMs(self):
     for player in self.playerList:
@@ -725,17 +758,20 @@ Vote to kill somebody!".format(self.getName(self.mafia_target)),self.mainGroup)
     self.log("Got DM")
 
     try:
-      if(not DM['sender_id'] == self.MODERATOR):
-        if(DM['text'][0:len(self.ACCESS_KW)] == self.ACCESS_KW):
-          words = DM['text'][len(self.ACCESS_KW):].split()
-          if(self.playerRoles[DM['sender_id']] == "DOCTOR"):
-            if(not len(words) == 0 and words[0] in self.DOC_OPS):
-              if not self.DOC_OPS[words[0]](DM,words):
-                self.sendDM("{} failed".format(words[0]),DM['sender_id'])
-          elif(self.playerRoles[DM['sender_id']] == "COP"):
-            if(not len(words) == 0 and words[0] in self.COP_OPS):
-              if not self.COP_OPS[words[0]](DM,words):
-                self.sendDM("{} failed".format(words[0]),DM['sender_id'])
+      if(not DM['sender_id'] == self.MODERATOR and
+         DM['text'][0:len(self.ACCESS_KW)] == self.ACCESS_KW):
+        words = DM['text'][len(self.ACCESS_KW):].split()
+        if(not len(words) == 0 and words[0] == self.RESTART_KW:
+           self.initVars()
+           self.cast("RESTARTING",mainGroup)
+        if(self.playerRoles[DM['sender_id']] == "DOCTOR"):
+          if(not len(words) == 0 and words[0] in self.DOC_OPS):
+            if not self.DOC_OPS[words[0]](DM,words):
+              self.sendDM("{} failed".format(words[0]),DM['sender_id'])
+        elif(self.playerRoles[DM['sender_id']] == "COP"):
+          if(not len(words) == 0 and words[0] in self.COP_OPS):
+            if not self.COP_OPS[words[0]](DM,words):
+              self.sendDM("{} failed".format(words[0]),DM['sender_id'])
     except Exception as e:
       self.log("Error doing DM: {}".format(e))
 
@@ -743,8 +779,7 @@ Vote to kill somebody!".format(self.getName(self.mafia_target)),self.mainGroup)
     if(  post['group_id'] == self.MAIN_GROUP_ID): self.do_POST_MAIN(post)
     elif(post['group_id'] == self.MAFIA_GROUP_ID): self.do_POST_MAFIA(post)
     self.saveNotes()
-    self.checkDMs()
-    #self.checkQuit()
+    #self.checkDMs()
     
   def do_POST_MAIN(self,post):
     self.log("Got POST in MAIN")
@@ -802,15 +837,6 @@ class MainHandler(BaseHandler):
 
     m.do_POST(post)
     return
-
-
-def reset(value):
-  try:
-    f = open("reset","w")
-    f.write(str(value))
-    f.close()
-  except:
-   pass
 
 if __name__ == '__main__':
 
