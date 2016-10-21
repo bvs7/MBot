@@ -18,6 +18,8 @@ ATTRIBUTES: ====================================================================
 MAIN_GROUP_ID    The id of the group with everyone in it
 mainGroup        The groupy Group object of main group
 
+mainLastMessage  The last message to come from the group
+
 MAFIA_GROUP_ID   The id of the group with just mafia in it
 mafiaGroup
 
@@ -76,6 +78,7 @@ saveNotes()              Save the state of the game in the notes file """
 
     # Use those values to get Groupy objects
     self.mainGroup  = self.getGroup(self.MAIN_GROUP_ID)
+    self.mainLastMessage = self.mainGroup.messages()[0]
     self.mafiaGroup = self.getGroup(self.MAFIA_GROUP_ID)
 
     self.mainBot    = self.getBot(self.MAIN_BOT_ID)
@@ -374,7 +377,8 @@ saveNotes()              Save the state of the game in the notes file """
           player = self.playerList[int(words[1])]
           mafia_target = player
         self.cast("It is done",self.mafiaGroup)
-        self.toDay()
+        if(not self.doctor_target == "" and not self.cop_target == ""):
+          self.toDay()
         return True
       except Exception as e:
         self.log("Mafia kill failed: {}".format(e))
@@ -382,7 +386,7 @@ saveNotes()              Save the state of the game in the notes file """
     
   def mafia_displayOptions(self,post={},words=[]):
     """{}{}  - List the options to kill and the numbers to use to kill them"""
-    r = "Use {}{} [number] to make a selection\n".format(self.ACCESS_KW,self.KILL_KW)
+    r = "Use {}{} [number] to make a selection\n".format(self.ACCESS_KW,self.TARGET_KW)
     c = 0
     for player in self.playerList:
       r = r + str(c) + ": " + self.getName(player) + "\n"
@@ -390,6 +394,28 @@ saveNotes()              Save the state of the game in the notes file """
     r = r + str(c) + ": No kill"
     self.cast(r,self.mafiaGroup)
     return True
+
+  ### DOCTOR FUNCTIONS #########################################################
+
+  def doctor_help(self,DM,words):
+    """{}{}  - Display this message"""
+    self.sendDM(self.DOC_HELP_MESSAGE, DM['sender_id'])
+    return True
+
+  def doctor_options(self,DM,words):
+    """{}{}  - List the options to save and the numbers to use to save them"""
+    r = "Use {}{} # to make a selection\n".format(self.ACCESS_KW,self.TARGET_KW)
+    c = 0
+    for player in self.playerList:
+      r = r + str(c) + ": " + self.getName(player) + "\n"
+      c = c + 1
+    r = r + str(c) + ": No kill"
+    self.sendDM(r, DM['sender_id'])
+    return True
+
+  def doctor_save(self,DM,words):
+    """{}{} #  - Try to save the person associated with this number tonight"""
+    
 
   def setupKW(self):
     # OP KEYWORDS
@@ -402,7 +428,7 @@ saveNotes()              Save the state of the game in the notes file """
     self.IN_KW     = 'in'
     self.OUT_KW    = 'out'
 
-    self.KILL_KW   = 'kill'
+    self.TARGET_KW = 'target'
     self.OPTS_KW   = 'options'
     
     # This dict routes the command to the correct function
@@ -415,10 +441,20 @@ saveNotes()              Save the state of the game in the notes file """
               }
 
     self.MOPS={ self.HELP_KW   : self.mafia_help ,
-                self.KILL_KW   : self.mafia_kill ,
+                self.TARGET_KW : self.mafia_kill ,
                 self.OPTS_KW   : self.mafia_displayOptions,
               }
-                
+
+    self.DOC_OPS = {self.HELP_KW   : self.doctor_help ,
+                    self.OPTS_KW   : self.doctor_options ,
+                    self.TARGET_KW : self.doctor_save ,
+                    }
+    self.COP_OPS = {self.HELP_KW   : self.cop_help ,
+                    self.OPTS_KW   : self.cop_options ,
+                    self.TARGET_KW : self.cop_investigate ,
+                    }
+
+    
 
     # Setup help message
     h = "Welcome to the Mafia Groupme.\nHere are some commands to use:\n"
@@ -433,6 +469,13 @@ saveNotes()              Save the state of the game in the notes file """
       h = h + "\n" + fun.__doc__.format(self.ACCESS_KW,command)
 
     self.M_HELP_MESSAGE = h
+
+    # Setup Doctor help message
+    h = "You are the Doctor"
+    for command,fun in self.DOC_OPS.items():
+      h = h + "\n" + fun.__doc__.format(self.ACCESS_KW,command)
+
+    self.DOC_HELP_MESSAGE = h
 
 ### POST HELPER FUNCTIONS ######################################################
 
@@ -550,7 +593,7 @@ saveNotes()              Save the state of the game in the notes file """
     self.time = "Day"
     self.day = self.day + 1
     self.cast("Uncertainty dawns, as does this day",self.mainGroup)
-    if not self.mafia_target == "":
+    if not self.mafia_target in ("","NONE"):
       if self.kill(self.mafia_target):
         self.cast("Tragedy has struck! {} is dead! Someone must pay for this!\
                   Vote to kill somebody!".format(self.getName(self.mafia_target)),
@@ -577,15 +620,15 @@ saveNotes()              Save the state of the game in the notes file """
       if player in self.recent_ids:
         DMs = self.getDMs(player)
       else:
-        DMs = self.getDMs(player,all)
+        DMs = self.getDMs(player,True)
       for DM in DMs:
         self.do_DM(DM)
 
-  def getDMs(self,player_id,all=False):
+  def getDMs(self,player_id,a=False):
     """Return a list of the most recent messages from player_id"""
     DMs = []
     try:
-      if not all:
+      if not a:
         response = groupyEP.DirectMessages.index(player_id,since_id=self.recent_ids[player_id])
       else:
         response = groupyEP.DirectMessages.index(player_id)
@@ -608,14 +651,36 @@ saveNotes()              Save the state of the game in the notes file """
       self.log("FAILED TO CASE-{} {}: {}".format(group.name,message,e))
       return False
 
+  def sendDM(self,message,mem_id):
+    try:
+      groupyEP.DirectMessages.create(mem_id,message)
+      self.log("DM-{}: {}".format(self.getName(mem_id),message))
+      return True
+    except Exception as e:
+      self.log("FAILED TO DM-{} {}: {}".format(self.getName(mem_id),message,e))
+      return False
+
   def do_DM(self,DM):
-    self.log(DM['text'])
+    self.log("Got DM")
+
+    try:
+      if(not DM['sender_id'] == MODERATOR):
+        if(DM['text'][0:len(self.ACCESS_KW)] == self.ACCESS_KW):
+          words = DM['text'][len(self.ACCESS_KW):].split()
+          if(self.playerRoles[DM['sender_id']] == "DOCTOR"):
+            if(not len(words) == 0 and words[0] in self.DOC_OPS):
+              if not self.DOC_OPS[words[0]](DM,words):
+                self.sendDM("{} failed".format(words[0]),DM['sender_id'])
+          elif(self.playerRoles[DM['sender_id']] == "COP"):
+            if(not len(words) == 0 and words[0] in self.COP_OPS):
+              if not self.COP_OPS[words[0]](DM,words):
+                self.sendDM("{} failed".format(words[0]),DM['sender_id'])
 
   def do_POST(self,post):
     if(  post['group_id'] == self.MAIN_GROUP_ID): self.do_POST_MAIN(post)
     elif(post['group_id'] == self.MAFIA_GROUP_ID): self.do_POST_MAFIA(post)
     self.saveNotes()
-    #self.checkDMs()
+    self.checkDMs()
     #self.checkQuit()
     
   def do_POST_MAIN(self,post):
@@ -623,10 +688,8 @@ saveNotes()              Save the state of the game in the notes file """
     # Test if we need to do anything
     try:
       if(post['text'][0:len(self.ACCESS_KW)] == self.ACCESS_KW):
-        self.log("Is Access")
         words = post['text'][len(self.ACCESS_KW):].split() 
         if(not len(words) == 0 and words[0] in self.OPS):
-          self.log("Type: {}".format(words[0]))
           if not self.OPS[words[0]](post,words):
             self.cast("{} failed".format(words[0]),self.mainGroup)
         else:
@@ -639,10 +702,8 @@ saveNotes()              Save the state of the game in the notes file """
     # Test if we need to do anything
     try:
       if(post['text'][0:len(self.ACCESS_KW)] == self.ACCESS_KW):
-        self.log("Is Access")
         words = post['text'][len(self.ACCESS_KW):].split() 
         if(not len(words) == 0 and words[0] in self.MOPS):
-          self.log("Type: {}".format(words[0]))
           if not self.MOPS[words[0]](post,words):
             self.cast("{} failed".format(words[0]),self.mainGroup)
         else:
@@ -667,7 +728,7 @@ class MainHandler(BaseHandler):
     super().__init__(request, client_address, server)
     self.m = Mafia
   
-  def do_POST(self):
+  def do_POST(self):    
     try:
       #get contents of the POST
       length = int(self.headers['Content-Length'])
