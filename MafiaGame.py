@@ -44,6 +44,9 @@ MODERATOR        ID of the member we have control over
 time             The time of day (Day/Night)
 day              Which day the game is at. 0 means no game has started
 
+cop_alive        "The cop is alive"
+doc_alive        "The doctor is alive"
+
 mafia_target     The id of the person who the mafia chose to kill
 cop_target
 doctor_target
@@ -118,6 +121,9 @@ saveNotes()              Save the state of the game in the notes file """
     self.playerVotes = {}
 
     self.recent_ids = {}
+
+    self.cop_alive = False
+    self.doc_alive = False
 
     self.mafia_target = ""
     self.cop_target = ""
@@ -377,8 +383,7 @@ saveNotes()              Save the state of the game in the notes file """
           player = self.playerList[int(words[1])]
           mafia_target = player
         self.cast("It is done",self.mafiaGroup)
-        if(not self.doctor_target == "" and not self.cop_target == ""):
-          self.toDay()
+        self.toDay()
         return True
       except Exception as e:
         self.log("Mafia kill failed: {}".format(e))
@@ -402,8 +407,43 @@ saveNotes()              Save the state of the game in the notes file """
     self.sendDM(self.DOC_HELP_MESSAGE, DM['sender_id'])
     return True
 
-  def doctor_options(self,DM,words):
-    """{}{}  - List the options to save and the numbers to use to save them"""
+  def doctor_save(self,DM,words):
+    """{}{} #  - Try to save the person associated with this number tonight"""
+    if(not self.day == 0 and self.time == 'Night'):
+      try:
+        if int(words[1]) == len(self.playerList):
+          self.doctor_target = "NONE"
+        else:
+          self.doctor_target = self.playerList[int(words[1])]
+        self.sendDM("It is done",DM['sender_id'])
+        self.toDay()
+      except Exception as e:
+        self.log("Doctor save failed: {}".format(e))
+    return False
+
+  ### COP FUNCTIONS ############################################################
+
+  def cop_help(self,DM,words):
+    """{}{}  - Display this message"""
+    self.sendDM(self.COP_HELP_MESSAGE, DM['sender_id'])
+    return True
+
+  def cop_investigate(self,DM,words):
+    """{}{} #  - Try to save the person associated with this number tonight"""
+    if(not self.day == 0 and self.time == 'Night'):
+      try:
+        if int(words[1]) == len(self.playerList):
+          self.cop_target = "NONE"
+        else:
+          self.cop_target = self.playerList[int(words[1])]
+        self.sendDM("It is done",DM['sender_id'])
+        self.toDay()
+      except Exception as e:
+        self.log("Cop investigation failed: {}".format(e))
+    return False
+
+  def options(self,DM,words):
+    """{}{}  - List the options to target and the numbers to use to save them"""
     r = "Use {}{} # to make a selection\n".format(self.ACCESS_KW,self.TARGET_KW)
     c = 0
     for player in self.playerList:
@@ -412,10 +452,6 @@ saveNotes()              Save the state of the game in the notes file """
     r = r + str(c) + ": No kill"
     self.sendDM(r, DM['sender_id'])
     return True
-
-  def doctor_save(self,DM,words):
-    """{}{} #  - Try to save the person associated with this number tonight"""
-    
 
   def setupKW(self):
     # OP KEYWORDS
@@ -446,11 +482,11 @@ saveNotes()              Save the state of the game in the notes file """
               }
 
     self.DOC_OPS = {self.HELP_KW   : self.doctor_help ,
-                    self.OPTS_KW   : self.doctor_options ,
+                    self.OPTS_KW   : self.options ,
                     self.TARGET_KW : self.doctor_save ,
                     }
     self.COP_OPS = {self.HELP_KW   : self.cop_help ,
-                    self.OPTS_KW   : self.cop_options ,
+                    self.OPTS_KW   : self.options ,
                     self.TARGET_KW : self.cop_investigate ,
                     }
 
@@ -544,10 +580,14 @@ saveNotes()              Save the state of the game in the notes file """
     for player in self.playerList:
       if c < self.num_mafia:
         self.playerRoles[player] = "MAFIA"
-#      elif c == self.num_mafia:
-#        self.playerRoles[player] = "COP"
-#      elif c == self.num_mafia + 1:
-#        self.playerRoles[player] = "DOCTOR"
+      elif c == self.num_mafia:
+        self.playerRoles[player] = "COP"
+        self.cop_alive = True
+        self.cop = player
+      elif c == self.num_mafia + 1:
+        self.playerRoles[player] = "DOCTOR"
+        self.doc_alive = True
+        self.doctor = player
       else:
         self.playerRoles[player] = "TOWN"
       c = c + 1
@@ -590,14 +630,30 @@ saveNotes()              Save the state of the game in the notes file """
   def toDay(self):
     # First check that everyone is done
 
+    if(self.cop_alive and self.cop_target == "" or
+       self.doc_alive and self.doctor_target == "" or
+       self.mafia_target == ""):
+      return False
+    
+
     self.time = "Day"
     self.day = self.day + 1
     self.cast("Uncertainty dawns, as does this day",self.mainGroup)
-    if not self.mafia_target in ("","NONE"):
-      if self.kill(self.mafia_target):
+    if not self.mafia_target == "NONE":
+      if self.mafia_target == self.doctor_target:
+        self.cast("Tragedy has struck! {} is ... wait! They've been saved by\
+the doctor! Someone must pay for this! Vote to kill somebody!".format(self.getName(self.mafia_target)))
+      else:
+        self.kill(self.mafia_target)
         self.cast("Tragedy has struck! {} is dead! Someone must pay for this!\
-                  Vote to kill somebody!".format(self.getName(self.mafia_target)),
-                  self.mainGroup)
+Vote to kill somebody!".format(self.getName(self.mafia_target)),self.mainGroup)
+
+    self.sendDM("{} is {}".format(self.getName(self.cop_target),self.playerRoles[self.cop_target]),self.cop)
+    
+    self.mafia_target = ""
+    self.cop_target = ""
+    self.doctor_target = ""
+    return True
 
   def toNight(self):
     self.time = "Night"
