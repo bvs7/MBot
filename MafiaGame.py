@@ -8,6 +8,7 @@ import json
 import _thread
 
 DEBUG = 1
+SILENT = True
 
 class MafiaGame:
 
@@ -231,10 +232,12 @@ saveNotes()              Save the state of the game in the notes file """
     return result
 
   def intro(self):
-    groupyEP.Groups.update(self.MAIN_GROUP_ID,name="Let's Play Mafia!")
+    if not SILENT:
+      groupyEP.Groups.update(self.MAIN_GROUP_ID,name="Let's Play Mafia!")
 
   def outro(self):
-    groupyEP.Groups.update(self.MAIN_GROUP_ID,name="Let's Play Mafia! [PAUSED]")
+    if not SILENT: 
+      groupyEP.Groups.update(self.MAIN_GROUP_ID,name="Let's Play Mafia! [PAUSED]")
 
 ### POST FUNCTIONS #############################################################
 
@@ -700,7 +703,8 @@ Vote to kill somebody!".format(self.getName(self.mafia_target)),self.mainGroup)
 
   def cast(self,message,group):
     try:
-      groupyEP.Messages.create(group.group_id,message)
+      if not SILENT:
+        groupyEP.Messages.create(group.group_id,message)
       self.log("CAST-{}: {}".format(group.name,message))
       return True
     except Exception as e:
@@ -709,7 +713,8 @@ Vote to kill somebody!".format(self.getName(self.mafia_target)),self.mainGroup)
 
   def sendDM(self,message,mem_id):
     try:
-      groupyEP.DirectMessages.create(mem_id,message)
+      if not SILENT:
+        groupyEP.DirectMessages.create(mem_id,message)
       self.log("DM-{}: {}".format(self.getName(mem_id),message))
       return True
     except Exception as e:
@@ -766,7 +771,7 @@ Vote to kill somebody!".format(self.getName(self.mafia_target)),self.mainGroup)
             self.cast("{} failed".format(words[0]),self.mainGroup)
         else:
           self.cast("Invalid request, (try {}{} for help)".format(self.ACCESS_KW,self.HELP_KW),
-                    self.mainGroup)
+                    self.mafiaGroup)
     except KeyError as e: pass
 
 class MafiaServer(HTTPServer):

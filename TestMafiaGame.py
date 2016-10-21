@@ -12,7 +12,7 @@ mem = mainGroup.members()
 def getMem(name):
   result = [m for m in mem if m.nickname == name]
   if len(result) >= 1:
-    return result
+    return result[0]
 
 
 def post(message, member=getMem("Brian"),group=mainGroup, mentions=None):
@@ -30,5 +30,5 @@ def post(message, member=getMem("Brian"),group=mainGroup, mentions=None):
   
   try:
     requests.post("http://localhost:1121", json.dumps(x))
-  except:
-    pass
+  except Exception as e:
+    print(e)
