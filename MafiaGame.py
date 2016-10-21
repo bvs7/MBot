@@ -720,7 +720,7 @@ Vote to kill somebody!".format(self.getName(self.mafia_target)),self.mainGroup)
     self.log("Got DM")
 
     try:
-      if(not DM['sender_id'] == MODERATOR):
+      if(not DM['sender_id'] == self.MODERATOR):
         if(DM['text'][0:len(self.ACCESS_KW)] == self.ACCESS_KW):
           words = DM['text'][len(self.ACCESS_KW):].split()
           if(self.playerRoles[DM['sender_id']] == "DOCTOR"):
@@ -731,6 +731,8 @@ Vote to kill somebody!".format(self.getName(self.mafia_target)),self.mainGroup)
             if(not len(words) == 0 and words[0] in self.COP_OPS):
               if not self.COP_OPS[words[0]](DM,words):
                 self.sendDM("{} failed".format(words[0]),DM['sender_id'])
+    except Exception as e:
+      self.log("Error doing DM: {}".format(e))
 
   def do_POST(self,post):
     if(  post['group_id'] == self.MAIN_GROUP_ID): self.do_POST_MAIN(post)
