@@ -4,12 +4,31 @@ import requests
 import groupy
 import json
 
-group = [g for g in groupy.Group.list() if g.name == "MAFIA CHAT"]
+mainGroup = [g for g in groupy.Group.list() if g.group_id == "25833774"][0]
+mafiaGroup= [g for g in groupy.Group.list() if g.group_id == "25941870"][0]
 
-g = group[0]
+mem = mainGroup.members()
+
+def getMem(name):
+  result = [m for m in mem if m.nickname == name]
+  if len(result) >= 1:
+    return result
 
 
-try:
-  requests.post("http://localhost:1121",json.dumps({'group_id':g.group_id,'text':"/help"}))
-except requests.exceptions.ConnectionError as e:
-  pass
+def post(message, member=getMem("Brian"),group=mainGroup, mentions=None):
+
+  x = {
+    'group_id':group.group_id,
+    'user_id':member.user_id,
+    'text':message,
+    }
+
+  if mentions == None:
+    x['attachments'] = []
+  else:
+    x['attachments'] = [{'type':'mentions','user_ids':[mentions]}]
+  
+  try:
+    requests.post("http://localhost:1121", json.dumps(x))
+  except:
+    pass
