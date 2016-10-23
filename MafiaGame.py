@@ -9,7 +9,7 @@ import _thread
 import time
 
 DEBUG = 1
-SILENT = True
+SILENT = False
 RESTART = False
 
 class MafiaGame:
@@ -120,6 +120,7 @@ saveNotes()              Save the state of the game in the notes file """
     self.day  = 0
     self.num_mafia = 0
     self.playerList = []
+    self.nextPlayerList = []
     self.savedPlayerRoles = {}
     self.playerRoles = {}
     self.playerVotes = {}
@@ -228,7 +229,7 @@ saveNotes()              Save the state of the game in the notes file """
     result = True
     for var in self.SAVES:
       try:
-        json.dump(self.__dict__[var], open(self.notes_fname+"/"+var,"w") )
+        json.dump(self.__dict__[var], open(self.NOTES_FNAME+"/"+var,"w") )
       except Exception as e:
         self.log("Failed to save {}: {}".format(var,e))
         result = False
@@ -347,7 +348,7 @@ saveNotes()              Save the state of the game in the notes file """
       self.nextPlayerList.append(player)
       msg = "{} added to next game:\n".format(self.getName(player))
       for player in self.nextPlayerList:
-        msg = msg + getName(player) + "\n"
+        msg = msg + self.getName(player) + "\n"
       self.cast(msg,self.mainGroup)
     return True
 
@@ -378,10 +379,10 @@ saveNotes()              Save the state of the game in the notes file """
     if(not self.day == 0 and self.time == "Night"):
       try:
         if int(words[1]) == len(self.playerList):
-          mafia_target = "NONE"
+          self.mafia_target = "NONE"
         else:
           player = self.playerList[int(words[1])]
-          mafia_target = player
+          self.mafia_target = player
         self.cast("It is done",self.mafiaGroup)
         self.toDay()
         return True
@@ -417,6 +418,7 @@ saveNotes()              Save the state of the game in the notes file """
           self.doctor_target = self.playerList[int(words[1])]
         self.sendDM("It is done",self.doctor)
         self.toDay()
+        return True
       except Exception as e:
         self.log("Doctor save failed: {}".format(e))
     return False
@@ -434,7 +436,7 @@ saveNotes()              Save the state of the game in the notes file """
 
   ### COP FUNCTIONS ############################################################
 
-  def cop_help(self,DM={},words={}):
+  def cop_help(self,DM={},words=[]):
     """{}{}  - Display this message"""
     self.sendDM(self.COP_HELP_MESSAGE, self.cop)
     return True
@@ -449,13 +451,14 @@ saveNotes()              Save the state of the game in the notes file """
           self.cop_target = self.playerList[int(words[1])]
         self.sendDM("It is done",self.cop)
         self.toDay()
+        return True
       except Exception as e:
         self.log("Cop investigation failed: {}".format(e))
     return False
 
-  def cop_options(self,DM,words):
+  def cop_options(self,DM={},words=[]):
     """{}{}  - List the options to target and the numbers to use to investigate them"""
-    r = "Use {}{} # to make a selection\n".format(self.ACCESS_KW,self.TARGET_KW)
+    r = "Use {}{} number  to make a selection\n".format(self.ACCESS_KW,self.TARGET_KW)
     c = 0
     for player in self.playerList:
       r = r + str(c) + ": " + self.getName(player) + "\n"
@@ -651,7 +654,7 @@ saveNotes()              Save the state of the game in the notes file """
   def toDay(self):
     # First check that everyone is done
     if(self.cop in self.playerList and self.cop_target == "" or
-       self.doc in self.playerList and self.doctor_target == "" or
+       self.doctor in self.playerList and self.doctor_target == "" or
        self.mafia_target == ""):
       return False
     
@@ -761,9 +764,9 @@ saveNotes()              Save the state of the game in the notes file """
       if(not DM['sender_id'] == self.MODERATOR and
          DM['text'][0:len(self.ACCESS_KW)] == self.ACCESS_KW):
         words = DM['text'][len(self.ACCESS_KW):].split()
-        if(not len(words) == 0 and words[0] == self.RESTART_KW:
-           self.initVars()
-           self.cast("RESTARTING",mainGroup)
+#        if(not len(words) == 0 and words[0] == self.RESTART_KW):
+ #          self.initVars()
+  #         self.cast("RESTARTING",self.mainGroup)
         if(self.playerRoles[DM['sender_id']] == "DOCTOR"):
           if(not len(words) == 0 and words[0] in self.DOC_OPS):
             if not self.DOC_OPS[words[0]](DM,words):
@@ -779,7 +782,7 @@ saveNotes()              Save the state of the game in the notes file """
     if(  post['group_id'] == self.MAIN_GROUP_ID): self.do_POST_MAIN(post)
     elif(post['group_id'] == self.MAFIA_GROUP_ID): self.do_POST_MAFIA(post)
     self.saveNotes()
-    #self.checkDMs()
+#    self.checkDMs()
     
   def do_POST_MAIN(self,post):
     self.log("Got POST in MAIN")
@@ -803,7 +806,7 @@ saveNotes()              Save the state of the game in the notes file """
         words = post['text'][len(self.ACCESS_KW):].split() 
         if(not len(words) == 0 and words[0] in self.MOPS):
           if not self.MOPS[words[0]](post,words):
-            self.cast("{} failed".format(words[0]),self.mainGroup)
+            self.cast("{} failed".format(words[0]),self.mafiaGroup)
         else:
           self.cast("Invalid request, (try {}{} for help)".format(self.ACCESS_KW,self.HELP_KW),
                     self.mafiaGroup)
@@ -840,6 +843,7 @@ class MainHandler(BaseHandler):
 
 if __name__ == '__main__':
 
-  m = MafiaGame("info","notes")
+  m = MafiaGame("info")
 
   m.run()
+
