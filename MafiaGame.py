@@ -1,5 +1,6 @@
 #!/usr/bin/python3
 
+
 from http.server import BaseHTTPRequestHandler as BaseHandler,HTTPServer
 import groupy
 import groupy.api.endpoint as groupyEP
@@ -273,6 +274,11 @@ saveNotes()              Save the state of the game in the notes file """
         self.log("Retracted Vote {}".format(voter))
         self.cast("Vote retraction successful",self.mainGroup)
         return True
+      elif words[1].lower() == "nokill":
+        self.playerVotes[voter] = "NOKILL"
+        self.cast("{} voted for no kill".format(self.getName(voter)),self.mainGroup)
+        self.testKillVotes("NOKILL")
+        return True
       else:
         votee = mentions[0]['user_ids'][0]
     except Exception as e:
@@ -316,8 +322,15 @@ saveNotes()              Save the state of the game in the notes file """
           for voter,votee in self.playerVotes.items():
             if(votee == player):
               count = count + 1
-              reply = reply + self.getName(voter)+" "
+              reply = reply + self.getName(voter)+", "
           reply = reply + str(count) +  "\n"
+      count = 0
+      reply = reply + "NO KILL : "
+      for voter, votee in self.playerVotes.items():
+        if(votee == "NOKILL"):
+          reply = reply + self.getName(voter) + ", "
+          count = count + 1
+      reply = reply + str(count)      
     self.cast(reply,self.mainGroup)
     return True
 
@@ -412,10 +425,7 @@ saveNotes()              Save the state of the game in the notes file """
     """{}{} #  - Try to save the person associated with this number tonight"""
     if(not self.day == 0 and self.time == 'Night'):
       try:
-        if int(words[1]) == len(self.playerList):
-          self.doctor_target = "NONE"
-        else:
-          self.doctor_target = self.playerList[int(words[1])]
+        self.doctor_target = self.playerList[int(words[1])]
         self.sendDM("It is done",self.doctor)
         self.toDay()
         return True
@@ -425,12 +435,11 @@ saveNotes()              Save the state of the game in the notes file """
 
   def doctor_options(self,DM={},words={}):
     """{}{}  - List the options to target and the numbers to use to save them"""
-    r = "Use {}{} # to make a selection\n".format(self.ACCESS_KW,self.TARGET_KW)
+    r = "Use {}{} number to make a selection".format(self.ACCESS_KW,self.TARGET_KW)
     c = 0
     for player in self.playerList:
-      r = r + str(c) + ": " + self.getName(player) + "\n"
+      r = r + "\n" + str(c) + ": " + self.getName(player)
       c = c + 1
-    r = r + str(c) + ": No kill"
     self.sendDM(r, self.doctor)
     return True
 
@@ -445,10 +454,7 @@ saveNotes()              Save the state of the game in the notes file """
     """{}{} #  - Try to save the person associated with this number tonight"""
     if(not self.day == 0 and self.time == 'Night'):
       try:
-        if int(words[1]) == len(self.playerList):
-          self.cop_target = "NONE"
-        else:
-          self.cop_target = self.playerList[int(words[1])]
+        self.cop_target = self.playerList[int(words[1])]
         self.sendDM("It is done",self.cop)
         self.toDay()
         return True
@@ -461,9 +467,8 @@ saveNotes()              Save the state of the game in the notes file """
     r = "Use {}{} number  to make a selection\n".format(self.ACCESS_KW,self.TARGET_KW)
     c = 0
     for player in self.playerList:
-      r = r + str(c) + ": " + self.getName(player) + "\n"
+      r = r + "\n" + str(c) + ": " + self.getName(player)
       c = c + 1
-    r = r + str(c) + ": No kill"
     self.sendDM(r, self.cop)
     return True
 
@@ -536,8 +541,21 @@ saveNotes()              Save the state of the game in the notes file """
   def testKillVotes(self,votee):
     # Get people voting for votee
     voters = [v for v,vee in self.playerVotes.items() if vee == votee]
-    # If the number of votes is in the majority, kill
+
     num_players = len(self.playerList)
+    # Check for no kill
+    if votee == "NOKILL":
+      if len(voters) >= num_players/2:
+        self.cast("You have decided not to kill anyone",self.mainGroup)
+        self.toNight()
+        return True
+      else:
+        self.cast("Vote successful: {} more vote{}to decide not to kill".format(
+                  int((num_players+1)/2) - len(voters),
+                  " " if (int((num_players+1)/2) - len(voters) == 1) else "s "),
+                  self.mainGroup)
+        return True
+    # If the number of votes is in the majority, kill
     if len(voters) > num_players/2:
       self.cast("The vote to kill {} has passed".format(
                 self.getName(votee)),self.mainGroup)
@@ -571,7 +589,7 @@ saveNotes()              Save the state of the game in the notes file """
     if self.num_mafia == 0:
       self.cast("TOWN WINS",self.mainGroup)
       self.endGame()
-    if self.num_mafia >= len(self.playerList)/2:
+    elif self.num_mafia >= len(self.playerList)/2:
       self.cast("MAFIA WINS",self.mainGroup)
       self.endGame()
     return True
@@ -625,8 +643,8 @@ saveNotes()              Save the state of the game in the notes file """
         self.mafiaGroup.add({'user_id':player})
     # Send out group messages
     self.cast(("Dawn. Of the game and of this new day. You have all learned "
-               "that scum reside in this town. A scum that you must purge. "
-               "Kill someone!"), self.mainGroup)
+               "that scum reside in this town. {} scum that you must purge. "
+               "Kill someone!").format(self.num_mafia), self.mainGroup)
     return True
     
   def endGame(self):
@@ -680,7 +698,8 @@ saveNotes()              Save the state of the game in the notes file """
     # If cop is still alive and has chosen a target
     if self.cop in self.playerList and not self.cop_target == "NONE":
       self.sendDM("{} is {}".format(self.getName(self.cop_target),
-                                    self.playerRoles[self.cop_target]),self.cop)
+          "MAFIA" if self.playerRoles[self.cop_target] in self.MAFIA_ROLES else "TOWN"),
+           self.cop)
     
     self.mafia_target = ""
     self.cop_target = ""
