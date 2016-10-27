@@ -592,6 +592,8 @@ saveNotes()              Save the state of the game in the notes file """
     elif self.num_mafia >= len(self.playerList)/2:
       self.cast("MAFIA WINS",self.mainGroup)
       self.endGame()
+    else: # Game continues, let the person know roles
+      self.sendDM(self.revealRoles(),votee)
     return True
 
   def gameNumbers(self,num_players):
@@ -653,13 +655,17 @@ saveNotes()              Save the state of the game in the notes file """
     self.playerVotes.clear()
     self.playerRoles.clear()
     self.clearMafia()
-    # Refresh the old members, also reveal roles
+    # reveal roles
+    self.cast(self.revealRoles(),self.mainGroup)
+    return True
+
+  def revealRoles(self):
     r = "GG, here were all the roles:"    
     self.playerList = []
     for player,role in self.savedPlayerRoles.items():
       r = r + "\n" + self.getName(player) + ": " + role
-    self.cast(r,self.mainGroup)
-    return True
+    return r
+ 
 
   def clearMafia(self):
     # Remove all from Mafia Group
