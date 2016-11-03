@@ -136,6 +136,8 @@ saveNotes()              Save the state of the game in the notes file """
 
     self.cops = []
     self.doctors = []
+    self.idiots = []
+    self.idiot_wins = []
 
     self.MAFIA_ROLES = [ "MAFIA" ]
     self.TOWN_ROLES  = [ "TOWN", "COP", "DOCTOR", "IDIOT" ]
@@ -157,17 +159,17 @@ saveNotes()              Save the state of the game in the notes file """
                  "the mafia scum. During the night, send a direct message to me"
                  " with the number of the person you want to save. If the mafia"
                  " targets them, they will have a near death experience, but "
-                 "survive.")
+                 "survive."),
       "IDIOT" : ("You are the villiage IDIOT. Your life's dream is to be such an"
                  " annoyance that the townsfolk kill you in frustration. You don't"
-                 " care whether the mafia win or lose, as long as you get votes.")
+                 " care whether the mafia win or lose, as long as you get votes."),
       }
 
     self.SAVES = [
       "time","day","num_mafia","playerList","nextPlayerList",
       "savedPlayerRoles","playerRoles","playerVotes",
-      "recent_ids","mafia_target","cop_target","doctor_target",
-      "cops","doctors"
+      "recent_ids","mafia_target","cop_targets","doctor_targets",
+      "cops","doctors","idiots","idiot_wins"
     ]
 
 ### INIT HELPER FUNCTIONS ######################################################
@@ -567,6 +569,8 @@ saveNotes()              Save the state of the game in the notes file """
       self.cast("The vote to kill {} has passed".format(
                 self.getName(votee)),self.mainGroup)
       if (self.kill(votee)):
+        if votee in self.idiots:
+          self.idiot_wins[self.idiots.index(votee)] = True
         if not self.day == 0:
           self.toNight()
         return True
@@ -603,7 +607,7 @@ saveNotes()              Save the state of the game in the notes file """
       self.sendDM(self.revealRoles(),votee)
     return True
 
-  def addUntil(role, weights):
+  def addUntil(self, role, weights):
     """Helper for genRoles"""
     result = 0
     for i in range(len(weights[0])):
@@ -649,7 +653,7 @@ saveNotes()              Save the state of the game in the notes file """
       if num_players == 4:
         return ["TOWN", "DOCTOR", "COP", "MAFIA"]
       elif num_players == 3:
-        return ["DOCTOR", "TOWN", "COP"]
+        return ["DOCTOR", "MAFIA", "COP"]
       while(n < num_players):
         r = random.randint(-5,5)
         if r >= score:
@@ -667,7 +671,7 @@ saveNotes()              Save the state of the game in the notes file """
             if m < self.addUntil(mrole,mafia_weights):
               role = mrole
               break
-          if not role == "Idiot":
+          if not role == "IDIOT":
             num_mafia += 1
         roles.append(role)
         score += scores[role]
@@ -690,20 +694,34 @@ saveNotes()              Save the state of the game in the notes file """
     self.clearMafia()
     # Get the next game people
     self.playerList = self.nextPlayerList.copy()
+    num_players = len(self.playerList)
+    if num_players < 3:
+      log("Not enough players to start")
+      return False
+
+    # Clear tracking lists 
+    for l in [self.cops, self.cop_targets, self.doctors, self.doctor_targets, self.idiots, self.idiot_wins]:
+      l = []
+
     self.nextPlayerList.clear()
     # Assign Roles
-    num_players = len(self.playerList)
     roles = self.genRoles(num_players)
     # First shuffle for assignment
     random.shuffle(self.playerList)
     for i in range(num_players):
-      self.playerRoles[self.playerList[i]] = roles[i]
+      player = self.playerList[i]
+      self.playerRoles[player] = roles[i]
       if roles[i] == "COP":
         self.cops.append(player)
+        self.cop_targets.append("")
       elif roles[i] == "DOCTOR":
         self.doctors.append(player)
+        self.doctor_targets.append("")
       elif roles[i] == "IDIOT":
         self.idiots.append(player)
+        self.idiot_wins.append(False)
+      elif roles[i] == "MAFIA":
+        self.num_mafia += 1
       self.log("{} {}".format(self.getName(player),self.playerRoles[player]))
     # Save players and roles
     self.savedPlayerRoles = self.playerRoles.copy()
@@ -726,6 +744,9 @@ saveNotes()              Save the state of the game in the notes file """
     self.playerVotes.clear()
     self.playerRoles.clear()
     self.clearMafia()
+    for l in [self.cops, self.cop_targets, self.doctors, self.doctor_targets, self.idiots, self.idiot_wins]:
+      l.clear()
+
     # reveal roles
     self.cast(self.revealRoles(),self.mainGroup)
     return True
@@ -777,22 +798,15 @@ saveNotes()              Save the state of the game in the notes file """
         self.cast(msg,self.mainGroup)
 
     # If cop is still alive and has chosen a target
-<<<<<<< HEAD
     for i in range(len(self.cops)):
       if self.cops[i] in self.playerList and not self.cop_targets[i] == "NONE":
         self.sendDM("{} is {}".format(self.getName(self.cop_targets[i]),
             "MAFIA" if self.playerRoles[self.cop_targets[i]] in self.MAFIA_ROLES else "TOWN"),
              self.cops[i])
     
-=======
-    if self.cop in self.playerList and not self.cop_target == "NONE":
-      self.sendDM("{} is {}".format(self.getName(self.cop_target),
-          "MAFIA" if self.playerRoles[self.cop_target] in self.MAFIA_ROLES else "TOWN"),
-           self.cop)
->>>>>>> origin/master
     self.mafia_target = ""
-    self.cop_target = ""
-    self.doctor_target = ""
+    for c in self.cop_targets: c = ""
+    for d in self.doctor_targets: c = ""
     return True
 
   def toNight(self):
@@ -842,7 +856,8 @@ saveNotes()              Save the state of the game in the notes file """
         DMs = response['direct_messages']
         self.recent_ids[player_id] = DMs[0]['id']
     except Exception as e:
-      self.log("Couldn't get DMs: {}".format(e))
+      pass
+#      self.log("Couldn't get DMs: {}".format(e))
     return DMs
 
   def log(self,message,level=1):
