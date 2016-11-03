@@ -2,6 +2,8 @@
 
 import json  # For loading vars
 
+DEBUG = 2
+
 info_fname = "info"
 
 try:
@@ -23,9 +25,8 @@ def log(msg, debug=2):
     print(msg)
 
 class NoteError(Exception):
-  def __init__(msg,varName):
+  def __init__(self,msg):
     self.msg = msg
-    self.varNam = varName
 
 def loadNote(varName):
   """Loads and returns a variable from a file"""
@@ -33,7 +34,7 @@ def loadNote(varName):
     return json.load( open(NOTES_FNAME+'/'+varName,'r') )
   except Exception as e:
     log("Falied to load {}: {}".format(varName,e))
-    raise NoteError(str(e),varName)
+    raise NoteError(str(e)+": "+varName)
 
 def saveNote(var,name):
   """Saves a variable"""
@@ -41,4 +42,4 @@ def saveNote(var,name):
     json.dump(var, open(self.NOTES_FNAME+'/'+name,'w'))
   except Exception as e:
     log("Failed to save {}: {}".format(name, e))
-    raise NoteError(str(e),name)
+    raise NoteError(str(e)+": "+name)

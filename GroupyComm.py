@@ -14,16 +14,18 @@ import groupy.api.endpoint as groupyEP
 from MInfo import * # loads in globals
 
 class NoGroupError(Exception):
-  def __init__(msg):
+  def __init__(self,msg):
     self.msg = msg
 
 class NoBotError(Exception):
-  def __init__(msg):
+  def __init__(self,msg):
     self.msg = msg
 
 class GroupyComm:
 
   def __init__(self):
+
+    log("init")
 
     # Setup Groups
     try:
@@ -42,6 +44,8 @@ class GroupyComm:
       log("FATAL: Failed loading Groups: {}".format(e))
       exit()
 
+    log("passed groups")
+
     # Setup Direct Messages
     try:
       self.recent_ids = loadNote("recent_ids")
@@ -53,24 +57,24 @@ class GroupyComm:
     try:
       groups = [g for g in groupy.Group.list() if g.group_id == group_id]
     except Exception as e:
-      self.log("Failed to load group from id {}: {}".format(group_id,e))
+      log("Failed to load group from id {}: {}".format(group_id,e))
       raise e
     if len(groups) >= 1:
       return groups[0]
     else:
-      self.log("No group found with id {}".format(group_id))
+      log("No group found with id {}".format(group_id))
       raise NoGroupError("No group found with id {}".format(group_id))
 
   def getBot(self,bot_id):
     try:
       bots = [b for b in groupy.Bot.list() if b.bot_id == bot_id]
     except Exception as e:
-      self.log("Failed to load bot from id {}: {}".format(bot_id,e))
+      log("Failed to load bot from id {}: {}".format(bot_id,e))
       raise e
     if len(bots) >= 1:
       return bots[0]
     else:
-      self.log("No bot found with id {}".format(bot_id))
+      log("No bot found with id {}".format(bot_id))
       raise NoBotError("No bot found with id {}".format(bot_id))
 
 
