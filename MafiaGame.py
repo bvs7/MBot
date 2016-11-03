@@ -1,5 +1,6 @@
 #!/usr/bin/python3
 
+# Test modular
 
 from http.server import BaseHTTPRequestHandler as BaseHandler,HTTPServer
 import groupy
