@@ -731,8 +731,7 @@ saveNotes()              Save the state of the game in the notes file """
     return True
 
   def revealRoles(self):
-    r = "GG, here were all the roles:"    
-    self.playerList = []
+    r = "GG, here were all the roles:"
     for player,role in self.savedPlayerRoles.items():
       r = r + "\n" + self.getName(player) + ": " + role
     return r
@@ -756,7 +755,6 @@ saveNotes()              Save the state of the game in the notes file """
         return False
     if(self.mafia_target == ""):
       return False
-    
     # Go to day
     self.time = "Day"
     self.day = self.day + 1
@@ -779,12 +777,19 @@ saveNotes()              Save the state of the game in the notes file """
         self.cast(msg,self.mainGroup)
 
     # If cop is still alive and has chosen a target
+<<<<<<< HEAD
     for i in range(len(self.cops)):
       if self.cops[i] in self.playerList and not self.cop_targets[i] == "NONE":
         self.sendDM("{} is {}".format(self.getName(self.cop_targets[i]),
             "MAFIA" if self.playerRoles[self.cop_targets[i]] in self.MAFIA_ROLES else "TOWN"),
              self.cops[i])
     
+=======
+    if self.cop in self.playerList and not self.cop_target == "NONE":
+      self.sendDM("{} is {}".format(self.getName(self.cop_target),
+          "MAFIA" if self.playerRoles[self.cop_target] in self.MAFIA_ROLES else "TOWN"),
+           self.cop)
+>>>>>>> origin/master
     self.mafia_target = ""
     self.cop_target = ""
     self.doctor_target = ""
@@ -830,10 +835,12 @@ saveNotes()              Save the state of the game in the notes file """
     try:
       if not a:
         response = groupyEP.DirectMessages.index(player_id,since_id=self.recent_ids[player_id])
+        DMs = response['direct_messages']
+        self.recent_ids[player_id] = DMs[0]['id']
       else:
         response = groupyEP.DirectMessages.index(player_id)
-      DMs = response['direct_messages']
-      self.recent_ids[player_id] = DMs[0]['id']
+        DMs = response['direct_messages']
+        self.recent_ids[player_id] = DMs[0]['id']
     except Exception as e:
       self.log("Couldn't get DMs: {}".format(e))
     return DMs
