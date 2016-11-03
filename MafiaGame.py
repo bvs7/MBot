@@ -13,6 +13,8 @@ DEBUG = 1
 SILENT = False
 RESTART = False
 
+BASE_SCORE = -8
+
 class MafiaGame:
 
   """
@@ -129,14 +131,14 @@ saveNotes()              Save the state of the game in the notes file """
     self.recent_ids = {}
 
     self.mafia_target = ""
-    self.cop_target = ""
-    self.doctor_target = ""
+    self.cop_targets = []
+    self.doctor_targets = []
 
-    self.cop = ""
-    self.doctor = ""
+    self.cops = []
+    self.doctors = []
 
     self.MAFIA_ROLES = [ "MAFIA" ]
-    self.TOWN_ROLES  = [ "TOWN", "COP", "DOCTOR" ]
+    self.TOWN_ROLES  = [ "TOWN", "COP", "DOCTOR", "IDIOT" ]
 
     self.ROLE_EXPLAIN= {
       "MAFIA" : ("You are MAFIA. You are now part of the mafia chat to talk "
@@ -156,13 +158,16 @@ saveNotes()              Save the state of the game in the notes file """
                  " with the number of the person you want to save. If the mafia"
                  " targets them, they will have a near death experience, but "
                  "survive.")
+      "IDIOT" : ("You are the villiage IDIOT. Your life's dream is to be such an"
+                 " annoyance that the townsfolk kill you in frustration. You don't"
+                 " care whether the mafia win or lose, as long as you get votes.")
       }
 
     self.SAVES = [
       "time","day","num_mafia","playerList","nextPlayerList",
       "savedPlayerRoles","playerRoles","playerVotes",
       "recent_ids","mafia_target","cop_target","doctor_target",
-      "cop","doctor"
+      "cops","doctors"
     ]
 
 ### INIT HELPER FUNCTIONS ######################################################
@@ -418,15 +423,16 @@ saveNotes()              Save the state of the game in the notes file """
 
   def doctor_help(self,DM={},words={}):
     """{}{}  - Display this message"""
-    self.sendDM(self.DOC_HELP_MESSAGE, self.doctor)
+    self.sendDM(self.DOC_HELP_MESSAGE, DM['sender_id'])
     return True
 
   def doctor_save(self,DM,words):
     """{}{} #  - Try to save the person associated with this number tonight"""
     if(not self.day == 0 and self.time == 'Night'):
+      index = self.doctors.index(DM['sender_id'])
       try:
-        self.doctor_target = self.playerList[int(words[1])]
-        self.sendDM("It is done",self.doctor)
+        self.doctor_targets[index] = self.playerList[int(words[1])]
+        self.sendDM("It is done",DM['sender_id'])
         self.toDay()
         return True
       except Exception as e:
@@ -440,22 +446,23 @@ saveNotes()              Save the state of the game in the notes file """
     for player in self.playerList:
       r = r + "\n" + str(c) + ": " + self.getName(player)
       c = c + 1
-    self.sendDM(r, self.doctor)
+    self.sendDM(r, DM['sender_id'])
     return True
 
   ### COP FUNCTIONS ############################################################
 
   def cop_help(self,DM={},words=[]):
     """{}{}  - Display this message"""
-    self.sendDM(self.COP_HELP_MESSAGE, self.cop)
+    self.sendDM(self.COP_HELP_MESSAGE, DM["sender_id"])
     return True
 
   def cop_investigate(self,DM,words):
     """{}{} #  - Try to save the person associated with this number tonight"""
     if(not self.day == 0 and self.time == 'Night'):
+      index = self.cops.index(DM['sender_id'])
       try:
-        self.cop_target = self.playerList[int(words[1])]
-        self.sendDM("It is done",self.cop)
+        self.cop_targets[index] = self.playerList[int(words[1])]
+        self.sendDM("It is done",DM['sender_id'])
         self.toDay()
         return True
       except Exception as e:
@@ -469,7 +476,7 @@ saveNotes()              Save the state of the game in the notes file """
     for player in self.playerList:
       r = r + "\n" + str(c) + ": " + self.getName(player)
       c = c + 1
-    self.sendDM(r, self.cop)
+    self.sendDM(r, DM['sender_id'])
     return True
 
   
@@ -596,15 +603,85 @@ saveNotes()              Save the state of the game in the notes file """
       self.sendDM(self.revealRoles(),votee)
     return True
 
-  def gameNumbers(self,num_players):
-    # This could eventually return other things, like the number of masons etc
-    # [Num People] : [num mafia]
-    GAME_COUNTS  = {
-       3 : 1,  4 : 1,  5 : 1,  6 : 1,  7 : 1,  8 : 2,  9 : 2,  10 : 3,
-      11 : 3,  12 : 3, 13 : 3, 14 : 4, 15 : 4, 16 : 4, 17 : 5, 18 : 5,
-      19 : 5,  20 : 5, 21 : 6, 22 : 6, 23 : 6, 24 : 6, 25 : 6, 26 : 6,
-      27 : 6, }
-    return GAME_COUNTS[num_players]
+  def addUntil(role, weights):
+    """Helper for genRoles"""
+    result = 0
+    for i in range(len(weights[0])):
+      result += weights[1][i]
+      if weights[0][i] == role:
+        break
+    return result
+  
+  def genRoles(self,num_players):
+    # Randomly generate the roles for a game
+    scores = {
+      "MAFIA"  : -3,
+      "DOCTOR" :  4,
+      "COP"    :  4,
+      "TOWN"   :  2,
+      "IDIOT"  : -2,
+    }
+
+    # Probability of town roles being chosen
+    town_weights = [
+      ["TOWN", "DOCTOR", "COP"],
+      [75,     10,       10]
+    ]
+
+    # Probability of anti-town roles being chosen
+    mafia_weights = [
+      ["MAFIA", "IDIOT"],
+      [85,      10],
+    ]
+
+    restart = True
+    while(restart):
+      restart = False
+
+      n = 0
+      score = BASE_SCORE
+      roles = []
+      num_mafia = 0
+      num_town = 0
+      town_sum = sum(town_weights[1])
+      mafia_sum = sum(mafia_weights[1])
+
+      if num_players == 4:
+        return ["TOWN", "DOCTOR", "COP", "MAFIA"]
+      elif num_players == 3:
+        return ["DOCTOR", "TOWN", "COP"]
+      while(n < num_players):
+        r = random.randint(-5,5)
+        if r >= score:
+          # Add Town
+          t = random.randint(0,town_sum)
+          for trole in town_weights[0]:
+            if t < self.addUntil(trole,town_weights):
+              role = trole
+              break
+          num_town += 1
+        else:
+          # Add Mafia
+          m = random.randint(0,mafia_sum)
+          for mrole in mafia_weights[0]:
+            if m < self.addUntil(mrole,mafia_weights):
+              role = mrole
+              break
+          if not role == "Idiot":
+            num_mafia += 1
+        roles.append(role)
+        score += scores[role]
+        n += 1
+
+      # Done making roles, ensure this isn't a bad game
+      if (num_mafia + 2 >= num_town):
+        restart = True
+      if num_mafia == 0:
+        restart = True
+
+    # Roles contains a valid game
+    return roles
+    
 
   def startGame(self):
     self.day = 1
@@ -616,23 +693,17 @@ saveNotes()              Save the state of the game in the notes file """
     self.nextPlayerList.clear()
     # Assign Roles
     num_players = len(self.playerList)
-    self.num_mafia = self.gameNumbers(num_players)
+    roles = self.genRoles(num_players)
     # First shuffle for assignment
     random.shuffle(self.playerList)
-    c = 0
-    for player in self.playerList:
-      if c < self.num_mafia:
-        self.playerRoles[player] = "MAFIA"
-      elif c == self.num_mafia:
-        self.playerRoles[player] = "COP"
-        self.cop = player
-      elif c == self.num_mafia + 1:
-        self.playerRoles[player] = "DOCTOR"
-        self.doc_alive = True
-        self.doctor = player
-      else:
-        self.playerRoles[player] = "TOWN"
-      c = c + 1
+    for i in range(num_players):
+      self.playerRoles[self.playerList[i]] = roles[i]
+      if roles[i] == "COP":
+        self.cops.append(player)
+      elif roles[i] == "DOCTOR":
+        self.doctors.append(player)
+      elif roles[i] == "IDIOT":
+        self.idiots.append(player)
       self.log("{} {}".format(self.getName(player),self.playerRoles[player]))
     # Save players and roles
     self.savedPlayerRoles = self.playerRoles.copy()
@@ -677,9 +748,13 @@ saveNotes()              Save the state of the game in the notes file """
 
   def toDay(self):
     # First check that everyone is done
-    if(self.cop in self.playerList and self.cop_target == "" or
-       self.doctor in self.playerList and self.doctor_target == "" or
-       self.mafia_target == ""):
+    for i in range(len(self.cops)):
+      if self.cops[i] in self.playerList and self.cop_targets[i] == "":
+        return False
+    for i in range(len(self.doctors)):
+      if self.doctors[i] in self.playerList and self.doctor_targets[i] == "":
+        return False
+    if(self.mafia_target == ""):
       return False
     
     # Go to day
@@ -689,7 +764,9 @@ saveNotes()              Save the state of the game in the notes file """
     # If mafia has a target
     if not self.mafia_target == "NONE":
       # Doctor is alive and saved the target
-      if self.doctor in self.playerList and self.mafia_target == self.doctor_target:
+      if not any(self.doctors[i] in self.playerList and
+                 self.mafia_target == self.doctor_target[i]
+                 for i in range(len(self.doctors))):
         msg = ("Tragedy has struck! {} is ... wait! They've been saved by "
                "the doctor! Someone must pay for this! Vote to kill "
                "somebody!").format(self.getName(self.mafia_target))
@@ -702,10 +779,11 @@ saveNotes()              Save the state of the game in the notes file """
         self.cast(msg,self.mainGroup)
 
     # If cop is still alive and has chosen a target
-    if self.cop in self.playerList and not self.cop_target == "NONE":
-      self.sendDM("{} is {}".format(self.getName(self.cop_target),
-          "MAFIA" if self.playerRoles[self.cop_target] in self.MAFIA_ROLES else "TOWN"),
-           self.cop)
+    for i in range(len(self.cops)):
+      if self.cops[i] in self.playerList and not self.cop_targets[i] == "NONE":
+        self.sendDM("{} is {}".format(self.getName(self.cop_targets[i]),
+            "MAFIA" if self.playerRoles[self.cop_targets[i]] in self.MAFIA_ROLES else "TOWN"),
+             self.cops[i])
     
     self.mafia_target = ""
     self.cop_target = ""
@@ -719,8 +797,10 @@ saveNotes()              Save the state of the game in the notes file """
     self.cast("As the sky darkens, so too do your intentions. Pick someone to kill",
               self.mafiaGroup)
     self.mafia_options()
-    self.doctor_options()
-    self.cop_options()
+    for cop in self.cops:
+      self.cop_options({'sender_id':cop})
+    for doc in self.doctors:
+      self.doctor_options({'sender_id':doc})
 
   def getName(self,player_id):
     self.mainGroup.refresh()
@@ -789,9 +869,6 @@ saveNotes()              Save the state of the game in the notes file """
       if(not DM['sender_id'] == self.MODERATOR and
          DM['text'][0:len(self.ACCESS_KW)] == self.ACCESS_KW):
         words = DM['text'][len(self.ACCESS_KW):].split()
-#        if(not len(words) == 0 and words[0] == self.RESTART_KW):
- #          self.initVars()
-  #         self.cast("RESTARTING",self.mainGroup)
         if(self.playerRoles[DM['sender_id']] == "DOCTOR"):
           if(not len(words) == 0 and words[0] in self.DOC_OPS):
             if not self.DOC_OPS[words[0]](DM,words):
