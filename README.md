@@ -35,8 +35,6 @@ Features to add:
 
 VILLAGE_IDIOT	Role will be added instead of one mafia in games that are biased towards mafia. The village idiot wins if they are killed during the day phase, and loses if they survive until the end or they are killed by the mafia.
 
-Games			Choose a "Game" from a set of possible games based on nuber of players
-
 Game Generation	Semi-fair games are generated
 
 Time limits		Night will only last so long before nothing happens. Days will have optional limits?
