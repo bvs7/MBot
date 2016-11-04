@@ -7,10 +7,13 @@ you can cast to different groups
 
 you can DM to different players
 
+"""
 
-
-import groupy
-import groupy.api.endpoint as groupyEP
+try:
+  import groupy
+  import groupy.api.endpoint as groupyEP
+except Exception as e:
+  pass
 
 class NoGroupError(Exception):
   def __init__(self,msg):
@@ -71,10 +74,10 @@ class GroupyComm:
       log("No bot found with id {}".format(bot_id))
       raise NoBotError("No bot found with id {}".format(bot_id))
 
-  def cast(self,message,group=self.mainGroup):
+  def cast(self,message,group_id=MAIN_GROUP_ID):
     try:
       if not SILENT:
-        groupyEP.Messages.create(group.group_id,message)
+        groupyEP.Messages.create(group_id,message)
       log("CAST-{}: {}".format(group.name,message))
       return True
     except Exception as e:
@@ -123,7 +126,14 @@ class GroupyComm:
       if not mem.user_id == self.MODERATOR:
         self.mafiaGroup.remove(mem)
         log("removing {} from mafia chat".format(mem.nickname))
-"""
+
+  def intro(self):
+    if not SILENT:
+      groupyEP.Groups.update(MAIN_GROUP_ID,name="Let's Play Mafia!")
+      
+  def outro(self):
+    if not SILENT: 
+      groupyEP.Groups.update(MAIN_GROUP_ID,name="Let's Play Mafia! [PAUSED]")
 
 class GroupyCommTest:
 
@@ -144,7 +154,7 @@ class GroupyCommTest:
     log(m,1)
 
   def sendDM(self,msg,player_id):
-    return "DM: "+"("+player_id+") "+msg
+    log("DM: "+"("+player_id+") "+msg)
 
   def getDMs(self,player_id):
     return []

@@ -1,6 +1,6 @@
 # Module to hold the state of the game
 
-from GroupyComm import GroupyCommTest as GroupyComm
+#from GroupyComm import GroupyCommTest as GroupyComm
 from MInfo import *
 
 import random
@@ -38,15 +38,24 @@ class MState:
     
   def vote(self, voter_id, votee_id):
 
-    voter = self.getPlayer(voter_id)
-    if votee_id == None:
-      votee = None
-    elif votee_id == "0":
-      votee = self.null
-    else:
-      votee = self.getPlayer(votee_id)
+    if not self.time == "Day":
+      log("{} couldn't vote for {}: Not Day".format(voter_id,votee_id))
+      return False
+
+    try:
+      voter = self.getPlayer(voter_id)
+      if votee_id == None:
+        votee = None
+      elif votee_id == "0":
+        votee = self.null
+      else:
+        votee = self.getPlayer(votee_id)
+    except Exception as e:
+      log(e)
+      return False
     voter.vote = votee
     self.checkVotes(votee)
+    return True
 
   def kill(self, player):
     # Remove from players things
@@ -62,32 +71,68 @@ class MState:
       # Game continues, let the person know roles
       self.comm.sendDM(self.revealRoles(),player.id_)
     return True
-    
+
+  def mafiaTarget(self, target_option):
+    if not self.time == "Night":
+      log("Mafia couldn't target {}: Not Night".format(target_option))
+      return False
+    try:
+      if target_option == len(self.players):
+        target = self.null
+      elif target_option == None:
+        target = None
+      else:
+        target = self.players[target_option]
+    except Exception as e:
+      log("Mafia failed to target {}: {}".format(target_option, e))
+      return False
+    self.mafia_target = target
+    # Check if Night is over
+    self.checkToDay()
+    return True
+
+  def target(self, player_id, target_option):
+    # Set a player's target. This only has an effect if the
+    # player is a cop or a doc
+
+    if not self.time == "Night":
+      log("{} couldn't target {}: Not Night".format(player_id,target_id))
+      return False
+    try:
+      if target_option == len(self.players):
+        target = self.null
+      elif target_option == None:
+        target = None
+      else:
+        target = self.players[target_option]
+    except Exception as e:
+      log("{} failed to target {}: {}".format(player_id, target_id, e))
+      return False
+    player.target = target
+    # Check if Night is over
+    self.checkToDay()
+    return True
 
   def checkVotes(self,player):
     if player == None:
       self.comm.cast("Vote Retraction successful")
-      return True
-    
+      return True 
     voters = [v for v in self.players if v.vote == player]
     num_voters = len(voters)
     num_players = len(self.players)
-
     if player == self.null:
       if num_voters >= num_players/2:
-        self.comm.cast("You have decided not to kill anyone",self.comm.mainGroup)
+        self.comm.cast("You have decided not to kill anyone")
         self.toNight()
         return True
       else:
         self.comm.cast("Vote successful: {} more vote{}to decide not to kill".format(
                   int((num_players+1)/2) - num_voters,
-                  " " if (int((num_players+1)/2) - num_voters == 1) else "s "),
-                  self.comm.mainGroup)
-        return True
-    
+                  " " if (int((num_players+1)/2) - num_voters == 1) else "s "))
+        return True  
     if len(voters) > num_players/2:
       self.comm.cast("The vote to kill {} has passed".format(
-                self.comm.getName(player.id_)), self.comm.mainGroup)
+                self.comm.getName(player.id_)))
       if(self.kill(player)):
         if player.role == "IDIOT":
           self.idiot_winners.append(player)
@@ -97,8 +142,8 @@ class MState:
       self.comm.cast("Vote successful: {} more vote{}until {} is killed".format(
            int((num_players)/2+1)-num_voters,
            " " if int((num_players)/2+1)-num_voters == 1 else "s ",
-           self.comm.getName(player.id_) ) ,self.comm.mainGroup)
-    return True
+           self.comm.getName(player.id_) ))
+      return True
 
   def checkToDay(self):
     if (self.mafia_target == None or
@@ -113,9 +158,9 @@ class MState:
     self.day = self.day + 1
     self.comm.cast("Uncertainty dawns, as does this day")
     # If mafia has a target
-    if not self.mafia_target == self.null:
+    if not self.mafia_target in [None, self.null]:
       # Doctor is alive and saved the target
-      if not any([d.target == self.mafia_target for d in self.docs]):
+      if any([d.target == self.mafia_target for d in self.docs]):
         msg = ("Tragedy has struck! {} is ... wait! They've been saved by "
                "the doctor! Someone must pay for this! Vote to kill "
                "somebody!").format(self.comm.getName(self.mafia_target.id_))
@@ -144,22 +189,41 @@ class MState:
     for p in self.players:
       p.vote = None
     self.comm.cast("Night falls and everyone sleeps")
-    self.comm.cast("As the sky darkens, so too do your intentions. Pick someone to kill",
-              self.comm.mafiaGroup)
-##    self.mafia_options()
-##    for cop in self.cops:
-##      self.cop_options({'sender_id':cop})
-##    for doc in self.doctors:
-##      self.doctor_options({'sender_id':doc})
-          
+    self.comm.cast("As the sky darkens, so too do your intentions. Pick someone to kill")
+    self.mafia_options()
+    for cop in self.cops:
+      if cop in self.players:
+        self.send_options("Use /target number (i.e. /target 2) to pick someone to investigate",cop.id_)
+    for doc in self.docs:
+      if doc in self.players:
+        self.send_options("Use /target number (i.e. /target 0) to pick someone to save",doc.id_)
+
+  def mafia_options(self):
+    msg = "Use /target number (i.e. /target 1) to select someone to kill:"
+    c = 0
+    for player in self.players:
+      msg += "\n"+str(c)+self.comm.getName(player.id_)
+      c += 1
+    self.comm.cast(msg,self.comm.mafiaGroup)
+    return True
+
+  def send_options(self, prompt, player_id):
+    msg = prompt
+    c = 0
+    for player in self.players:
+      msg += "\n"+str(c)+self.comm.getName(player.id_)
+      c += 1
+    self.comm.sendDM(msg,player_id)
+    return True
+        
   def checkWinCond(self):
     # Check win conditions
     if self.num_mafia == 0:
-      self.comm.cast("TOWN WINS",self.comm.mainGroup)
+      self.comm.cast("TOWN WINS")
       self.endGame()
       return True
     elif self.num_mafia >= len(self.players)/2:
-      self.comm.cast("MAFIA WINS",self.comm.mainGroup)
+      self.comm.cast("MAFIA WINS")
       self.endGame()
       return True
     return False
@@ -260,6 +324,7 @@ class MState:
       self.comm.sendDM(ROLE_EXPLAIN[player.role],player.id_)
       if player.role in MAFIA_ROLES:
         self.comm.addMafia(player.id_)
+    return True
 
   def endGame(self):
     self.day = 0
@@ -267,7 +332,10 @@ class MState:
     self.players.clear()
     self.comm.clearMafia()
 
-    self.comm.cast(self.revealRoles(),self.comm.mainGroup)
+    for winner in idiot_winners:
+      self.comm.cast(self.comm.getName(winner.id_)+" WON!")
+
+    self.comm.cast(self.revealRoles())
     return True
 
   def revealRoles(self):
@@ -282,6 +350,14 @@ class MState:
       return players[0]
     else:
       raise Exception("Couldn't find player from id {}".format(player_id))
+
+  def loadNotes(self):
+    for varName in SAVES:
+      self.__dict__[varName] = loadNote(varName)
+
+  def saveNotes(self):
+    for varName in SAVES:
+      saveNote(self.__dict__[varName],varName)
 
   def __str__(self):
     if self.day == 0:

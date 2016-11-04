@@ -74,6 +74,13 @@ ROLE_EXPLAIN= {
              " care whether the mafia win or lose, as long as you get votes."),
   }
 
+self.SAVES = [
+      "time","day","num_mafia","playerList","nextPlayerList",
+      "savedPlayerRoles","playerRoles","playerVotes",
+      "recent_ids","mafia_target","cop_targets","doctor_targets",
+      "cops","doctors","idiots","idiot_wins"
+    ]
+
 # ROLE GENERATION
 
 BASE_SCORE = -8
@@ -97,3 +104,31 @@ MAFIA_WEIGHTS = [
   ["MAFIA", "IDIOT"],
   [85,      20],
 ]
+
+
+# OP KEYWORDS
+ACCESS_KW = '/'
+
+VOTE_KW   = 'vote'
+STATUS_KW = 'status'
+HELP_KW   = 'help'
+START_KW  = 'start'
+IN_KW     = 'in'
+OUT_KW    = 'out'
+
+TARGET_KW = 'target'
+OPTS_KW   = 'options'
+
+RESTART_KW= 'restart'
+
+## HELP MESSAGES
+
+HELP_MESSAGE = "Main Help"
+
+M_HELP_MESSAGE = "Mafia Help"
+
+DOC_HELP_MESSAGE = "Doc Help"
+
+COP_HELP_MESSAGE = "Cop Help"
+
+DM_HELP_MESSAGE = "DM Help"
