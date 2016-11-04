@@ -1,5 +1,4 @@
-# Server Module
-
+#!/usr/bin/python3
 from http.server import BaseHTTPRequestHandler as BaseHandler,HTTPServer
 
 import _thread
@@ -8,7 +7,7 @@ from MInfo import *
 import GroupyComm
 import MState
 
-comm = GroupyComm.GroupyCommTest()
+comm = GroupyComm.GroupyComm()
 mstate = MState.MState(comm)
 
 ### POST FUNCTIONS #############################################################
@@ -80,7 +79,7 @@ def in_(post,words=[]):
     comm.cast(msg)
   return True
 
-def out(spost,words=[]):
+def out(post,words=[]):
   """{}{}  - Leave the next game"""
   log("OUT")
   # Get player
@@ -91,7 +90,7 @@ def out(spost,words=[]):
     return False
   # try to remove from list:
   if player in mstate.nextPlayerIDs: mstate.nextPlayerIDs.remove(player)
-  scomm.cast("{} removed from game".format(comm.getName(player)))
+  comm.cast("{} removed from game".format(comm.getName(player)))
   return True
 
 
@@ -99,7 +98,7 @@ def out(spost,words=[]):
 
 def mafia_help(post={},words=[]):
   """{}{}  - Display this message"""
-  comm.cast(M_HELP_MESSAGE,comm.mafiaGroup)
+  comm.cast(M_HELP_MESSAGE,MAFIA_GROUP_ID)
   return True
 
 def mafia_target(post,words):
@@ -175,7 +174,7 @@ OPS ={ VOTE_KW   : vote   ,
      }
 
 MOPS={ HELP_KW   : mafia_help ,
-       TARGET_KW : mafia_kill ,
+       TARGET_KW : mafia_target ,
        OPTS_KW   : mafia_options,
      }
 
@@ -198,10 +197,9 @@ def do_POST_MAIN(post):
       words = post['text'][len(ACCESS_KW):].split() 
       if(not len(words) == 0 and words[0] in OPS):
         if not OPS[words[0]](post,words):
-          comm.cast("{} failed".format(words[0]),comm.mainGroup)
+          comm.cast("{} failed".format(words[0]))
       else:
-        comm.cast("Invalid request, (try {}{} for help)".format(ACCESS_KW,HELP_KW),
-                  comm.mainGroup)
+        comm.cast("Invalid request, (try {}{} for help)".format(ACCESS_KW,HELP_KW))
   except KeyError as e: pass
 
 def do_POST_MAFIA(post):
@@ -212,10 +210,9 @@ def do_POST_MAFIA(post):
       words = post['text'][len(ACCESS_KW):].split() 
       if(not len(words) == 0 and words[0] in MOPS):
         if not MOPS[words[0]](post,words):
-          comm.cast("{} failed".format(words[0]),comm.mafiaGroup)
+          comm.cast("{} failed".format(words[0]),MAFIA_GROUP_ID)
       else:
-        comm.cast("Invalid request, (try {}{} for help)".format(ACCESS_KW,HELP_KW),
-                  comm.mafiaGroup)
+        comm.cast("Invalid request, (try {}{} for help)".format(ACCESS_KW,HELP_KW))
   except KeyError as e: pass
 
 def do_POST(post):
@@ -278,8 +275,9 @@ if __name__ == "__main__":
   comm.intro()
 
   try:
-    _thread.start_new_thread(server.serve_forever,())
     _thread.start_new_thread(loopDM,())
+    _thread.start_new_thread(server.serve_forever,())
+
     while True:
       pass
   except KeyboardInterrupt as e:

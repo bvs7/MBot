@@ -80,10 +80,7 @@ ROLE_EXPLAIN= {
   }
 
 SAVES = [
-      "time","day","num_mafia","playerList","nextPlayerList",
-      "savedPlayerRoles","playerRoles","playerVotes",
-      "recent_ids","mafia_target","cop_targets","doctor_targets",
-      "cops","doctors","idiots","idiot_wins"
+      "time","day","num_mafia","mafia_target"
     ]
 
 # ROLE GENERATION

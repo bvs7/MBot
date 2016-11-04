@@ -78,10 +78,10 @@ class GroupyComm:
     try:
       if not SILENT:
         groupyEP.Messages.create(group_id,message)
-      log("CAST-{}: {}".format(group.name,message))
+      log("CAST: {}".format(message))
       return True
     except Exception as e:
-      log("FAILED TO CAST-{} {}: {}".format(group.name,message,e))
+      log("FAILED TO CAST {}: {}".format(message,e))
       return False
     
   def sendDM(self,message,mem_id):
@@ -124,7 +124,7 @@ class GroupyComm:
     # Remove all from Mafia Group
     self.mafiaGroup.refresh()
     for mem in self.mafiaGroup.members():
-      if not mem.user_id == self.MODERATOR:
+      if not mem.user_id == MODERATOR:
         self.mafiaGroup.remove(mem)
         log("removing {} from mafia chat".format(mem.nickname))
 
@@ -169,4 +169,8 @@ class GroupyCommTest:
   def clearMafia(self):
     self.mafia.clear()
 
-  
+  def intro(self):
+    log("intro")
+
+  def outro(self):
+    log("outro")

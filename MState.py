@@ -189,7 +189,7 @@ class MState:
     for p in self.players:
       p.vote = None
     self.comm.cast("Night falls and everyone sleeps")
-    self.comm.cast("As the sky darkens, so too do your intentions. Pick someone to kill")
+    self.comm.cast("As the sky darkens, so too do your intentions. Pick someone to kill",MAFIA_GROUP_ID)
     self.mafia_options()
     for cop in self.cops:
       if cop in self.players:
@@ -204,7 +204,7 @@ class MState:
     for player in self.players:
       msg += "\n"+str(c)+self.comm.getName(player.id_)
       c += 1
-    self.comm.cast(msg,self.comm.mafiaGroup)
+    self.comm.cast(msg,MAFIA_GROUP_ID)
     return True
 
   def send_options(self, prompt, player_id):
@@ -283,6 +283,11 @@ class MState:
     return roles
       
   def startGame(self):
+    num_players = len(self.nextPlayerIDs)
+    if num_players < 3:
+      self.comm.cast("Not enough players to start")
+      return False
+
     self.day = 1
     self.time = "Day"
 
@@ -296,11 +301,6 @@ class MState:
 
     random.shuffle(self.nextPlayerIDs)
     
-    num_players = len(self.nextPlayerIDs)
-    if num_players < 3:
-      self.comm.cast("Not enough players to start")
-      return False
-
     roles = self.genRoles(num_players)
 
     for i in range(len(self.nextPlayerIDs)):
@@ -352,12 +352,15 @@ class MState:
       raise Exception("Couldn't find player from id {}".format(player_id))
 
   def loadNotes(self):
-    for varName in SAVES:
-      self.__dict__[varName] = loadNote(varName)
-    self.players = self.loadPList("players")
-    self.cops    = self.loadPList("cops")
-    self.docs    = self.loadPList("docs")
-    self.idiot_winners = self.loadPList("idiot_winners")
+    try:
+      for varName in SAVES:
+        self.__dict__[varName] = loadNote(varName)
+      self.players = self.loadPList("players")
+      self.cops    = self.loadPList("cops")
+      self.docs    = self.loadPList("docs")
+      self.idiot_winners = self.loadPList("idiot_winners")
+    except NoteError as e:
+      log(e)
 
   def saveNotes(self):
     for varName in SAVES:
