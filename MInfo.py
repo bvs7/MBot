@@ -41,9 +41,7 @@ def loadNote(varName):
 def saveNote(var,name):
   """Saves a variable"""
   fname = NOTES_FNAME + "/" + name
-  print(fname)
   folder = fname[0:-len(fname.split('/')[-1])-1]
-  print(folder)
   if not os.path.exists(folder):
     os.makedirs(folder)
   try:

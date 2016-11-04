@@ -2,6 +2,8 @@
 
 from http.server import BaseHTTPRequestHandler as BaseHandler,HTTPServer
 
+import _thread
+
 from MInfo import *
 import GroupyComm
 import MState
@@ -13,7 +15,7 @@ mstate = MState.MState(comm)
     
 ### VOTE -----------------------------------------------------------------------
     
-def vote(self,post,words):
+def vote(post,words):
   """{}{} @[player]  - Vote for someone. Once they have a majority of votes they are killed"""
   log("VOTE")
   # get voter_id
@@ -42,25 +44,25 @@ def vote(self,post,words):
   return mstate.vote(voter,votee)
   
 
-def status(self,post={},words=[]):
+def status(post={},words=[]):
   """{}{}  - Check the status of the game"""
   log("STATUS")
   comm.cast(mstate.__str__())
   return True
 
-def help_(self,post={},words=[]):
+def help_(post={},words=[]):
   """{}{}  - Display this message"""
   comm.cast(HELP_MESSAGE)
   return True
 
-def start(self,post={},words=[]):
+def start(post={},words=[]):
   """{}{}  - Start a game with the current players"""
   # NOTE: When the day is 0, the following is true:
   if mstate.day == 0:
     return mstate.startGame() 
   return False
 
-def in_(self,post,words=[]):
+def in_(post,words=[]):
   """{}{}  - Join the next game"""
   log("IN")
   # Get inquirer
@@ -78,7 +80,7 @@ def in_(self,post,words=[]):
     comm.cast(msg)
   return True
 
-def out(self,post,words=[]):
+def out(spost,words=[]):
   """{}{}  - Leave the next game"""
   log("OUT")
   # Get player
@@ -95,12 +97,12 @@ def out(self,post,words=[]):
 
 ### MAFIA POST FUNCTIONS #####################################################
 
-def mafia_help(self,post={},words=[]):
+def mafia_help(post={},words=[]):
   """{}{}  - Display this message"""
   comm.cast(M_HELP_MESSAGE,comm.mafiaGroup)
   return True
 
-def mafia_target(self,post,words):
+def mafia_target(post,words):
   """{}{} [number]  - Kill the player associated with this number (from options)"""
   try:
     return mstate.mafiaTarget(int(words[1]))
@@ -108,18 +110,18 @@ def mafia_target(self,post,words):
     log("Invalid Mafia Target {}".format(e))
     return False
   
-def mafia_options(self,post={},words=[]):
+def mafia_options(post={},words=[]):
   """{}{}  - List the options to kill and the numbers to use to kill them"""
   return mstate.mafia_options()
 
 ### DOCTOR FUNCTIONS #########################################################
 
-def doctor_help(self,DM,words={}):
+def doctor_help(DM,words={}):
   """{}{}  - Display this message"""
   comm.sendDM(DOC_HELP_MESSAGE, DM['sender_id'])
   return True
 
-def doctor_save(self,DM,words):
+def doctor_save(DM,words):
   """{}{} #  - Try to save the person associated with this number tonight"""
   try:
     return mstate.target(DM['sender_id'],int(words[1]))
@@ -127,19 +129,19 @@ def doctor_save(self,DM,words):
     log("Doctor save failed: {}".format(e))
   return False
 
-def doctor_options(self,DM,words={}):
+def doctor_options(DM,words={}):
   """{}{}  - List the options to target and the numbers to use to save them"""
   return mstate.send_options("Use /target number (i.e. /target 0) to pick someone to save",
                              DM['sender_id'])
 
 ### COP FUNCTIONS ############################################################
 
-def cop_help(self,DM,words=[]):
+def cop_help(DM,words=[]):
   """{}{}  - Display this message"""
   comm.sendDM(COP_HELP_MESSAGE, DM["sender_id"])
   return True
 
-def cop_investigate(self,DM,words):
+def cop_investigate(sDM,words):
   """{}{} #  - Try to save the person associated with this number tonight"""
   try:
     return mstate.target(DM['sender_id'],int(words[1]))
@@ -147,18 +149,18 @@ def cop_investigate(self,DM,words):
     log("Cop investigation failed: {}".format(e))
   return False
 
-def cop_options(self,DM,words=[]):
+def cop_options(DM,words=[]):
   """{}{}  - List the options to target and the numbers to use to investigate them"""
   return mstate.send_options("Use /target number (i.e. /target 2) to pick someone to investigate",
                              DM['sender_id'])
 
 ### ANY DM FUNCTIONS ########################################################
 
-def dm_help(self,DM,words):
+def dm_help(DM,words):
   """{}{}  - Get this help message""".format(ACCESS_KW,HELP_KW)
   return comm.sendDM(DM_HELP_MESSAGE,DM['sender_id'])
 
-def dm_status(self,DM,words=[]):
+def dm_status(DM,words=[]):
   """{}{}  - Get the current state of the game""".format(ACCESS_KW,STATUS_KW)
   return comm.sendDM(mstate.__str__,DM['sender_id'])
   
@@ -202,7 +204,7 @@ def do_POST_MAIN(post):
                   comm.mainGroup)
   except KeyError as e: pass
 
-def do_POST_MAFIA(self,post):
+def do_POST_MAFIA(post):
   log("Got POST in MAFIA")
   # Test if we need to do anything
   try:
@@ -221,7 +223,7 @@ def do_POST(post):
   elif(post['group_id'] == MAFIA_GROUP_ID): do_POST_MAFIA(post)
   mstate.saveNotes()
 
-def do_DM(self,DM):
+def do_DM(DM):
   log("Got DM")
   try:
     if(not DM['sender_id'] == MODERATOR and
@@ -247,6 +249,13 @@ def do_DM(self,DM):
   except Exception as e:
     self.log("Error doing DM: {}".format(e))
 
+def loopDM():
+  while True:
+    for player in mstate.players:
+      DMs = comm.getDMs(player.id_)
+      for DM in DMs:
+        do_DM(DM)
+
 class MainHandler(BaseHandler):
 
   def do_POST(self):
@@ -269,8 +278,8 @@ if __name__ == "__main__":
   comm.intro()
 
   try:
-    _thread.start_new_thread(self.server.serve_forever,())
-    _thread.start_new_thread(self.loopDM,())
+    _thread.start_new_thread(server.serve_forever,())
+    _thread.start_new_thread(loopDM,())
     while True:
       pass
   except KeyboardInterrupt as e:

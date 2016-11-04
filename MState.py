@@ -354,10 +354,12 @@ class MState:
   def loadNotes(self):
     for varName in SAVES:
       self.__dict__[varName] = loadNote(varName)
+    self.loadPlayers()
 
   def saveNotes(self):
     for varName in SAVES:
       saveNote(self.__dict__[varName],varName)
+    self.savePlayers()
 
   def loadPlayers(self):
     ids = loadNote("player_ids")
