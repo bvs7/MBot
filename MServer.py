@@ -6,7 +6,7 @@ from MInfo import *
 import GroupyComm
 import MState
 
-comm = GroupyComm.GroupyComm()
+comm = GroupyComm.GroupyCommTest()
 mstate = MState.MState(comm)
 
 ### POST FUNCTIONS #############################################################

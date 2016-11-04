@@ -359,6 +359,22 @@ class MState:
     for varName in SAVES:
       saveNote(self.__dict__[varName],varName)
 
+  def loadPlayers(self):
+    ids = loadNote("player_ids")
+    for id_ in ids:
+      p = Player(id_, loadNote(id_+"/role"),
+                      loadNote(id_+"/vote"),
+                      loadNote(id_+"/target"))
+      self.players.append(p)
+
+  def savePlayers(self):
+    ids = [p.id_ for p in self.players]
+    saveNote(ids,"player_ids")
+    for player in self.players:
+      saveNote(player.role,player.id_+"/role")
+      saveNote(player.vote,player.id_+"/vote")
+      saveNote(player.target,player.id_+"/target")
+
   def __str__(self):
     if self.day == 0:
       m = "In the next game:\n"
