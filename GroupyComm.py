@@ -104,6 +104,7 @@ class GroupyComm:
         DMs = groupyEP.DirectMessages.index(player_id)
         self.recent_ids[player_id] = DMs[0]['id']
         DMs = []
+      saveNote(self.recent_ids,"recent_ids")
       return DMs
     except groupyEP.APIError as e:
       log("Failed to get DM: {}".format(e), 3) # This happens a lot, so it's silenced

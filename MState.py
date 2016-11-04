@@ -354,24 +354,32 @@ class MState:
   def loadNotes(self):
     for varName in SAVES:
       self.__dict__[varName] = loadNote(varName)
-    self.loadPlayers()
+    self.players = self.loadPList("players")
+    self.cops    = self.loadPList("cops")
+    self.docs    = self.loadPList("docs")
+    self.idiot_winners = self.loadPList("idiot_winners")
 
   def saveNotes(self):
     for varName in SAVES:
       saveNote(self.__dict__[varName],varName)
-    self.savePlayers()
+    self.savePList(self.players,"players")
+    self.savePList(self.cops,"cops")
+    self.savePList(self.docs,"docs")
+    self.savePList(self.idiot_winners,"idiot_winners")
 
-  def loadPlayers(self):
-    ids = loadNote("player_ids")
+  def loadPList(self,name):
+    ids = loadNote(name)
+    plist = []
     for id_ in ids:
       p = Player(id_, loadNote(id_+"/role"),
                       loadNote(id_+"/vote"),
                       loadNote(id_+"/target"))
-      self.players.append(p)
+      plist.append(p)
+    return plist
 
-  def savePlayers(self):
-    ids = [p.id_ for p in self.players]
-    saveNote(ids,"player_ids")
+  def savePList(self,plist,name):
+    ids = [p.id_ for p in plist]
+    saveNote(ids,name)
     for player in self.players:
       saveNote(player.role,player.id_+"/role")
       saveNote(player.vote,player.id_+"/vote")
