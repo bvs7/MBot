@@ -2,6 +2,7 @@
 from http.server import BaseHTTPRequestHandler as BaseHandler,HTTPServer
 
 import _thread
+import time
 
 from MInfo import *
 import GroupyComm
@@ -15,7 +16,6 @@ mstate = MState.MState(comm)
 ### VOTE -----------------------------------------------------------------------
     
 def vote(post,words):
-  """{}{} @[player]  - Vote for someone. Once they have a majority of votes they are killed"""
   log("VOTE")
   # get voter_id
   try:
@@ -44,25 +44,21 @@ def vote(post,words):
   
 
 def status(post={},words=[]):
-  """{}{}  - Check the status of the game"""
   log("STATUS")
   comm.cast(mstate.__str__())
   return True
 
 def help_(post={},words=[]):
-  """{}{}  - Display this message"""
   comm.cast(HELP_MESSAGE)
   return True
 
 def start(post={},words=[]):
-  """{}{}  - Start a game with the current players"""
   # NOTE: When the day is 0, the following is true:
   if mstate.day == 0:
     return mstate.startGame() 
   return False
 
 def in_(post,words=[]):
-  """{}{}  - Join the next game"""
   log("IN")
   # Get inquirer
   try:
@@ -80,7 +76,6 @@ def in_(post,words=[]):
   return True
 
 def out(post,words=[]):
-  """{}{}  - Leave the next game"""
   log("OUT")
   # Get player
   try:
@@ -97,12 +92,10 @@ def out(post,words=[]):
 ### MAFIA POST FUNCTIONS #####################################################
 
 def mafia_help(post={},words=[]):
-  """{}{}  - Display this message"""
   comm.cast(M_HELP_MESSAGE,MAFIA_GROUP_ID)
   return True
 
 def mafia_target(post,words):
-  """{}{} [number]  - Kill the player associated with this number (from options)"""
   try:
     return mstate.mafiaTarget(int(words[1]))
   except Exception as e:
@@ -110,18 +103,15 @@ def mafia_target(post,words):
     return False
   
 def mafia_options(post={},words=[]):
-  """{}{}  - List the options to kill and the numbers to use to kill them"""
   return mstate.mafia_options()
 
 ### DOCTOR FUNCTIONS #########################################################
 
 def doctor_help(DM,words={}):
-  """{}{}  - Display this message"""
   comm.sendDM(DOC_HELP_MESSAGE, DM['sender_id'])
   return True
 
 def doctor_save(DM,words):
-  """{}{} #  - Try to save the person associated with this number tonight"""
   try:
     return mstate.target(DM['sender_id'],int(words[1]))
   except Exception as e:
@@ -129,19 +119,16 @@ def doctor_save(DM,words):
   return False
 
 def doctor_options(DM,words={}):
-  """{}{}  - List the options to target and the numbers to use to save them"""
   return mstate.send_options("Use /target number (i.e. /target 0) to pick someone to save",
                              DM['sender_id'])
 
 ### COP FUNCTIONS ############################################################
 
 def cop_help(DM,words=[]):
-  """{}{}  - Display this message"""
   comm.sendDM(COP_HELP_MESSAGE, DM["sender_id"])
   return True
 
 def cop_investigate(sDM,words):
-  """{}{} #  - Try to save the person associated with this number tonight"""
   try:
     return mstate.target(DM['sender_id'],int(words[1]))
   except Exception as e:
@@ -149,18 +136,24 @@ def cop_investigate(sDM,words):
   return False
 
 def cop_options(DM,words=[]):
-  """{}{}  - List the options to target and the numbers to use to investigate them"""
   return mstate.send_options("Use /target number (i.e. /target 2) to pick someone to investigate",
                              DM['sender_id'])
+
+### CELEB FN ################################################################
+
+def celeb_help(DM,words=[]):
+  comm.sendDM(CELEB_HELP_MESSAGE, DM["sender_id"])
+  return True
+
+def celeb_reveal(DM,words=[]):
+  return mstate.reveal(DM["sender_id"]):
 
 ### ANY DM FUNCTIONS ########################################################
 
 def dm_help(DM,words):
-  """{}{}  - Get this help message""".format(ACCESS_KW,HELP_KW)
   return comm.sendDM(DM_HELP_MESSAGE,DM['sender_id'])
 
 def dm_status(DM,words=[]):
-  """{}{}  - Get the current state of the game""".format(ACCESS_KW,STATUS_KW)
   return comm.sendDM(mstate.__str__,DM['sender_id'])
   
   
@@ -186,6 +179,9 @@ COP_OPS = {HELP_KW   : cop_help ,
            OPTS_KW   : cop_options ,
            TARGET_KW : cop_investigate ,
           }
+CELEB_OPS = {HELP_KW : celeb_help,
+             REVEAL_KW : celeb_reveal,
+             }
 DM_OPS = { HELP_KW  : dm_help,
            STATUS_KW: dm_status,
           }
@@ -238,6 +234,11 @@ def do_DM(DM):
           if not COP_OPS[words[0]](DM,words):
             comm.sendDM("{} failed".format(words[0]),DM['sender_id'])
 
+      elif(player.role == "CELEB"):
+        if(not len(words) == 0 and words[0] in CELEB_OPS):
+          if not CELEB_OPS[words[0]](DM,words):
+            comm.sendDM("{} failed".format(words[0]),DM['sender_id'])
+
       if(not len(words) == 0 and words[0] in DM_OPS):
         if not DM_OPS[words[0]](DM,words):
           comm.sendDM("{} failed".format(words[0]),DM['sender_id'])
@@ -248,10 +249,45 @@ def do_DM(DM):
 
 def loopDM():
   while True:
-    for player in mstate.players:
-      DMs = comm.getDMs(player.id_)
+    for member in comm.getMembers:
+      DMs = comm.getDMs(member.user_id)
       for DM in DMs:
         do_DM(DM)
+
+def keepTime():
+
+  currTime = mstate.time
+  currDay  = mstate.day
+
+  lastTime = currTime
+  lastDay  = currDay
+
+  seconds = 0
+
+  while True:
+    currTime = mstate.time
+    currDay  = mstate.day
+
+    if((not currDay == 0) and currTime==lastTime and currDay==lastDay):
+      seconds += 1
+    else:
+      seconds = 0
+
+    if currDay == "Day" and seconds >= MAX_SECONDS_DAY:
+      comm.cast("You are out of time")
+      mstate.toNight()
+      seconds = 0
+    elif currDay == "Night" and seconds >= MAX_SECONDS_NIGHT:
+      comm.cast("Some people accidentally slept through the night...")
+      mstate.toDay()
+      seconds = 0
+
+    lastTime = currTime
+    lastDay  = currDay
+
+    #Wait For a second
+    time.sleep(1)
+      
 
 class MainHandler(BaseHandler):
 
@@ -277,6 +313,7 @@ if __name__ == "__main__":
   try:
     _thread.start_new_thread(loopDM,())
     _thread.start_new_thread(server.serve_forever,())
+    _thread.start_new_thread(keepTime,()
 
     while True:
       pass

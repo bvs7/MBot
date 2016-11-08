@@ -91,6 +91,15 @@ class MState:
     self.checkToDay()
     return True
 
+  def mafia_options(self):
+    msg = "Use /target number (i.e. /target 1) to select someone to kill:"
+    c = 0
+    for player in self.players:
+      msg += "\n"+str(c)+self.comm.getName(player.id_)
+      c += 1
+    self.comm.cast(msg,MAFIA_GROUP_ID)
+    return True
+
   def target(self, player_id, target_option):
     # Set a player's target. This only has an effect if the
     # player is a cop or a doc
@@ -111,6 +120,24 @@ class MState:
     player.target = target
     # Check if Night is over
     self.checkToDay()
+    return True
+
+  def send_options(self, prompt, player_id):
+    msg = prompt
+    c = 0
+    for player in self.players:
+      msg += "\n"+str(c)+self.comm.getName(player.id_)
+      c += 1
+    self.comm.sendDM(msg,player_id)
+    return True
+
+  def reveal(self, player_id):
+    try:
+      player = self.getPlayer(player_id)
+    except Exception as e:
+      log(e)
+      return False
+    self.comm.cast(self.comm.getName(player_id) + " is " + player.role)
     return True
 
   def checkVotes(self,player):
@@ -171,6 +198,10 @@ class MState:
         msg = ("Tragedy has struck! {} is dead! Someone must pay for this! "
                "Vote to kill somebody!").format(self.comm.getName(self.mafia_target.id_))
         self.comm.cast(msg)
+    # Mafia has no target
+    else:
+      msg = ("A peculiar feeling drifts about... everyone is still alive...")
+      self.comm.cast(msg)
 
     # If cop is still alive and has chosen a target
     for cop in self.cops:
@@ -197,24 +228,6 @@ class MState:
     for doc in self.docs:
       if doc in self.players:
         self.send_options("Use /target number (i.e. /target 0) to pick someone to save",doc.id_)
-
-  def mafia_options(self):
-    msg = "Use /target number (i.e. /target 1) to select someone to kill:"
-    c = 0
-    for player in self.players:
-      msg += "\n"+str(c)+self.comm.getName(player.id_)
-      c += 1
-    self.comm.cast(msg,MAFIA_GROUP_ID)
-    return True
-
-  def send_options(self, prompt, player_id):
-    msg = prompt
-    c = 0
-    for player in self.players:
-      msg += "\n"+str(c)+self.comm.getName(player.id_)
-      c += 1
-    self.comm.sendDM(msg,player_id)
-    return True
         
   def checkWinCond(self):
     # Check win conditions

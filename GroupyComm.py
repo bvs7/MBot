@@ -117,6 +117,10 @@ class GroupyComm:
         return m.nickname
     return "__"
 
+  def getMembers(self):
+    self.mainGroup.refresh()
+    return self.mainGroup.members()
+
   def addMafia(self, player_id):
     self.mafiaGroup.add({'user_id':player_id})
 
@@ -162,6 +166,10 @@ class GroupyCommTest:
 
   def getName(self,player_id):
     return "[Name of {}]".format(player_id)
+
+  def getMembers(self):
+    print("Getting Members")
+    return []
 
   def addMafia(self, player_id):
     self.mafia.append(player_id)

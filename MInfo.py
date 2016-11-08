@@ -77,6 +77,10 @@ ROLE_EXPLAIN= {
   "IDIOT" : ("You are the villiage IDIOT. Your life's dream is to be such an"
              " annoyance that the townsfolk kill you in frustration. You don't"
              " care whether the mafia win or lose, as long as you get votes."),
+  "CELEB" : ("You are a CELEBrity. Everybody knows who you are, they just "
+             "don't recognize you right now. You can reveal yourself during Day "
+             "by sending me '/reveal'. But be careful! You'll be quite the "
+             "target once you do this!")
   }
 
 SAVES = [
@@ -93,12 +97,13 @@ ROLE_SCORES = {
   "COP"    :  4,
   "TOWN"   :  2,
   "IDIOT"  : -2,
+  "CELEB"  :  3,
 }
 
 # Probability of town roles being chosen
 TOWN_WEIGHTS = [
-  ["TOWN", "DOCTOR", "COP"],
-  [75,     10,       10]
+  ["TOWN", "DOCTOR", "COP", "CELEB"],
+  [75,     10,       10,    5]
 ]
 
 # Probability of anti-town roles being chosen
@@ -121,16 +126,61 @@ OUT_KW    = 'out'
 TARGET_KW = 'target'
 OPTS_KW   = 'options'
 
+REVEAL_KW = 'reveal'
+
 RESTART_KW= 'restart'
 
 ## HELP MESSAGES
 
-HELP_MESSAGE = "Main Help"
+HELP_MESSAGE =("Welcome to the Mafia Groupme. "
+               "In this Groupme you can play mafia via certain commands.\n"
+               "/vote @  - Use this to vote for somebody, where @ is a mention. "
+               "You can also use /vote me to vote yourself, /vote none to cancel "
+               "And /vote nokill to vote for no kill.\n"
+               "/status  - Get the current state of the game\n"
+               "/help  - Display this message\n"
+               "/in  - Be in the NEXT game. During a game, this means the game "
+               "after this one finishes.\n"
+               "/out  - If you change your mind, use this to get out of the "
+               "next game.\n"
+               "/start  - Use this to begin a game with those who have enrolled.\n")
 
-M_HELP_MESSAGE = "Mafia Help"
+M_HELP_MESSAGE = ("Hey you naughty people, here is what you can do here:\n"
+                  "/options  - Display the list of what numbers to use to kill.\n"
+                  "/target #  - Kill the person who is option #. For example, if "
+                  "Brian is option 2, enter '/target 2'\n"
+                  "/help  - Display this message.")
 
-DOC_HELP_MESSAGE = "Doc Help"
+DOC_HELP_MESSAGE = ("Hey Doc, here is what you can do here:\n"
+                    "/options  - Display the list of what numbers to use to save.\n"
+                    "/target #  - Save the person who is option #. For example, if "
+                    "Brian is option 2, enter '/target 2'\n"
+                    "/help  - Display this message.")
 
-COP_HELP_MESSAGE = "Cop Help"
+COP_HELP_MESSAGE = ("Hey Cop, here is what you can do here:\n"
+                    "/options  - Display the list of what numbers to use to search.\n"
+                    "/target #  - Search the person who is option #. For example, if "
+                    "Brian is option 2, enter '/target 2'\n"
+                    "/help  - Display this message.")
 
-DM_HELP_MESSAGE = "DM Help"
+CELEB_HELP_MESSAGE = ("Hey Celeb, here is what you can do here:\n"
+                      "/reveal  - MODERATOR will send a message to the main group "
+                      " confirming you as town. You can use this whenever you want")
+
+DM_HELP_MESSAGE = ("In the Main Groupme you can play mafia via these commands:\n"
+                   "/vote @  - Use this to vote for somebody, where @ is a mention. "
+                   "You can also use /vote me to vote yourself, /vote none to cancel "
+                   "And /vote nokill to vote for no kill.\n"
+                   "/status  - Get the current state of the game. You can also "
+                   "enter this command here to privately get the stats\n"
+                   "/help  - Display this message\n"
+                   "/in  - Be in the NEXT game. During a game, this means the game "
+                   "after this one finishes.\n"
+                   "/out  - If you change your mind, use this to get out of the "
+                   "next game.\n"
+                   "/start  - Use this to begin a game with those who have enrolled.\n")
+
+### TIMING ##########
+
+MAX_SECONDS_DAY = 60
+MAX_SECONDS_NIGHT = 60
