@@ -104,7 +104,6 @@ class GroupyComm:
         self.recent_ids[player_id] = DMs[0]['id']
       else:
         DMs = groupyEP.DirectMessages.index(player_id)['direct_messages']
-        print(DMs)
         if len(DMs) > 0:
           self.recent_ids[player_id] = DMs[0]['id']
           DMs = []

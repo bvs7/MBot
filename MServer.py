@@ -130,7 +130,7 @@ def cop_help(DM,words=[]):
   comm.sendDM(COP_HELP_MESSAGE, DM["sender_id"])
   return True
 
-def cop_investigate(sDM,words):
+def cop_investigate(DM,words):
   try:
     return mstate.target(DM['sender_id'],int(words[1]))
   except Exception as e:
@@ -220,7 +220,6 @@ def do_POST(post):
   mstate.saveNotes()
 
 def do_DM(DM):
-  DMlock.acquire()
   log("Got DM")
   try:
     if(not DM['sender_id'] == MODERATOR and
@@ -253,23 +252,30 @@ def do_DM(DM):
          
   except Exception as e:
     comm.log("Error doing DM: {}".format(e))
-  DMlock.release()
 
 def loopDM():
   while True:
     for member in comm.getMembers():
+#      print("slow {}".format(member.user_id))
       DMs = comm.getDMs(member.user_id)
       for DM in DMs:
+        DMlock.acquire()
         do_DM(DM)
-      time.sleep(2)
+        DMlock.release()
+      time.sleep(.5)
+
 
 def loopDMin():
 # Specifically, only loop through the players in the game
   while True:
     for player in mstate.players:
+#      print("into {}".format(player.id_))
       DMs = comm.getDMs(player.id_)
       for DM in DMs:
+        DMlock.acquire()
         do_DM(DM)
+        DMlock.release()
+      time.sleep(.5)
 
 def keepTime():
   log("Starting KeepTime")
@@ -282,7 +288,6 @@ def keepTime():
   seconds = 0
 
   while True:
-    log(str(seconds))
     currTime = mstate.time
     currDay  = mstate.day
 
@@ -334,6 +339,7 @@ if __name__ == "__main__":
 
   try:
     _thread.start_new_thread(loopDM,())
+    _thread.start_new_thread(loopDMin,())
     _thread.start_new_thread(server.serve_forever,())
     _thread.start_new_thread(keepTime,())
 
