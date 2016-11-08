@@ -11,6 +11,8 @@ import MState
 comm = GroupyComm.GroupyComm()
 mstate = MState.MState(comm)
 
+DMlock = _thread.allocate_lock()
+
 ### POST FUNCTIONS #############################################################
     
 ### VOTE -----------------------------------------------------------------------
@@ -146,7 +148,8 @@ def celeb_help(DM,words=[]):
   return True
 
 def celeb_reveal(DM,words=[]):
-  return mstate.reveal(DM["sender_id"]):
+  return mstate.reveal(DM["sender_id"])
+
 
 ### ANY DM FUNCTIONS ########################################################
 
@@ -154,7 +157,7 @@ def dm_help(DM,words):
   return comm.sendDM(DM_HELP_MESSAGE,DM['sender_id'])
 
 def dm_status(DM,words=[]):
-  return comm.sendDM(mstate.__str__,DM['sender_id'])
+  return comm.sendDM(mstate.__str__(),DM['sender_id'])
   
   
 # This dict routes the command to the correct function
@@ -217,24 +220,28 @@ def do_POST(post):
   mstate.saveNotes()
 
 def do_DM(DM):
+  DMlock.acquire()
   log("Got DM")
   try:
     if(not DM['sender_id'] == MODERATOR and
        DM['text'][0:len(ACCESS_KW)] == ACCESS_KW):
       words = DM['text'][len(ACCESS_KW):].split()
-      player = mstate.getPlayer(DM['sender_id'])
-      
-      if(player.role == "DOCTOR"):
+      try:
+        role = mstate.getPlayer(DM['sender_id']).role
+      except Exception as e:
+        role = ""
+     
+      if(role == "DOCTOR"):
         if(not len(words) == 0 and words[0] in DOC_OPS):
           if not DOC_OPS[words[0]](DM,words):
             comm.sendDM("{} failed".format(words[0]),DM['sender_id'])
               
-      elif(player.role == "COP"):
+      elif(role == "COP"):
         if(not len(words) == 0 and words[0] in COP_OPS):
           if not COP_OPS[words[0]](DM,words):
             comm.sendDM("{} failed".format(words[0]),DM['sender_id'])
 
-      elif(player.role == "CELEB"):
+      elif(role == "CELEB"):
         if(not len(words) == 0 and words[0] in CELEB_OPS):
           if not CELEB_OPS[words[0]](DM,words):
             comm.sendDM("{} failed".format(words[0]),DM['sender_id'])
@@ -245,12 +252,22 @@ def do_DM(DM):
       
          
   except Exception as e:
-    self.log("Error doing DM: {}".format(e))
+    comm.log("Error doing DM: {}".format(e))
+  DMlock.release()
 
 def loopDM():
   while True:
-    for member in comm.getMembers:
+    for member in comm.getMembers():
       DMs = comm.getDMs(member.user_id)
+      for DM in DMs:
+        do_DM(DM)
+      time.sleep(2)
+
+def loopDMin():
+# Specifically, only loop through the players in the game
+  while True:
+    for player in mstate.players:
+      DMs = comm.getDMs(player.id_)
       for DM in DMs:
         do_DM(DM)
 
@@ -313,7 +330,7 @@ if __name__ == "__main__":
   try:
     _thread.start_new_thread(loopDM,())
     _thread.start_new_thread(server.serve_forever,())
-    _thread.start_new_thread(keepTime,()
+    _thread.start_new_thread(keepTime,())
 
     while True:
       pass

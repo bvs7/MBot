@@ -97,17 +97,22 @@ class GroupyComm:
   def getDMs(self, player_id):
     try:
       if player_id in self.recent_ids:
-        DMs = groupyEP.DirectMessages.index(player_id,
-                                            since_id=self.recent_ids[player_id])
+        DMs = groupyEP.DirectMessages.index(
+                player_id,
+                since_id=self.recent_ids[player_id])['direct_messages']
+
         self.recent_ids[player_id] = DMs[0]['id']
       else:
-        DMs = groupyEP.DirectMessages.index(player_id)
-        self.recent_ids[player_id] = DMs[0]['id']
-        DMs = []
+        DMs = groupyEP.DirectMessages.index(player_id)['direct_messages']
+        print(DMs)
+        if len(DMs) > 0:
+          self.recent_ids[player_id] = DMs[0]['id']
+          DMs = []
       saveNote(self.recent_ids,"recent_ids")
       return DMs
-    except groupyEP.APIError as e:
-      log("Failed to get DM: {}".format(e), 3) # This happens a lot, so it's silenced
+    except Exception as e:
+      log("Failed to get DM from {}: {}".format(self.getName(player_id),e), 3) # This happens a lot, so it's silenced
+      return []
 
   def getName(self,player_id):
     self.mainGroup.refresh()

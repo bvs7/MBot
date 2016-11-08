@@ -3,7 +3,7 @@
 import json  # For loading vars
 import os
 
-DEBUG = 2
+DEBUG = 4
 SILENT = False
 
 info_fname = "info"
