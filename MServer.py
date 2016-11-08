@@ -272,7 +272,7 @@ def loopDMin():
         do_DM(DM)
 
 def keepTime():
-
+  log("Starting KeepTime")
   currTime = mstate.time
   currDay  = mstate.day
 
@@ -282,6 +282,7 @@ def keepTime():
   seconds = 0
 
   while True:
+    log(str(seconds))
     currTime = mstate.time
     currDay  = mstate.day
 
@@ -290,14 +291,18 @@ def keepTime():
     else:
       seconds = 0
 
-    if currDay == "Day" and seconds >= MAX_SECONDS_DAY:
+    if currTime == "Day" and seconds >= MAX_SECONDS_DAY:
       comm.cast("You are out of time")
       mstate.toNight()
       seconds = 0
-    elif currDay == "Night" and seconds >= MAX_SECONDS_NIGHT:
+    elif currTime == "Night" and seconds >= MAX_SECONDS_NIGHT:
       comm.cast("Some people accidentally slept through the night...")
       mstate.toDay()
       seconds = 0
+
+    if ((currTime == "Day" and (MAX_SECONDS_DAY - seconds == 60)) or
+       (currTime == "Night" and (MAX_SECONDS_NIGHT -seconds == 60))):
+      comm.cast("One minute left")
 
     lastTime = currTime
     lastDay  = currDay

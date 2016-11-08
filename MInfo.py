@@ -3,10 +3,15 @@
 import json  # For loading vars
 import os
 
-DEBUG = 4
+DEBUG = 2
 SILENT = False
 
 info_fname = "info"
+
+### TIMING ##########
+
+MAX_SECONDS_DAY = 30*60
+MAX_SECONDS_NIGHT = 5*60-1
 
 try:
   f = open(info_fname,'r')
@@ -180,7 +185,3 @@ DM_HELP_MESSAGE = ("In the Main Groupme you can play mafia via these commands:\n
                    "next game.\n"
                    "/start  - Use this to begin a game with those who have enrolled.\n")
 
-### TIMING ##########
-
-MAX_SECONDS_DAY = 60
-MAX_SECONDS_NIGHT = 60

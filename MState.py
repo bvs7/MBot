@@ -128,8 +128,7 @@ class MState:
     for player in self.players:
       msg += "\n"+str(c)+self.comm.getName(player.id_)
       c += 1
-    self.comm.sendDM(msg,player_id)
-    return True
+    return self.comm.sendDM(msg,player_id)
 
   def reveal(self, player_id):
     try:
@@ -205,7 +204,7 @@ class MState:
 
     # If cop is still alive and has chosen a target
     for cop in self.cops:
-      if not cop.target == self.null:
+      if not cop.target in [None,self.null]:
         self.comm.sendDM("{} is {}".format(self.comm.getName(cop.target.id_),
             "MAFIA" if cop.target.role in MAFIA_ROLES else "TOWN"),
              cop.id_)
@@ -223,10 +222,11 @@ class MState:
     self.comm.cast("As the sky darkens, so too do your intentions. Pick someone to kill",MAFIA_GROUP_ID)
     self.mafia_options()
     for cop in self.cops:
-      if cop in self.players:
+      print(cop.id_)
+      if any([cop.id_ == p.id_ for p in self.players]):
         self.send_options("Use /target number (i.e. /target 2) to pick someone to investigate",cop.id_)
     for doc in self.docs:
-      if doc in self.players:
+      if any([doc.id_ == p.id_ for p in self.players]):
         self.send_options("Use /target number (i.e. /target 0) to pick someone to save",doc.id_)
         
   def checkWinCond(self):
@@ -337,6 +337,11 @@ class MState:
       self.comm.sendDM(ROLE_EXPLAIN[player.role],player.id_)
       if player.role in MAFIA_ROLES:
         self.comm.addMafia(player.id_)
+
+    self.comm.cast(("Dawn. Of the game and of this new day. You have learned "
+                    "that scum reside in this town... A scum you must purge. "
+                    "Kill Someone!"))
+
     return True
 
   def endGame(self):
