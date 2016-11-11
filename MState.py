@@ -64,8 +64,12 @@ class MState:
       if player.role in MAFIA_ROLES:
         self.num_mafia = self.num_mafia - 1
       self.players.remove(player)
+      if player in self.cops:
+        self.cops.remove(player)
+      if player in self.docs:
+        self.docs.remove(player)
     except Exception as e:
-      log("Failed to kill {}: {}".format(player,e))
+      log("Failed to kill {}: {}".format(player_id,e))
       return False
     # Check win conditions
     if not self.checkWinCond():
@@ -163,7 +167,7 @@ class MState:
     if len(voters) > num_players/2:
       self.comm.cast("The vote to kill {} has passed".format(
                 self.comm.getName(player.id_)))
-      if(self.kill(player)):
+      if(self.kill(player.id_)):
         if player.role == "IDIOT":
           self.idiot_winners.append(player)
         if not self.day == 0:
@@ -192,16 +196,16 @@ class MState:
     # If mafia has a target
     if not self.mafia_target in [None, self.null]:
       # Doctor is alive and saved the target
-      if any([d.target == self.mafia_target for d in self.docs]):
+      if any([d.target.id_ == self.mafia_target for d in self.docs]):
         msg = ("Tragedy has struck! {} is ... wait! They've been saved by "
                "the doctor! Someone must pay for this! Vote to kill "
-               "somebody!").format(self.comm.getName(self.mafia_target.id_))
+               "somebody!").format(self.comm.getName(self.mafia_target))
         self.comm.cast(msg)
       # Doctor couldn't save the target
       else:
         self.kill(self.mafia_target)
         msg = ("Tragedy has struck! {} is dead! Someone must pay for this! "
-               "Vote to kill somebody!").format(self.comm.getName(self.mafia_target.id_))
+               "Vote to kill somebody!").format(self.comm.getName(self.mafia_target))
         self.comm.cast(msg)
     # Mafia has no target
     else:
@@ -269,13 +273,14 @@ class MState:
       num_town = 0
       town_sum = sum(TOWN_WEIGHTS[1])
       mafia_sum = sum(MAFIA_WEIGHTS[1])
+      role = "TOWN"
 
       if num_players == 4:
         return ["TOWN", "DOCTOR", "COP", "MAFIA"]
       elif num_players == 3:
         return ["DOCTOR", "MAFIA", "COP"]
       while(n < num_players):
-        r = random.randint(-5,5)
+        r = random.randint(-3,3)
         if r >= score:
           # Add Town
           t = random.randint(0,town_sum)
@@ -359,7 +364,7 @@ class MState:
     self.players.clear()
     self.comm.clearMafia()
 
-    for winner in idiot_winners:
+    for winner in self.idiot_winners:
       self.comm.cast(self.comm.getName(winner.id_)+" WON!")
 
     self.comm.cast(self.revealRoles())
