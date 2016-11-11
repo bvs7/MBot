@@ -217,7 +217,7 @@ def do_POST_MAFIA(post):
 def do_POST(post):
   if(  post['group_id'] == MAIN_GROUP_ID): do_POST_MAIN(post)
   elif(post['group_id'] == MAFIA_GROUP_ID): do_POST_MAFIA(post)
-  mstate.saveNotes()
+#  mstate.saveNotes()
 
 def do_DM(DM):
   log("Got DM")
@@ -255,27 +255,33 @@ def do_DM(DM):
 
 def loopDM():
   while True:
-    for member in comm.getMembers():
-#      print("slow {}".format(member.user_id))
-      DMs = comm.getDMs(member.user_id)
-      for DM in DMs:
-        DMlock.acquire()
-        do_DM(DM)
-        DMlock.release()
-      time.sleep(.5)
+    try:
+      for member in comm.getMembers():
+#        print("slow {}".format(member.user_id))
+        DMs = comm.getDMs(member.user_id)
+        for DM in DMs:
+          DMlock.acquire()
+          do_DM(DM)
+          DMlock.release()
+        time.sleep(.5)
+    except Exception as e:
+      log("Error in DMs: {}".format(e))
 
 
 def loopDMin():
 # Specifically, only loop through the players in the game
   while True:
-    for player in mstate.players:
-#      print("into {}".format(player.id_))
-      DMs = comm.getDMs(player.id_)
-      for DM in DMs:
-        DMlock.acquire()
-        do_DM(DM)
-        DMlock.release()
-      time.sleep(.5)
+    try:
+      for player in mstate.players:
+#        print("into {}".format(player.id_))
+        DMs = comm.getDMs(player.id_)
+        for DM in DMs:
+          DMlock.acquire()
+          do_DM(DM)
+          DMlock.release()
+        time.sleep(.5)
+    except Exception as e:
+      log("Error in DMsin: {}".format(e))
 
 def keepTime():
   log("Starting KeepTime")
@@ -333,7 +339,7 @@ if __name__ == "__main__":
 
   server = HTTPServer((ADDRESS,int(PORT)), MainHandler)
 
-  mstate.loadNotes()
+#  mstate.loadNotes()
 
   comm.intro()
 
