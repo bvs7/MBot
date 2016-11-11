@@ -216,7 +216,8 @@ class MState:
     for cop in self.cops:
       if not cop.target in [None,self.null]:
         self.comm.sendDM("{} is {}".format(self.comm.getName(cop.target.id_),
-            "MAFIA" if cop.target.role in MAFIA_ROLES else "TOWN"),
+            "MAFIA" if (cop.target.role in MAFIA_ROLES and
+                        not cop.target.role == "GODFATHER") else "TOWN"),
              cop.id_)
     
     self.clearTargets()
@@ -300,6 +301,10 @@ class MState:
             num_mafia += 1
         roles.append(role)
         score += ROLE_SCORES[role]
+        if role == "GODFATHER":
+          score -= len([None for c in roles if c == "COP"])
+        if role == "COP":
+          score -= len([None for g in roles if g == "GODFATHER"])
         n += 1
 
       # Done making roles, ensure this isn't a bad game
@@ -307,6 +312,7 @@ class MState:
         break
 
     # Roles contains a valid game
+    print(score)
     return roles
       
   def startGame(self):

@@ -58,13 +58,16 @@ def saveNote(var,name):
 
 ### DATA FOR MSTATE #############
 
-MAFIA_ROLES = [ "MAFIA" ]
+MAFIA_ROLES = [ "MAFIA" , "GODFATHER"]
 TOWN_ROLES  = [ "TOWN", "COP", "DOCTOR", "IDIOT" ]
 
 ROLE_EXPLAIN= {
   "MAFIA" : ("You are MAFIA. You are now part of the mafia chat to talk "
              "privately with your co-conspirators. During the day, try not "
              "to get killed. During the Night, choose somebody to kill!"),
+  "GODFATHER" : ("You are a GODFATHER. You are a leader of the mafia, up "
+                 "to no good! Use the mafia chat to conspire. If a cop "
+                 "investigates you, they'll see you as TOWN!"),
   "TOWN"  : ("You are TOWN. You are a normal player in this game, the last "
              "line of defense against the mafia scum. Sniff out who the "
              "mafia are and convince your fellow town members to kill them "
@@ -98,6 +101,7 @@ BASE_SCORE = -8
 
 ROLE_SCORES = {
   "MAFIA"  : -3,
+  "GODFATHER" : -3,
   "DOCTOR" :  4,
   "COP"    :  4,
   "TOWN"   :  2,
@@ -113,8 +117,8 @@ TOWN_WEIGHTS = [
 
 # Probability of anti-town roles being chosen
 MAFIA_WEIGHTS = [
-  ["MAFIA", "IDIOT"],
-  [85,      15],
+  ["MAFIA", "IDIOT", "GODFATHER"],
+  [85,      15,       10],
 ]
 
 
