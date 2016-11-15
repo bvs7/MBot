@@ -37,7 +37,7 @@ class NoteError(Exception):
 def loadNote(varName):
   """Loads and returns a variable from a file"""
   try:
-    return pickle.load( open(NOTES_FNAME+'/'+varName,'r') )
+    return pickle.load( open(NOTES_FNAME+'/'+varName,'rb') )
   except Exception as e:
     log("Falied to load {}: {}".format(varName,e))
     raise NoteError(str(e)+": "+varName)
@@ -45,10 +45,10 @@ def loadNote(varName):
 def saveNote(var,name):
   """Saves a variable"""
   fname = NOTES_FNAME + "/" + name
-  if not os.path.exists(fname):
-    os.makedirs(fname)
+  if not os.path.exists(NOTES_FNAME):
+    os.makedirs(NOTES_FNAME)
   try:
-    pickle.dump(var, open(fname,'w'))
+    pickle.dump(var, open(fname,'wb'))
   except Exception as e:
     log("Failed to save {}: {}".format(name, e))
     raise NoteError(str(e)+": "+name)

@@ -60,6 +60,8 @@ timerOn  - if Timer is on
     self.timer_value = 0
     self.timerOn = False
 
+    self.loadNotes()
+
     ## initialize time keeping thread
     _thread.start_new_thread(self.watchTimer, ())
     
@@ -462,11 +464,13 @@ timerOn  - if Timer is on
 
   def setTimer(self):
     """ Start a 5 minute timer. At the end of which the game will automatically progress. """
-    if not self.timerOn:
+    if (not self.timerOn or self.day == 0):
       self.timerOn = True
       self.timer_value = SET_TIMER_VALUE
       self.comm.cast("Timer Started. Five minutes left")
       return True
+    else:
+      return False
 
   def watchTimer(self):
     """ Ticks a timer and switches to the next stage when we take too long. """

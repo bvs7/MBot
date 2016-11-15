@@ -3,6 +3,7 @@ from http.server import BaseHTTPRequestHandler as BaseHandler,HTTPServer
 
 import _thread
 import time
+import json
 
 from MInfo import *
 import GroupyComm
@@ -222,7 +223,7 @@ def do_POST_MAFIA(post):
 def do_POST(post):
   if(  post['group_id'] == MAIN_GROUP_ID): do_POST_MAIN(post)
   elif(post['group_id'] == MAFIA_GROUP_ID): do_POST_MAFIA(post)
-#  mstate.saveNotes()
+  mstate.saveNotes()
 
 def do_DM(DM):
   log("Got DM")
@@ -262,7 +263,6 @@ def loopDM():
   while True:
     try:
       for member in comm.getMembers():
-#        print("slow {}".format(member.user_id))
         DMs = comm.getDMs(member.user_id)
         for DM in DMs:
           DMlock.acquire()
@@ -278,7 +278,6 @@ def loopDMin():
   while True:
     try:
       for player in mstate.players:
-#        print("into {}".format(player.id_))
         DMs = comm.getDMs(player.id_)
         for DM in DMs:
           DMlock.acquire()
@@ -298,7 +297,10 @@ class MainHandler(BaseHandler):
     except Exception as e:
       post = {}
 
-    do_POST(post)
+    try:
+      do_POST(post)
+    except Exception as e:
+      log(e)
     return
 
 if __name__ == "__main__":
