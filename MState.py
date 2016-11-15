@@ -464,7 +464,7 @@ timerOn  - if Timer is on
 
   def setTimer(self):
     """ Start a 5 minute timer. At the end of which the game will automatically progress. """
-    if (not self.timerOn or self.day == 0):
+    if not (self.timerOn or self.day == 0):
       self.timerOn = True
       self.timer_value = SET_TIMER_VALUE
       self.comm.cast("Timer Started. Five minutes left")
@@ -486,7 +486,7 @@ timerOn  - if Timer is on
         else:
           self.timerOn = False
           self.timer_value = 0
-
+      if self.timerOn:
         if self.timer_value == 60:
           self.comm.cast("One minute remaining, one minute")
         elif self.timer_value == 20:
