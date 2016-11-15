@@ -1,6 +1,6 @@
 # Main info module
 
-import json  # For loading vars
+import pickle  # For loading vars
 import os
 
 DEBUG = 2
@@ -10,8 +10,7 @@ info_fname = "info"
 
 ### TIMING ##########
 
-MAX_SECONDS_DAY = 30*60
-MAX_SECONDS_NIGHT = 5*60-1
+SET_TIMER_VALUE = 5*60
 
 try:
   f = open(info_fname,'r')
@@ -38,7 +37,7 @@ class NoteError(Exception):
 def loadNote(varName):
   """Loads and returns a variable from a file"""
   try:
-    return json.load( open(NOTES_FNAME+'/'+varName,'r') )
+    return pickle.load( open(NOTES_FNAME+'/'+varName,'r') )
   except Exception as e:
     log("Falied to load {}: {}".format(varName,e))
     raise NoteError(str(e)+": "+varName)
@@ -46,11 +45,10 @@ def loadNote(varName):
 def saveNote(var,name):
   """Saves a variable"""
   fname = NOTES_FNAME + "/" + name
-  folder = fname[0:-len(fname.split('/')[-1])-1]
-  if not os.path.exists(folder):
-    os.makedirs(folder)
+  if not os.path.exists(fname):
+    os.makedirs(fname)
   try:
-    json.dump(var, open(fname,'w'))
+    pickle.dump(var, open(fname,'w'))
   except Exception as e:
     log("Failed to save {}: {}".format(name, e))
     raise NoteError(str(e)+": "+name)
@@ -92,7 +90,7 @@ ROLE_EXPLAIN= {
   }
 
 SAVES = [
-      "time","day","num_mafia","mafia_target"
+      "time","day","num_mafia","mafia_target","players","idiot_winners",
     ]
 
 # ROLE GENERATION
@@ -131,6 +129,7 @@ HELP_KW   = 'help'
 START_KW  = 'start'
 IN_KW     = 'in'
 OUT_KW    = 'out'
+TIMER_KW  = 'timer'
 
 TARGET_KW = 'target'
 OPTS_KW   = 'options'
@@ -152,7 +151,8 @@ HELP_MESSAGE =("Welcome to the Mafia Groupme. "
                "after this one finishes.\n"
                "/out  - If you change your mind, use this to get out of the "
                "next game.\n"
-               "/start  - Use this to begin a game with those who have enrolled.\n")
+               "/start  - Use this to begin a game with those who have enrolled.\n"
+               "/timer  - Set a five minute time limit on the current day\n")
 
 M_HELP_MESSAGE = ("Hey you naughty people, here is what you can do here:\n"
                   "/options  - Display the list of what numbers to use to kill.\n"

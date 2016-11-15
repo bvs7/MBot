@@ -90,6 +90,10 @@ def out(post,words=[]):
   comm.cast("{} removed from game".format(comm.getName(player)))
   return True
 
+def timer(post={},words=[]):
+  log("Setting Timer")
+  return mstate.setTimer()
+
 
 ### MAFIA POST FUNCTIONS #####################################################
 
@@ -167,6 +171,7 @@ OPS ={ VOTE_KW   : vote   ,
        START_KW  : start  ,
        IN_KW     : in_    ,
        OUT_KW    : out    ,
+       TIMER_KW  : timer  ,
      }
 
 MOPS={ HELP_KW   : mafia_help ,
@@ -283,45 +288,6 @@ def loopDMin():
     except Exception as e:
       log("Error in DMsin: {}".format(e))
 
-def keepTime():
-  log("Starting KeepTime")
-  currTime = mstate.time
-  currDay  = mstate.day
-
-  lastTime = currTime
-  lastDay  = currDay
-
-  seconds = 0
-
-  while True:
-    currTime = mstate.time
-    currDay  = mstate.day
-
-    if((not currDay == 0) and currTime==lastTime and currDay==lastDay):
-      seconds += 1
-    else:
-      seconds = 0
-
-    if currTime == "Day" and seconds >= MAX_SECONDS_DAY:
-      comm.cast("You are out of time")
-      mstate.toNight()
-      seconds = 0
-    elif currTime == "Night" and seconds >= MAX_SECONDS_NIGHT:
-      comm.cast("Some people accidentally slept through the night...")
-      mstate.toDay()
-      seconds = 0
-
-    if ((currTime == "Day" and (MAX_SECONDS_DAY - seconds == 60)) or
-       (currTime == "Night" and (MAX_SECONDS_NIGHT -seconds == 60))):
-      comm.cast("One minute left")
-
-    lastTime = currTime
-    lastDay  = currDay
-
-    #Wait For a second
-    time.sleep(1)
-      
-
 class MainHandler(BaseHandler):
 
   def do_POST(self):
@@ -347,7 +313,6 @@ if __name__ == "__main__":
     _thread.start_new_thread(loopDM,())
     _thread.start_new_thread(loopDMin,())
     _thread.start_new_thread(server.serve_forever,())
-    _thread.start_new_thread(keepTime,())
 
     while True:
       pass
