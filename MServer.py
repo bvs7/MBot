@@ -17,19 +17,27 @@ DMlock = _thread.allocate_lock()
 ### POST FUNCTIONS #############################################################
 
 ### LOBBY ----------------------------------------------------------------------
+def lobby_help(post={},words=[]):
+  comm.cast("LOBBY HELP",LOBBY_GROUP_ID)
+  return True
+
+def lobby_status(post={},words=[]):
+  comm.cast("LOBBY STATUS",LOBBY_GROUP_ID)
+  return True
+
 def lobby_start(post={},words=[]):
   # NOTE: When the day is 0, the following is true:
   if mstate.day == 0:
     return mstate.startGame() 
   return False
 
-def in_(post,words=[]):
+def lobby_in(post,words=[]):
   log("IN")
   # Get inquirer
   try:
     player = post['user_id']
   except Exception as e:
-    log("In failed: couldn't get voter: {}".format(e))
+    log("In failed: couldn't get player: {}".format(e))
     return False
   # Add to list
   if player not in mstate.nextPlayerIDs:
@@ -37,20 +45,38 @@ def in_(post,words=[]):
     msg = "{} added to next game:\n".format(comm.getName(player))
     for player in mstate.nextPlayerIDs:
       msg = msg + comm.getName(player) + "\n"
-    comm.cast(msg)
+    comm.cast(msg,LOBBY_GROUP_ID)
   return True
 
-def out(post,words=[]):
+def lobby_out(post,words=[]):
   log("OUT")
   # Get player
   try:
     player = post['user_id']
   except Exception as e:
-    log("Out failed: couldn't get voter: {}".format(e))
+    log("Out failed: couldn't get player: {}".format(e))
     return False
   # try to remove from list:
   if player in mstate.nextPlayerIDs: mstate.nextPlayerIDs.remove(player)
-  comm.cast("{} removed from game".format(comm.getName(player)))
+  comm.cast("{} removed from next game".format(comm.getName(player)),LOBBY_GROUP_ID)
+  return True
+
+def lobby_watch(post,words=[]):
+  log("WATCH")
+  # Get player
+  try:
+    player_id = post['user_id']
+  except Exception as e:
+    log("Watch failed: couldn't get player: {}".format(e))
+    return False
+  # if they aren't already in the game, add to game
+  try:
+    if not comm.addMain(player_id):
+      log("Failed to add {} as watcher: already in".format(player_id))
+      return False
+  except Exception as e:
+    log("Failed to add {} as watcher: {}".format(player_id,e))
+    return False
   return True
 
     

@@ -405,8 +405,11 @@ timerOn  - if Timer is on
     self.nextPlayerIDs.clear()
     random.shuffle(self.players)
 
+    self.comm.clearMain([p.id_ for p in self.players])
+
     for player in self.players:
       self.comm.sendDM(ROLE_EXPLAIN[player.role],player.id_)
+      self.comm.addMain(player.id_)
       if player.role in MAFIA_ROLES:
         self.comm.addMafia(player.id_)
 

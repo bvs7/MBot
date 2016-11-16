@@ -125,6 +125,22 @@ class GroupyComm:
     self.mainGroup.refresh()
     return self.mainGroup.members()
 
+  def addMain(self, player_id):
+    if not player_id in [m.user_id for m in self.getMembers()]:
+      self.mainGroup.add({'user_id':player_id})
+      return True
+    else:
+      return False
+
+  def clearMain(self, saveList=[]):
+    # Remove all from Mafia Group except for those with id in savelist
+    self.mainGroup.refresh()
+    for mem in self.mainGroup.members():
+      if not mem.user_id == MODERATOR and not mem.user_id in saveList:
+        self.mainGroup.remove(mem)
+        log("removing {} from mafia chat".format(mem.nickname))
+    return True
+
   def addMafia(self, player_id):
     self.mafiaGroup.add({'user_id':player_id})
 
@@ -135,6 +151,7 @@ class GroupyComm:
       if not mem.user_id == MODERATOR:
         self.mafiaGroup.remove(mem)
         log("removing {} from mafia chat".format(mem.nickname))
+    return True
 
   def intro(self):
     if not SILENT:
@@ -158,6 +175,8 @@ class GroupyCommTest:
       m += "(MAIN) "
     elif group == self.mafiaGroup:
       m += "(MAFIA) "
+    elif group == self.lobbyGroup:
+      m += "(LOBBY) "
     m += msg
 
     log(m,1)
