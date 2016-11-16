@@ -1,3 +1,7 @@
+The purpose of this branch is to design a version of MBot where the main group chat is a lobby. That is to say that people can sign up for games there, but the games will be played in another chat. This will cut down on the spam the group receives.
+
+
+
 This is Mafia Bot!
 
 Mafia Bot uses the Groupme API to let a group chat play the game Mafia
