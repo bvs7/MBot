@@ -15,8 +15,46 @@ mstate = MState.MState(comm)
 DMlock = _thread.allocate_lock()
 
 ### POST FUNCTIONS #############################################################
+
+### LOBBY ----------------------------------------------------------------------
+def lobby_start(post={},words=[]):
+  # NOTE: When the day is 0, the following is true:
+  if mstate.day == 0:
+    return mstate.startGame() 
+  return False
+
+def in_(post,words=[]):
+  log("IN")
+  # Get inquirer
+  try:
+    player = post['user_id']
+  except Exception as e:
+    log("In failed: couldn't get voter: {}".format(e))
+    return False
+  # Add to list
+  if player not in mstate.nextPlayerIDs:
+    mstate.nextPlayerIDs.append(player)
+    msg = "{} added to next game:\n".format(comm.getName(player))
+    for player in mstate.nextPlayerIDs:
+      msg = msg + comm.getName(player) + "\n"
+    comm.cast(msg)
+  return True
+
+def out(post,words=[]):
+  log("OUT")
+  # Get player
+  try:
+    player = post['user_id']
+  except Exception as e:
+    log("Out failed: couldn't get voter: {}".format(e))
+    return False
+  # try to remove from list:
+  if player in mstate.nextPlayerIDs: mstate.nextPlayerIDs.remove(player)
+  comm.cast("{} removed from game".format(comm.getName(player)))
+  return True
+
     
-### VOTE -----------------------------------------------------------------------
+### MAIN -----------------------------------------------------------------------
     
 def vote(post,words):
   log("VOTE")
@@ -53,42 +91,6 @@ def status(post={},words=[]):
 
 def help_(post={},words=[]):
   comm.cast(HELP_MESSAGE)
-  return True
-
-def start(post={},words=[]):
-  # NOTE: When the day is 0, the following is true:
-  if mstate.day == 0:
-    return mstate.startGame() 
-  return False
-
-def in_(post,words=[]):
-  log("IN")
-  # Get inquirer
-  try:
-    player = post['user_id']
-  except Exception as e:
-    log("In failed: couldn't get voter: {}".format(e))
-    return False
-  # Add to list
-  if player not in mstate.nextPlayerIDs:
-    mstate.nextPlayerIDs.append(player)
-    msg = "{} added to next game:\n".format(comm.getName(player))
-    for player in mstate.nextPlayerIDs:
-      msg = msg + comm.getName(player) + "\n"
-    comm.cast(msg)
-  return True
-
-def out(post,words=[]):
-  log("OUT")
-  # Get player
-  try:
-    player = post['user_id']
-  except Exception as e:
-    log("Out failed: couldn't get voter: {}".format(e))
-    return False
-  # try to remove from list:
-  if player in mstate.nextPlayerIDs: mstate.nextPlayerIDs.remove(player)
-  comm.cast("{} removed from game".format(comm.getName(player)))
   return True
 
 def timer(post={},words=[]):
@@ -165,13 +167,20 @@ def dm_status(DM,words=[]):
   return comm.sendDM(mstate.__str__(),DM['sender_id'])
   
   
-# This dict routes the command to the correct function
+# These dicts routes the command to the correct function
+
+# Lobby operations
+LOPS={ HELP_KW   : lobby_help  ,
+       STATUS_KW : lobby_status,
+       WATCH_KW  : lobby_watch ,
+       IN_KW     : lobby_in    ,
+       OUT_KW    : lobby_out   ,
+       START_KW  : lobby_start ,
+     }
+
 OPS ={ VOTE_KW   : vote   ,
        STATUS_KW : status ,
        HELP_KW   : help_  ,
-       START_KW  : start  ,
-       IN_KW     : in_    ,
-       OUT_KW    : out    ,
        TIMER_KW  : timer  ,
      }
 
@@ -194,6 +203,17 @@ CELEB_OPS = {HELP_KW : celeb_help,
 DM_OPS = { HELP_KW  : dm_help,
            STATUS_KW: dm_status,
           }
+def do_POST_LOBBY(post):
+  log("POST in LOBBY")
+  try:
+    if(post['text'][0:len(ACCESS_KW)] == ACCESS_KW):
+      words = post['text'][len(ACCESS_KW):].split() 
+      if(not len(words) == 0 and words[0] in LOPS):
+        if not LOPS[words[0]](post,words):
+          comm.cast("{} failed".format(words[0]))
+      else:
+        comm.cast("Invalid request, (try {}{} for help)".format(ACCESS_KW,HELP_KW))
+  except KeyError as e: pass
 
 def do_POST_MAIN(post):
   log("POST in MAIN")
