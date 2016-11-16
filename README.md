@@ -20,7 +20,7 @@ Main group commands:
 /vote		changes the player's vote to the other player they mention
 		/vote me, /vote none, /vote nokill also work
 /status	lists who is in the next game, or who is in the game and where the votes stand.
-
+/timer	start a five minute timer. At the end of this, the game continues even with no actions
 
 Mafia group (and Cop/Doctor DM) commands:
 
@@ -34,11 +34,7 @@ Now the game is in the "Day" phase. During this time, everybody votes for somebo
 
 Features to add:
 
-Time limits		Night will only last so long before nothing happens. Days will have optional limits?
-
 MASONS		These roles would be for a large mafia group. This is a group chat where everyone is confirmed town.
-
-GODFATHER		A mafia variant whom when investigated is shown as TOWN
 
 VIGILANTE		
 
