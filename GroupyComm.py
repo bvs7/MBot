@@ -28,6 +28,9 @@ class GroupyComm:
   def __init__(self):
     # Setup Groups
     try:
+      self.lobbyGroup = self.getGroup(LOBBY_GROUP_ID)
+      self.lobbyBot   = self.getBot(LOBBY_BOT_ID)
+
       self.mainGroup  = self.getGroup(MAIN_GROUP_ID)
       self.mainBot    = self.getBot(MAIN_BOT_ID)
       
@@ -114,8 +117,8 @@ class GroupyComm:
       return []
 
   def getName(self,player_id):
-    self.mainGroup.refresh()
-    members = self.mainGroup.members()
+    self.lobbyGroup.refresh()
+    members = self.lobbyGroup.members()
     for m in members:
       if m.user_id == player_id:
         return m.nickname
@@ -153,13 +156,22 @@ class GroupyComm:
         log("removing {} from mafia chat".format(mem.nickname))
     return True
 
+  def remove(self,player_id):
+    for mem in self.mainGroup.members():
+      if mem.user_id == player_id:
+        self.mainGroup.remove(mem)
+    for mem in self.mafiaGroup.members():
+      if mem.user_id == player_id:
+        self.mafiaGroup.remove(mem)
+    return True
+
   def intro(self):
     if not SILENT:
-      groupyEP.Groups.update(MAIN_GROUP_ID,name="Let's Play Mafia!")
+      groupyEP.Groups.update(LOBBY_GROUP_ID,name="Let's Play Mafia!")
       
   def outro(self):
     if not SILENT: 
-      groupyEP.Groups.update(MAIN_GROUP_ID,name="Let's Play Mafia! [PAUSED]")
+      groupyEP.Groups.update(LOBBY_GROUP_ID,name="Let's Play Mafia! [PAUSED]")
 
 class GroupyCommTest:
 

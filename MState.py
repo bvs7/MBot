@@ -99,6 +99,7 @@ timerOn  - if Timer is on
       if player.role in MAFIA_ROLES:
         self.num_mafia = self.num_mafia - 1
       self.players.remove(player)
+      self.comm.remove(player.id_)
     except Exception as e:
       log("Failed to kill {}: {}".format(player.id_,e))
       return False

@@ -269,6 +269,7 @@ def do_POST_MAFIA(post):
 def do_POST(post):
   if(  post['group_id'] == MAIN_GROUP_ID): do_POST_MAIN(post)
   elif(post['group_id'] == MAFIA_GROUP_ID): do_POST_MAFIA(post)
+  elif(post['group_id'] == LOBBY_GROUP_ID): do_POST_LOBBY(post)
   mstate.saveNotes()
 
 def do_DM(DM):
@@ -353,7 +354,7 @@ if __name__ == "__main__":
 
   server = HTTPServer((ADDRESS,int(PORT)), MainHandler)
 
-#  mstate.loadNotes()
+  mstate.loadNotes()
 
   comm.intro()
 
@@ -368,6 +369,4 @@ if __name__ == "__main__":
     pass
 
   comm.outro()
-  
-  
-
+ 

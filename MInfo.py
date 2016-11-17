@@ -123,12 +123,14 @@ MAFIA_WEIGHTS = [
 # OP KEYWORDS
 ACCESS_KW = '/'
 
-VOTE_KW   = 'vote'
-STATUS_KW = 'status'
-HELP_KW   = 'help'
 START_KW  = 'start'
 IN_KW     = 'in'
 OUT_KW    = 'out'
+WATCH_KW  = 'watch'
+
+VOTE_KW   = 'vote'
+STATUS_KW = 'status'
+HELP_KW   = 'help'
 TIMER_KW  = 'timer'
 
 TARGET_KW = 'target'
