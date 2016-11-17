@@ -142,6 +142,12 @@ RESTART_KW= 'restart'
 
 ## HELP MESSAGES
 
+L_HELP_MESSAGE=("Welcome to the Mafia Groupme. This is the Lobby\n"
+                "To join a game, use /in. To start the game, /start\n"
+                "If you change your mind, use /out to leave the next game\n"
+                "To check the status of a current game, use /status\n"
+                "For this help message, try /help\n")
+
 HELP_MESSAGE =("Welcome to the Mafia Groupme. "
                "In this Groupme you can play mafia via certain commands.\n"
                "/vote @  - Use this to vote for somebody, where @ is a mention. "
@@ -149,11 +155,6 @@ HELP_MESSAGE =("Welcome to the Mafia Groupme. "
                "And /vote nokill to vote for no kill.\n"
                "/status  - Get the current state of the game\n"
                "/help  - Display this message\n"
-               "/in  - Be in the NEXT game. During a game, this means the game "
-               "after this one finishes.\n"
-               "/out  - If you change your mind, use this to get out of the "
-               "next game.\n"
-               "/start  - Use this to begin a game with those who have enrolled.\n"
                "/timer  - Set a five minute time limit on the current day\n")
 
 M_HELP_MESSAGE = ("Hey you naughty people, here is what you can do here:\n"

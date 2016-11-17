@@ -18,11 +18,11 @@ DMlock = _thread.allocate_lock()
 
 ### LOBBY ----------------------------------------------------------------------
 def lobby_help(post={},words=[]):
-  comm.cast("LOBBY HELP",LOBBY_GROUP_ID)
+  comm.cast(L_HELP_MESSAGE,LOBBY_GROUP_ID)
   return True
 
 def lobby_status(post={},words=[]):
-  comm.cast("LOBBY STATUS",LOBBY_GROUP_ID)
+  comm.cast(mstate.__str__,LOBBY_GROUP_ID)
   return True
 
 def lobby_start(post={},words=[]):

@@ -99,7 +99,6 @@ timerOn  - if Timer is on
       if player.role in MAFIA_ROLES:
         self.num_mafia = self.num_mafia - 1
       self.players.remove(player)
-      self.comm.remove(player.id_)
     except Exception as e:
       log("Failed to kill {}: {}".format(player.id_,e))
       return False
@@ -217,6 +216,7 @@ timerOn  - if Timer is on
       self.comm.cast("The vote to kill {} has passed".format(
                 self.comm.getName(player.id_)))
       if(self.kill(player.id_)):
+        self.comm.remove(player.id_)
         if player.role == "IDIOT":
           self.idiot_winners.append(player)
         if not self.day == 0:
@@ -263,7 +263,8 @@ timerOn  - if Timer is on
         self.kill(self.mafia_target)
         msg = ("Tragedy has struck! {} is dead! Someone must pay for this! "
                "Vote to kill somebody!").format(self.comm.getName(self.mafia_target.id_))
-        self.comm.cast(msg)
+        self.comm.cast(msg)  
+        self.comm.remove(self.mafia_target.id_)
     # Mafia has no target
     else:
       msg = ("A peculiar feeling drifts about... everyone is still alive...")
@@ -293,6 +294,7 @@ timerOn  - if Timer is on
         self.send_options("Use /target number (i.e. /target 2) to pick someone to investigate",p.id_)
       elif p.role == "DOCTOR":
         self.send_options("Use /target number (i.e. /target 0) to pick someone to save",p.id_)
+    self.setTimer()
         
   def checkWinCond(self):
     """ Check if a team has won, if so end the game. """
@@ -516,9 +518,7 @@ timerOn  - if Timer is on
   def __str__(self):
     """ Return the status of the game. """
     if self.day == 0:
-      m = "In the next game:\n"
-      for pid in self.nextPlayerIDs:
-        m += self.comm.getName(pid) + "\n"
+      m = "Ready to start a new game."
     else:
       m = "{} {}: ".format(self.time,self.day)
       if self.timerOn:
