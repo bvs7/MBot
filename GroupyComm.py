@@ -130,7 +130,7 @@ class GroupyComm:
 
   def addMain(self, player_id):
     if not player_id in [m.user_id for m in self.getMembers()]:
-      self.mainGroup.add({'user_id':player_id})
+      self.mainGroup.add({'user_id':player_id, 'nickname':self.getName(player_id)})
       return True
     else:
       return False

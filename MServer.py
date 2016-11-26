@@ -22,7 +22,7 @@ def lobby_help(post={},words=[]):
   return True
 
 def lobby_status(post={},words=[]):
-  comm.cast(mstate.__str__,LOBBY_GROUP_ID)
+  comm.cast(mstate.__str__(),LOBBY_GROUP_ID)
   return True
 
 def lobby_start(post={},words=[]):
@@ -46,6 +46,8 @@ def lobby_in(post,words=[]):
     for player in mstate.nextPlayerIDs:
       msg = msg + comm.getName(player) + "\n"
     comm.cast(msg,LOBBY_GROUP_ID)
+  else:
+    comm.cast("You are already in the next game!",LOBBY_GROUP_ID)
   return True
 
 def lobby_out(post,words=[]):
@@ -63,6 +65,10 @@ def lobby_out(post,words=[]):
 
 def lobby_watch(post,words=[]):
   log("WATCH")
+
+  if mstate.day == 0:
+    comm.cast("No game to watch",LOBBY_GROUP_ID)
+    return True
   # Get player
   try:
     player_id = post['user_id']
@@ -236,9 +242,9 @@ def do_POST_LOBBY(post):
       words = post['text'][len(ACCESS_KW):].split() 
       if(not len(words) == 0 and words[0] in LOPS):
         if not LOPS[words[0]](post,words):
-          comm.cast("{} failed".format(words[0]))
+          comm.cast("{} failed".format(words[0]),LOBBY_GROUP_ID)
       else:
-        comm.cast("Invalid request, (try {}{} for help)".format(ACCESS_KW,HELP_KW))
+        comm.cast("Invalid request, (try {}{} for help)".format(ACCESS_KW,HELP_KW),LOBBY_GROUP_ID)
   except KeyError as e: pass
 
 def do_POST_MAIN(post):
