@@ -15,8 +15,78 @@ mstate = MState.MState(comm)
 DMlock = _thread.allocate_lock()
 
 ### POST FUNCTIONS #############################################################
+
+### LOBBY ----------------------------------------------------------------------
+def lobby_help(post={},words=[]):
+  comm.cast(L_HELP_MESSAGE,LOBBY_GROUP_ID)
+  return True
+
+def lobby_status(post={},words=[]):
+  comm.cast(mstate.__str__(),LOBBY_GROUP_ID)
+  return True
+
+def lobby_start(post={},words=[]):
+  # NOTE: When the day is 0, the following is true:
+  if mstate.day == 0:
+    return mstate.startGame() 
+  return False
+
+def lobby_in(post,words=[]):
+  log("IN")
+  # Get inquirer
+  try:
+    player = post['user_id']
+  except Exception as e:
+    log("In failed: couldn't get player: {}".format(e))
+    return False
+  # Add to list
+  if player not in mstate.nextPlayerIDs:
+    mstate.nextPlayerIDs.append(player)
+    msg = "{} added to next game:\n".format(comm.getName(player))
+    for player in mstate.nextPlayerIDs:
+      msg = msg + comm.getName(player) + "\n"
+    comm.cast(msg,LOBBY_GROUP_ID)
+  else:
+    comm.cast("You are already in the next game!",LOBBY_GROUP_ID)
+  return True
+
+def lobby_out(post,words=[]):
+  log("OUT")
+  # Get player
+  try:
+    player = post['user_id']
+  except Exception as e:
+    log("Out failed: couldn't get player: {}".format(e))
+    return False
+  # try to remove from list:
+  if player in mstate.nextPlayerIDs: mstate.nextPlayerIDs.remove(player)
+  comm.cast("{} removed from next game".format(comm.getName(player)),LOBBY_GROUP_ID)
+  return True
+
+def lobby_watch(post,words=[]):
+  log("WATCH")
+
+  if mstate.day == 0:
+    comm.cast("No game to watch",LOBBY_GROUP_ID)
+    return True
+  # Get player
+  try:
+    player_id = post['user_id']
+  except Exception as e:
+    log("Watch failed: couldn't get player: {}".format(e))
+    return False
+  # if they aren't already in the game, add to game
+  try:
+    if not comm.addMain(player_id):
+      log("Failed to add {} as watcher: already in".format(player_id))
+      return False
+  except Exception as e:
+    log("Failed to add {} as watcher: {}".format(player_id,e))
+    return False
+  return True
+
     
-### VOTE -----------------------------------------------------------------------
+### MAIN -----------------------------------------------------------------------
     
 def vote(post,words):
   log("VOTE")
@@ -53,42 +123,6 @@ def status(post={},words=[]):
 
 def help_(post={},words=[]):
   comm.cast(HELP_MESSAGE)
-  return True
-
-def start(post={},words=[]):
-  # NOTE: When the day is 0, the following is true:
-  if mstate.day == 0:
-    return mstate.startGame() 
-  return False
-
-def in_(post,words=[]):
-  log("IN")
-  # Get inquirer
-  try:
-    player = post['user_id']
-  except Exception as e:
-    log("In failed: couldn't get voter: {}".format(e))
-    return False
-  # Add to list
-  if player not in mstate.nextPlayerIDs:
-    mstate.nextPlayerIDs.append(player)
-    msg = "{} added to next game:\n".format(comm.getName(player))
-    for player in mstate.nextPlayerIDs:
-      msg = msg + comm.getName(player) + "\n"
-    comm.cast(msg)
-  return True
-
-def out(post,words=[]):
-  log("OUT")
-  # Get player
-  try:
-    player = post['user_id']
-  except Exception as e:
-    log("Out failed: couldn't get voter: {}".format(e))
-    return False
-  # try to remove from list:
-  if player in mstate.nextPlayerIDs: mstate.nextPlayerIDs.remove(player)
-  comm.cast("{} removed from game".format(comm.getName(player)))
   return True
 
 def timer(post={},words=[]):
@@ -165,13 +199,20 @@ def dm_status(DM,words=[]):
   return comm.sendDM(mstate.__str__(),DM['sender_id'])
   
   
-# This dict routes the command to the correct function
+# These dicts routes the command to the correct function
+
+# Lobby operations
+LOPS={ HELP_KW   : lobby_help  ,
+       STATUS_KW : lobby_status,
+       WATCH_KW  : lobby_watch ,
+       IN_KW     : lobby_in    ,
+       OUT_KW    : lobby_out   ,
+       START_KW  : lobby_start ,
+     }
+
 OPS ={ VOTE_KW   : vote   ,
        STATUS_KW : status ,
        HELP_KW   : help_  ,
-       START_KW  : start  ,
-       IN_KW     : in_    ,
-       OUT_KW    : out    ,
        TIMER_KW  : timer  ,
      }
 
@@ -194,6 +235,17 @@ CELEB_OPS = {HELP_KW : celeb_help,
 DM_OPS = { HELP_KW  : dm_help,
            STATUS_KW: dm_status,
           }
+def do_POST_LOBBY(post):
+  log("POST in LOBBY")
+  try:
+    if(post['text'][0:len(ACCESS_KW)] == ACCESS_KW):
+      words = post['text'][len(ACCESS_KW):].split() 
+      if(not len(words) == 0 and words[0] in LOPS):
+        if not LOPS[words[0]](post,words):
+          comm.cast("{} failed".format(words[0]),LOBBY_GROUP_ID)
+      else:
+        comm.cast("Invalid request, (try {}{} for help)".format(ACCESS_KW,HELP_KW),LOBBY_GROUP_ID)
+  except KeyError as e: pass
 
 def do_POST_MAIN(post):
   log("POST in MAIN")
@@ -223,6 +275,7 @@ def do_POST_MAFIA(post):
 def do_POST(post):
   if(  post['group_id'] == MAIN_GROUP_ID): do_POST_MAIN(post)
   elif(post['group_id'] == MAFIA_GROUP_ID): do_POST_MAFIA(post)
+  elif(post['group_id'] == LOBBY_GROUP_ID): do_POST_LOBBY(post)
   mstate.saveNotes()
 
 def do_DM(DM):
@@ -307,7 +360,7 @@ if __name__ == "__main__":
 
   server = HTTPServer((ADDRESS,int(PORT)), MainHandler)
 
-#  mstate.loadNotes()
+  mstate.loadNotes()
 
   comm.intro()
 
@@ -322,6 +375,4 @@ if __name__ == "__main__":
     pass
 
   comm.outro()
-  
-  
-
+ 

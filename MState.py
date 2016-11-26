@@ -216,6 +216,7 @@ timerOn  - if Timer is on
       self.comm.cast("The vote to kill {} has passed".format(
                 self.comm.getName(player.id_)))
       if(self.kill(player.id_)):
+        self.comm.remove(player.id_)
         if player.role == "IDIOT":
           self.idiot_winners.append(player)
         if not self.day == 0:
@@ -262,7 +263,8 @@ timerOn  - if Timer is on
         self.kill(self.mafia_target)
         msg = ("Tragedy has struck! {} is dead! Someone must pay for this! "
                "Vote to kill somebody!").format(self.comm.getName(self.mafia_target.id_))
-        self.comm.cast(msg)
+        self.comm.cast(msg)  
+        self.comm.remove(self.mafia_target.id_)
     # Mafia has no target
     else:
       msg = ("A peculiar feeling drifts about... everyone is still alive...")
@@ -292,16 +294,19 @@ timerOn  - if Timer is on
         self.send_options("Use /target number (i.e. /target 2) to pick someone to investigate",p.id_)
       elif p.role == "DOCTOR":
         self.send_options("Use /target number (i.e. /target 0) to pick someone to save",p.id_)
+    self.setTimer()
         
   def checkWinCond(self):
     """ Check if a team has won, if so end the game. """
     # Check win conditions
     if self.num_mafia == 0:
       self.comm.cast("TOWN WINS")
+      self.comm.cast("TOWN WINS",LOBBY_GROUP_ID)
       self.endGame()
       return True
     elif self.num_mafia >= len(self.players)/2:
       self.comm.cast("MAFIA WINS")
+      self.comm.cast("MAFIA WINS",LOBBY_GROUP_ID)
       self.endGame()
       return True
     return False
@@ -377,7 +382,7 @@ timerOn  - if Timer is on
     """ Gen roles, create player objects and start the game. """
     num_players = len(self.nextPlayerIDs)
     if num_players < 3:
-      self.comm.cast("Not enough players to start")
+      self.comm.cast("Not enough players to start",LOBBY_GROUP_ID)
       return False
 
     self.day = 1
@@ -405,8 +410,11 @@ timerOn  - if Timer is on
     self.nextPlayerIDs.clear()
     random.shuffle(self.players)
 
+    self.comm.clearMain([p.id_ for p in self.players])
+
     for player in self.players:
       self.comm.sendDM(ROLE_EXPLAIN[player.role],player.id_)
+      self.comm.addMain(player.id_)
       if player.role in MAFIA_ROLES:
         self.comm.addMafia(player.id_)
 
@@ -427,6 +435,7 @@ timerOn  - if Timer is on
       self.comm.cast(self.comm.getName(winner.id_)+" WON!")
 
     self.comm.cast(self.revealRoles())
+    self.comm.cast(self.revealRoles(),LOBBY_GROUP_ID)
     return True
 
   def revealRoles(self):
@@ -512,9 +521,9 @@ timerOn  - if Timer is on
   def __str__(self):
     """ Return the status of the game. """
     if self.day == 0:
-      m = "In the next game:\n"
-      for pid in self.nextPlayerIDs:
-        m += self.comm.getName(pid) + "\n"
+      m = "Ready to start a new game.\n"
+      for p in self.nextPlayerIDs:
+        m += "{}\n".format(self.comm.getName(p))
     else:
       m = "{} {}: ".format(self.time,self.day)
       if self.timerOn:
