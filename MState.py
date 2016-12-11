@@ -301,11 +301,13 @@ timerOn  - if Timer is on
     # Check win conditions
     if self.num_mafia == 0:
       self.comm.cast("TOWN WINS")
+      self.win = self.win + " TOWN"
       self.comm.cast("TOWN WINS",LOBBY_GROUP_ID)
       self.endGame()
       return True
     elif self.num_mafia >= len(self.players)/2:
       self.comm.cast("MAFIA WINS")
+      self.win = self.win + " MAFIA"
       self.comm.cast("MAFIA WINS",LOBBY_GROUP_ID)
       self.endGame()
       return True
@@ -436,6 +438,7 @@ timerOn  - if Timer is on
 
     self.comm.cast(self.revealRoles())
     self.comm.cast(self.revealRoles(),LOBBY_GROUP_ID)
+    self.recordGame()
     return True
 
   def revealRoles(self):
@@ -465,6 +468,20 @@ timerOn  - if Timer is on
         self.__dict__[varName] = loadNote(varName)
     except NoteError as e:
       log(e)
+
+  def recordGame(self):
+    m = ""
+    for player_id,role in self.savedRoles.items():
+      m += role + " "
+    m += self.win + "\n"
+    m += len(self.idiot_winners) +"\n\n"
+
+    try:
+      f = open(info_fname, 'a')
+      f.write(m)
+      f.close()
+    except Exception as e:
+      log("Failed to save game")
 
   def saveNotes(self):
     """ Saves all important info so the game can be recovered. """
