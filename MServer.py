@@ -148,7 +148,7 @@ def mafia_options(post={},words=[]):
 
 ### DOCTOR FUNCTIONS #########################################################
 
-def doctor_help(DM,words={}):
+def doctor_help(DM,words=[]):
   comm.sendDM(DOC_HELP_MESSAGE, DM['sender_id'])
   return True
 

@@ -3,7 +3,7 @@
 import pickle  # For loading vars
 import os
 
-DEBUG = 2
+DEBUG = 5
 SILENT = False
 
 info_fname = "info"
