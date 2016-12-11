@@ -504,36 +504,39 @@ timerOn  - if Timer is on
     lastDay  = self.day
     seconds = 0
     while True:
-      currTime = self.time
-      currDay  = self.day
-      if self.timerOn:
-        if((not currDay == 0) and currTime == lastTime and currDay == lastDay):
-          self.timer_value -= 1
-        else:
-          self.timerOn = False
-          self.timer_value = 0
-      if self.timerOn:
-        if self.timer_value == 60:
-          self.comm.cast("One minute remaining, one minute")
-        elif self.timer_value == 20:
-          self.comm.cast("Twenty Seconds")
-        elif self.timer_value == 0:
-          if currTime == "Day":
-            self.comm.cast("You are out of time")
-            self.toNight()
+      try:
+        currTime = self.time
+        currDay  = self.day
+        if self.timerOn:
+          if((not currDay == 0) and currTime == lastTime and currDay == lastDay):
+            self.timer_value -= 1
+          else:
             self.timerOn = False
             self.timer_value = 0
-          elif currTime == "Night":
-            self.comm.cast("Some people slept through the night")
-            self.toDay()
-            self.timerOn = False
-            self.timer_value = 0
+        if self.timerOn:
+          if self.timer_value == 60:
+            self.comm.cast("One minute remaining, one minute")
+          elif self.timer_value == 20:
+            self.comm.cast("Twenty Seconds")
+          elif self.timer_value == 0:
+            if currTime == "Day":
+              self.comm.cast("You are out of time")
+              self.toNight()
+              self.timerOn = False
+              self.timer_value = 0
+            elif currTime == "Night":
+              self.comm.cast("Some people slept through the night")
+              self.toDay()
+              self.timerOn = False
+              self.timer_value = 0
 
-      lastTime = currTime
-      lastDay  = currDay
+        lastTime = currTime
+        lastDay  = currDay
 
-      #Wait For a second
-      time.sleep(1)
+        #Wait For a second
+        time.sleep(1)
+      except:
+        pass
 
   def __str__(self):
     """ Return the status of the game. """
