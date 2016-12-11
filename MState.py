@@ -251,7 +251,8 @@ timerOn  - if Timer is on
       # Doctor is alive and saved the target
       target_saved = False
       for p in self.players:
-        if (p.role == "DOCTOR" and p.target.id_ == self.mafia_target.id_):
+        if (p.role == "DOCTOR" and not p.target == None and
+            p.target.id_ == self.mafia_target.id_):
           target_saved = True
       if target_saved:
           msg = ("Tragedy has struck! {} is ... wait! They've been saved by "
@@ -301,13 +302,11 @@ timerOn  - if Timer is on
     # Check win conditions
     if self.num_mafia == 0:
       self.comm.cast("TOWN WINS")
-      self.win = self.win + " TOWN"
       self.comm.cast("TOWN WINS",LOBBY_GROUP_ID)
       self.endGame()
       return True
     elif self.num_mafia >= len(self.players)/2:
       self.comm.cast("MAFIA WINS")
-      self.win = self.win + " MAFIA"
       self.comm.cast("MAFIA WINS",LOBBY_GROUP_ID)
       self.endGame()
       return True
@@ -377,7 +376,6 @@ timerOn  - if Timer is on
         break
 
     # Roles contains a valid game
-    print(score)
     return roles
       
   def startGame(self):
@@ -438,7 +436,6 @@ timerOn  - if Timer is on
 
     self.comm.cast(self.revealRoles())
     self.comm.cast(self.revealRoles(),LOBBY_GROUP_ID)
-    self.recordGame()
     return True
 
   def revealRoles(self):
@@ -469,20 +466,6 @@ timerOn  - if Timer is on
     except NoteError as e:
       log(e)
 
-  def recordGame(self):
-    m = ""
-    for player_id,role in self.savedRoles.items():
-      m += role + " "
-    m += self.win + "\n"
-    m += len(self.idiot_winners) +"\n\n"
-
-    try:
-      f = open(info_fname, 'a')
-      f.write(m)
-      f.close()
-    except Exception as e:
-      log("Failed to save game")
-
   def saveNotes(self):
     """ Saves all important info so the game can be recovered. """
     for varName in SAVES:
@@ -510,9 +493,6 @@ timerOn  - if Timer is on
         if self.timerOn:
           if((not currDay == 0) and currTime == lastTime and currDay == lastDay):
             self.timer_value -= 1
-          else:
-            self.timerOn = False
-            self.timer_value = 0
         if self.timerOn:
           if self.timer_value == 60:
             self.comm.cast("One minute remaining, one minute")

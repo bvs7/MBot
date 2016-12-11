@@ -10,7 +10,7 @@ info_fname = "info"
 
 ### TIMING ##########
 
-SET_TIMER_VALUE = 5*60
+SET_TIMER_VALUE = 1*60
 
 try:
   f = open(info_fname,'r')

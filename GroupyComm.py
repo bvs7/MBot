@@ -178,8 +178,10 @@ class GroupyCommTest:
   def __init__(self):
     self.mainGroup = 1
     self.mafiaGroup = 2
+    self.lobbyGroup = 3
 
     self.mafia = []
+    self.main = []
 
   def cast(self,msg,group=1):
     m = "CAST: "
@@ -211,6 +213,22 @@ class GroupyCommTest:
 
   def clearMafia(self):
     self.mafia.clear()
+
+  def addMain(self, player):
+    if not player in self.main:
+      self.main.append(player)
+
+  def clearMain(self, saveList = []):
+    for p in self.main:
+      if not p in saveList:
+        self.main.remove(p)
+
+  def remove(self, p_id):
+    if p_id in self.main:
+      self.main.remove(p_id)
+    if p_id in self.mafia:
+      self.mafia.remove(p_id)
+      
 
   def intro(self):
     log("intro")
