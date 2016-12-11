@@ -136,7 +136,7 @@ class GroupyComm:
       return False
 
   def clearMain(self, saveList=[]):
-    # Remove all from Mafia Group except for those with id in savelist
+    # Remove all from Main Group except for those with id in savelist
     self.mainGroup.refresh()
     for mem in self.mainGroup.members():
       if not mem.user_id == MODERATOR and not mem.user_id in saveList:
