@@ -2,6 +2,8 @@
 
 from MInfo import *
 
+import time
+
 import MServer
 
 def makePost(group_id,text,user_id="",mentions=[]):
@@ -102,9 +104,27 @@ def cop_game():
   vote(m,"2","5")
   vote(m,"4","5")
 
+def doc_game():
+  m = basic_start()
+  get5In(m)
+  m.mstate.startGame(["TOWN","DOCTOR","TOWN","TOWN","MAFIA"])
+  vote(m,"2","1")
+  vote(m,"3","1")
+  vote(m,"4","1")
+  m.do_POST(makePost(MAFIA_GROUP_ID,"/target 1"))
+  m.do_DM(makeDM("2","/target 1"))
+  vote(m,"2","0")
+  vote(m,"3","0")
+  m.do_POST(makePost(MAFIA_GROUP_ID,"/target 0"))
+  m.mstate.timer_value = 2
+  time.sleep(3)
+  vote(m,"4","4")
+  vote(m,"5","4")
+
 
 if __name__ == "__main__":
 
   #simple_game()
   #double_game()
-  cop_game()
+  #cop_game()
+  doc_game()
