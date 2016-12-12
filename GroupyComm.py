@@ -176,59 +176,74 @@ class GroupyComm:
 class GroupyCommTest:
 
   def __init__(self):
-    self.mainGroup = 1
-    self.mafiaGroup = 2
-    self.lobbyGroup = 3
+    log("GroupyComm Init",3)
 
-    self.mafia = []
     self.main = []
+    self.mafia = []
 
-  def cast(self,msg,group=1):
+  def cast(self,msg,group_id=MAIN_GROUP_ID):
+    log("GroupyComm cast",5)
     m = "CAST: "
-    if group == self.mainGroup:
+    if group_id == MAIN_GROUP_ID:
       m += "(MAIN) "
-    elif group == self.mafiaGroup:
+    elif group_id == MAFIA_GROUP_ID:
       m += "(MAFIA) "
-    elif group == self.lobbyGroup:
+    elif group_id == LOBBY_GROUP_ID:
       m += "(LOBBY) "
     m += msg
 
     log(m,1)
+    return True
 
   def sendDM(self,msg,player_id):
+    log("GroupyComm sendDM",5)
     log("DM: "+"("+player_id+") "+msg)
+    return True
 
   def getDMs(self,player_id):
+    log("GroupyComm getDMs",3)
     return []
 
   def getName(self,player_id):
+    log("GroupyComm getName",5)
     return "[Name of {}]".format(player_id)
 
   def getMembers(self):
+    log("GroupyComm getMembers",3)
     print("Getting Members")
     return []
 
   def addMafia(self, player_id):
+    log("GroupyComm addMafia",3)
     self.mafia.append(player_id)
+    return True
 
   def clearMafia(self):
+    log("GroupyComm clearMafia",3)
     self.mafia.clear()
+    return True
 
   def addMain(self, player):
+    log("GroupyComm addMain",3)
     if not player in self.main:
       self.main.append(player)
+    return True
 
   def clearMain(self, saveList = []):
+    log("GroupyComm clearMain",3)
     for p in self.main:
       if not p in saveList:
         self.main.remove(p)
+    return True
 
   def remove(self, p_id):
+    log("GroupyComm remove",3)
     if p_id in self.main:
       self.main.remove(p_id)
     if p_id in self.mafia:
       self.mafia.remove(p_id)
-      
+    return True
+
 
   def intro(self):
     log("intro")

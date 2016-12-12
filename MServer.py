@@ -9,317 +9,307 @@ from MInfo import *
 import GroupyComm
 import MState
 
-comm = GroupyComm.GroupyComm()
-mstate = MState.MState(comm)
 
-DMlock = _thread.allocate_lock()
+class MServer:
 
-### POST FUNCTIONS #############################################################
+  def __init__(self, CommType=GroupyComm.GroupyCommTest,
+                     MStateType=MState.MState,
+                     restart=False):
+    log("MServer init",3)
+    self.comm = CommType()
+    self.mstate = MStateType(self.comm, restart)
 
-### LOBBY ----------------------------------------------------------------------
-def lobby_help(post={},words=[]):
-  comm.cast(L_HELP_MESSAGE,LOBBY_GROUP_ID)
-  return True
+    self.__init_OPS()
 
-def lobby_status(post={},words=[]):
-  comm.cast(mstate.__str__(),LOBBY_GROUP_ID)
-  return True
+  def do_POST(self,post):
+    """Process a POST request from bots watching the chats"""
+    log("MServer do_POST",3)
+    if post['text'][0:len(ACCESS_KW)] == ACCESS_KW:
+      words = post['text'][len(ACCESS_KW):].split()
+      ops = {}
+      if(  post['group_id'] == MAIN_GROUP_ID):  ops = self.__OPS
+      elif(post['group_id'] == MAFIA_GROUP_ID): ops = self.__MOPS
+      elif(post['group_id'] == LOBBY_GROUP_ID): ops = self.__LOPS
+      else:
+        log("POST group_id not found: {}".format(post['group_id']))
+        return False
+      return self.__do_POST_OPS(post,words,ops)
 
-def lobby_start(post={},words=[]):
-  # NOTE: When the day is 0, the following is true:
-  if mstate.day == 0:
-    return mstate.startGame() 
-  return False
-
-def lobby_in(post,words=[]):
-  log("IN")
-  # Get inquirer
-  try:
-    player = post['user_id']
-  except Exception as e:
-    log("In failed: couldn't get player: {}".format(e))
-    return False
-  # Add to list
-  if player not in mstate.nextPlayerIDs:
-    mstate.nextPlayerIDs.append(player)
-    msg = "{} added to next game:\n".format(comm.getName(player))
-    for player in mstate.nextPlayerIDs:
-      msg = msg + comm.getName(player) + "\n"
-    comm.cast(msg,LOBBY_GROUP_ID)
-  else:
-    comm.cast("You are already in the next game!",LOBBY_GROUP_ID)
-  return True
-
-def lobby_out(post,words=[]):
-  log("OUT")
-  # Get player
-  try:
-    player = post['user_id']
-  except Exception as e:
-    log("Out failed: couldn't get player: {}".format(e))
-    return False
-  # try to remove from list:
-  if player in mstate.nextPlayerIDs: mstate.nextPlayerIDs.remove(player)
-  comm.cast("{} removed from next game".format(comm.getName(player)),LOBBY_GROUP_ID)
-  return True
-
-def lobby_watch(post,words=[]):
-  log("WATCH")
-
-  if mstate.day == 0:
-    comm.cast("No game to watch",LOBBY_GROUP_ID)
+  def do_DM(self,DM):
+    """Process a DM from a player"""
+    log("MServer do_DM",3)
+    assert 'sender_id' in DM, "No sender_id in DM for do_DM"
+    assert 'text' in DM, "No text in DM for do_DM"
+    if (not DM['sender_id'] == MODERATOR and
+        DM['text'][0:len(ACCESS_KW)] == ACCESS_KW):
+      words = DM['text'][len(ACCESS_KW):].split()
+      try:
+        role = self.mstate.getPlayer(DM['sender_id']).role
+      except Exception as e:
+        log(e)
+        role = ""
+      ops = self.__DM_OPS
+      if(not len(words) == 0):
+        if(role == "DOCTOR" and words[0] in self.__DOC_OPS):
+          ops = self.__DOC_OPS
+        elif(role == "COP" and words[0] in self.__COP_OPS):
+          ops = self.__COP_OPS
+        elif(role == "CELEB" and words[0] in self.__CELEB_OPS):
+          ops = self.__CELEB_OPS
+      if words[0] in ops:
+        if not ops[words[0]](DM,words):
+          self.comm.sendDM("{} failed".format(words[0]),DM['sender_id'])
+          return False
+      else:
+        self.comm.sendDM("Invalid command: {}".format(words[0]),DM['sender_id'])
+    self.mstate.saveNotes()
     return True
-  # Get player
-  try:
-    player_id = post['user_id']
-  except Exception as e:
-    log("Watch failed: couldn't get player: {}".format(e))
-    return False
-  # if they aren't already in the game, add to game
-  try:
-    if not comm.addMain(player_id):
-      log("Failed to add {} as watcher: already in".format(player_id))
-      return False
-  except Exception as e:
-    log("Failed to add {} as watcher: {}".format(player_id,e))
-    return False
-  return True
 
-    
-### MAIN -----------------------------------------------------------------------
-    
-def vote(post,words):
-  log("VOTE")
-  # get voter_id
-  try:
-    voter = post['user_id']
-  except Exception as e:
-    log("Vote failed: couldn't get voter: {}".format(e))
-    return False
-  # get votee_id
-  try:
-    mentions = [a for a in post['attachments'] if a['type'] == 'mentions']
-    if not len(mentions) <= 1:
-      log("Vote Failed: invalid votee count: {}".format(len(mentions)))
+  #### HELPER FN ####
+
+  def __do_POST_OPS(self,post,words,ops):
+    """Process a POST split into words, using a dict of operations"""
+    log("MServer __do_POST_OPS",4)
+    if (not len(words) == 0 and words[0] in ops):
+      if (not ops[words[0]](post,words)):
+        log("{} failed".format(words[0]))
+        self.comm.cast("{} failed".format(words[0]),post['group_id'])
+        return False
+    else:
+      log("Invalid request: {}".format(post['text']))
+      self.comm.cast("Invalid request, (try {}{} for help)".format(ACCESS_KW,HELP_KW),
+                post['group_id'])
       return False
-    elif words[1].lower() == "me":
+    self.mstate.saveNotes()
+    return True
+
+  def __init_OPS(self):
+    """Create Operations libraries. Called in __init__"""
+    # Lobby Options
+    self.__LOPS={ HELP_KW   : self.__lobby_help   ,
+                  STATUS_KW : self.__lobby_status ,
+                  START_KW  : self.__lobby_start  ,
+                  IN_KW     : self.__lobby_in     ,
+                  OUT_KW    : self.__lobby_out    ,
+                  WATCH_KW  : self.__lobby_watch  ,
+                }
+
+    # Main OPS
+    self.__OPS ={ VOTE_KW   : self.__vote   ,
+                  STATUS_KW : self.__status ,
+                  HELP_KW   : self.__help   ,
+                  TIMER_KW  : self.__timer  ,
+                }
+
+    # Mafia OPS
+    self.__MOPS={ HELP_KW   : self.__mafia_help    ,
+                  TARGET_KW : self.__mafia_target  ,
+                  OPTS_KW   : self.__mafia_options ,
+                }
+
+    self.__DOC_OPS = { HELP_KW    : self.__doc_help ,
+                       OPTS_KW    : self.__doc_options ,
+                       TARGET_KW  : self.__doc_save ,
+                     }
+    self.__COP_OPS = { HELP_KW    : self.__cop_help ,
+                       OPTS_KW    : self.__cop_options ,
+                       TARGET_KW  : self.__cop_investigate ,
+                     }
+    self.__CELEB_OPS={ HELP_KW    : self.__celeb_help,
+                       REVEAL_KW  : self.__celeb_reveal,
+                     }
+    self.__DM_OPS =  { HELP_KW    : self.__dm_help,
+                       STATUS_KW  : self.__dm_status,
+                     }
+
+  ### LOBBY GROUP FN -----------------------------------------------------------
+
+  def __lobby_help(self,post={},words=[]):
+    log("MServer __lobby_help",5)
+    self.comm.cast(L_HELP_MESSAGE,LOBBY_GROUP_ID)
+    return True
+
+  def __lobby_status(self,post={},words=[]):
+    log("MServer __lobby_status",5)
+    self.comm.cast(mstate.__str__(),LOBBY_GROUP_ID)
+    return True
+
+  def __lobby_start(self,post={},words=[]):
+    log("MServer __lobby_start",5)
+    # NOTE: When the day is 0, the following is true:
+    if self.mstate.day == 0:
+      return self.mstate.startGame()
+    else:
+      self.comm.cast("A game is already in progress. Watch with {}{}".format(ACCESS_KW,WATCH_KW),
+                     LOBBY_GROUP_ID)
+      return True
+
+  def __lobby_in(self,post,words=[]):
+    log("MServer __lobby_in",5)
+    assert 'user_id' in post, "No user_id in __lobby_in post"
+    # Get player to go in
+    player_id = post['user_id']
+    # Add to next list
+    return self.mstate.inNext(player_id)
+
+  def __lobby_out(self,post,words=[]):
+    log("MServer __lobby_out",5)
+    assert 'user_id' in post, "No user_id in __lobby_out post"
+    player_id = post['user_id']
+    # try to remove from list:
+    if player in self.mstate.nextPlayerIDs:
+      self.mstate.nextPlayerIDs.remove(player)
+      self.comm.cast("{} removed from next game".format(self.comm.getName(player)),
+                     LOBBY_GROUP_ID)
+    else:
+      self.comm.cast("{} wasn't in the next game".format(self.comm.getName(player)),
+                     LOBBY_GROUP_ID)
+    return True
+
+  def __lobby_watch(self,post,words=[]):
+    log("MServer __lobby_watch",5)
+    if self.mstate.day == 0:
+      self.comm.cast("No game to watch",LOBBY_GROUP_ID)
+      return True
+    assert 'user_id' in post, "No user_id in __lobby_watch post"
+    player_id = post['user_id']
+    # if they aren't already in the game, add to game
+    return self.comm.addMain(player_id)
+
+  ### MAIN GROUP FN ------------------------------------------------------------
+
+  def __vote(self,post,words):
+    log("MServer __vote",5)
+    assert 'user_id' in post, "No user_id in __vote post"
+    voter = post['user_id']
+
+    if words[1].lower() == "me":
       votee = voter
     elif words[1].lower() == "none":
       votee = None
     elif words[1].lower() == "nokill":
-      votee= "0"
+      votee = "0"
+    elif ('attachments' in post):
+      mentions = [a for a in post['attachments'] if a['type'] == 'mentions']
+      if len(mentions):
+        assert 'user_ids' in mentions[0] and len(mentions[0]['user_ids']) >= 1, "No user_ids in mention in _vote post"
+        votee = mentions[0]['user_ids'][0]
     else:
-      votee = mentions[0]['user_ids'][0]
-  except Exception as e:
-    self.log("Vote Failed: Couldn't get votee: {}".format(e))
+      self.log("Vote Failed: couldn't get votee")
+      return False
+    return self.mstate.vote(voter,votee)
+
+  def __status(self,post={},words=[]):
+    log("MServer __status",5)
+    self.comm.cast(mstate.__str__())
+    return True
+
+  def __help(self,post={},words=[]):
+    log("MServer __help",5)
+    self.comm.cast(HELP_MESSAGE)
+    return True
+
+  def __timer(self,post={},words=[]):
+    log("MServer __timer",5)
+    return self.mstate.setTimer()
+
+  ### MAFIA GROUP FN -----------------------------------------------------------
+
+  def __mafia_help(self,post={},words=[]):
+    log("MServer __mafia_help",5)
+    self.comm.cast(M_HELP_MESSAGE,MAFIA_GROUP_ID)
+    return True
+
+  def __mafia_target(self,post,words):
+    log("MServer __mafia_target",5)
+    try:
+      return self.mstate.mafiaTarget(int(words[1]))
+    except Exception as e:
+      log("Invalid Mafia Target {}".format(e))
+      return False
+
+
+  def __mafia_options(self,post={},words=[]):
+    log("MServer __mafia_options",5)
+    return self.mstate.mafia_options()
+
+  ### DOC DM FN ----------------------------------------------------------------
+
+  def __doc_help(self,DM,words=[]):
+    log("MServer __doc_help",5)
+    self.comm.sendDM(DOC_HELP_MESSAGE, DM['sender_id'])
+    return True
+
+  def __doc_save(self,DM,words):
+    log("MServer __doc_save",5)
+    try:
+      return self.mstate.target(DM['sender_id'],int(words[1]))
+    except Exception as e:
+      log("Doctor save failed: {}".format(e))
     return False
-  return mstate.vote(voter,votee)
-  
 
-def status(post={},words=[]):
-  log("STATUS")
-  comm.cast(mstate.__str__())
-  return True
+  def __doc_options(self,DM,words=[]):
+    log("MServer __doc_options",5)
+    return self.mstate.send_options("Use /target number (i.e. /target 0) to pick someone to save",
+                                    DM['sender_id'])
 
-def help_(post={},words=[]):
-  comm.cast(HELP_MESSAGE)
-  return True
+  ### COP DM FN ----------------------------------------------------------------
 
-def timer(post={},words=[]):
-  log("Setting Timer")
-  return mstate.setTimer()
+  def __cop_help(self,DM,words=[]):
+    log("MServer __cop_help",5)
+    self.comm.sendDM(COP_HELP_MESSAGE, DM["sender_id"])
+    return True
 
-
-### MAFIA POST FUNCTIONS #####################################################
-
-def mafia_help(post={},words=[]):
-  comm.cast(M_HELP_MESSAGE,MAFIA_GROUP_ID)
-  return True
-
-def mafia_target(post,words):
-  try:
-    return mstate.mafiaTarget(int(words[1]))
-  except Exception as e:
-    log("Invalid Mafia Target {}".format(e))
+  def __cop_investigate(self,DM,words):
+    log("MServer __cop_investigate",5)
+    try:
+      return self.mstate.target(DM['sender_id'],int(words[1]))
+    except Exception as e:
+      log("Cop investigation failed: {}".format(e))
     return False
-  
-def mafia_options(post={},words=[]):
-  return mstate.mafia_options()
 
-### DOCTOR FUNCTIONS #########################################################
+  def __cop_options(Self,DM,words=[]):
+    log("MServer __cop_options",5)
+    return self.mstate.send_options("Use /target number (i.e. /target 2) to pick someone to investigate",
+                                    DM['sender_id'])
 
-def doctor_help(DM,words=[]):
-  comm.sendDM(DOC_HELP_MESSAGE, DM['sender_id'])
-  return True
+  ### CELEB DM FN --------------------------------------------------------------
 
-def doctor_save(DM,words):
-  try:
-    return mstate.target(DM['sender_id'],int(words[1]))
-  except Exception as e:
-    log("Doctor save failed: {}".format(e))
-  return False
+  def __celeb_help(self,DM,words=[]):
+    log("MServer __celeb_help",5)
+    self.comm.sendDM(CELEB_HELP_MESSAGE, DM["sender_id"])
+    return True
 
-def doctor_options(DM,words={}):
-  return mstate.send_options("Use /target number (i.e. /target 0) to pick someone to save",
-                             DM['sender_id'])
+  def __celeb_reveal(self,DM,words=[]):
+    log("MServer __celeb_reveal",5)
+    return self.mstate.reveal(DM["sender_id"])
 
-### COP FUNCTIONS ############################################################
+  ### DM FN --------------------------------------------------------------------
 
-def cop_help(DM,words=[]):
-  comm.sendDM(COP_HELP_MESSAGE, DM["sender_id"])
-  return True
+  def __dm_help(self,DM,words):
+    log("MServer __dm_help",5)
+    return self.comm.sendDM(DM_HELP_MESSAGE,DM['sender_id'])
 
-def cop_investigate(DM,words):
-  try:
-    return mstate.target(DM['sender_id'],int(words[1]))
-  except Exception as e:
-    log("Cop investigation failed: {}".format(e))
-  return False
-
-def cop_options(DM,words=[]):
-  return mstate.send_options("Use /target number (i.e. /target 2) to pick someone to investigate",
-                             DM['sender_id'])
-
-### CELEB FN ################################################################
-
-def celeb_help(DM,words=[]):
-  comm.sendDM(CELEB_HELP_MESSAGE, DM["sender_id"])
-  return True
-
-def celeb_reveal(DM,words=[]):
-  return mstate.reveal(DM["sender_id"])
+  def __dm_status(self,DM,words=[]):
+    log("MServer __dm_status",5)
+    return self.comm.sendDM(mstate.__str__(),DM['sender_id'])
 
 
-### ANY DM FUNCTIONS ########################################################
 
-def dm_help(DM,words):
-  return comm.sendDM(DM_HELP_MESSAGE,DM['sender_id'])
+if __name__ == "__main__":
+  mserver = MServer()
+    
+  DMlock = _thread.allocate_lock()
 
-def dm_status(DM,words=[]):
-  return comm.sendDM(mstate.__str__(),DM['sender_id'])
-  
-  
-# These dicts routes the command to the correct function
-
-# Lobby operations
-LOPS={ HELP_KW   : lobby_help  ,
-       STATUS_KW : lobby_status,
-       WATCH_KW  : lobby_watch ,
-       IN_KW     : lobby_in    ,
-       OUT_KW    : lobby_out   ,
-       START_KW  : lobby_start ,
-     }
-
-OPS ={ VOTE_KW   : vote   ,
-       STATUS_KW : status ,
-       HELP_KW   : help_  ,
-       TIMER_KW  : timer  ,
-     }
-
-MOPS={ HELP_KW   : mafia_help ,
-       TARGET_KW : mafia_target ,
-       OPTS_KW   : mafia_options,
-     }
-
-DOC_OPS = {HELP_KW   : doctor_help ,
-           OPTS_KW   : doctor_options ,
-           TARGET_KW : doctor_save ,
-          }
-COP_OPS = {HELP_KW   : cop_help ,
-           OPTS_KW   : cop_options ,
-           TARGET_KW : cop_investigate ,
-          }
-CELEB_OPS = {HELP_KW : celeb_help,
-             REVEAL_KW : celeb_reveal,
-             }
-DM_OPS = { HELP_KW  : dm_help,
-           STATUS_KW: dm_status,
-          }
-def do_POST_LOBBY(post):
-  log("POST in LOBBY")
-  try:
-    if(post['text'][0:len(ACCESS_KW)] == ACCESS_KW):
-      words = post['text'][len(ACCESS_KW):].split() 
-      if(not len(words) == 0 and words[0] in LOPS):
-        if not LOPS[words[0]](post,words):
-          comm.cast("{} failed".format(words[0]),LOBBY_GROUP_ID)
-      else:
-        comm.cast("Invalid request, (try {}{} for help)".format(ACCESS_KW,HELP_KW),LOBBY_GROUP_ID)
-  except KeyError as e: pass
-
-def do_POST_MAIN(post):
-  log("POST in MAIN")
-  try:
-    if(post['text'][0:len(ACCESS_KW)] == ACCESS_KW):
-      words = post['text'][len(ACCESS_KW):].split() 
-      if(not len(words) == 0 and words[0] in OPS):
-        if not OPS[words[0]](post,words):
-          comm.cast("{} failed".format(words[0]))
-      else:
-        comm.cast("Invalid request, (try {}{} for help)".format(ACCESS_KW,HELP_KW))
-  except KeyError as e: pass
-
-def do_POST_MAFIA(post):
-  log("Got POST in MAFIA")
-  # Test if we need to do anything
-  try:
-    if(post['text'][0:len(ACCESS_KW)] == ACCESS_KW):
-      words = post['text'][len(ACCESS_KW):].split() 
-      if(not len(words) == 0 and words[0] in MOPS):
-        if not MOPS[words[0]](post,words):
-          comm.cast("{} failed".format(words[0]),MAFIA_GROUP_ID)
-      else:
-        comm.cast("Invalid request, (try {}{} for help)".format(ACCESS_KW,HELP_KW))
-  except KeyError as e: pass
-
-def do_POST(post):
-  if(  post['group_id'] == MAIN_GROUP_ID): do_POST_MAIN(post)
-  elif(post['group_id'] == MAFIA_GROUP_ID): do_POST_MAFIA(post)
-  elif(post['group_id'] == LOBBY_GROUP_ID): do_POST_LOBBY(post)
-  mstate.saveNotes()
-
-def do_DM(DM):
-  log("Got DM")
-  try:
-    if(not DM['sender_id'] == MODERATOR and
-       DM['text'][0:len(ACCESS_KW)] == ACCESS_KW):
-      words = DM['text'][len(ACCESS_KW):].split()
-      try:
-        role = mstate.getPlayer(DM['sender_id']).role
-      except Exception as e:
-        role = ""
-     
-      if(role == "DOCTOR"):
-        if(not len(words) == 0 and words[0] in DOC_OPS):
-          if not DOC_OPS[words[0]](DM,words):
-            comm.sendDM("{} failed".format(words[0]),DM['sender_id'])
-              
-      elif(role == "COP"):
-        if(not len(words) == 0 and words[0] in COP_OPS):
-          if not COP_OPS[words[0]](DM,words):
-            comm.sendDM("{} failed".format(words[0]),DM['sender_id'])
-
-      elif(role == "CELEB"):
-        if(not len(words) == 0 and words[0] in CELEB_OPS):
-          if not CELEB_OPS[words[0]](DM,words):
-            comm.sendDM("{} failed".format(words[0]),DM['sender_id'])
-
-      if(not len(words) == 0 and words[0] in DM_OPS):
-        if not DM_OPS[words[0]](DM,words):
-          comm.sendDM("{} failed".format(words[0]),DM['sender_id'])
-      
-         
-  except Exception as e:
-    comm.log("Error doing DM: {}".format(e))
 
 def loopDM():
   while True:
     try:
-      for member in comm.getMembers():
-        DMs = comm.getDMs(member.user_id)
+      for member in mserver.comm.getMembers():
+        DMs = mserver.comm.getDMs(member.user_id)
         for DM in DMs:
           DMlock.acquire()
-          do_DM(DM)
+          mserver.do_DM(DM)
           DMlock.release()
         time.sleep(.5)
     except Exception as e:
@@ -330,11 +320,11 @@ def loopDMin():
 # Specifically, only loop through the players in the game
   while True:
     try:
-      for player in mstate.players:
-        DMs = comm.getDMs(player.id_)
+      for player in mserver.mstate.players:
+        DMs = mserver.comm.getDMs(player.id_)
         for DM in DMs:
           DMlock.acquire()
-          do_DM(DM)
+          mserver.do_DM(DM)
           DMlock.release()
         time.sleep(.5)
     except Exception as e:
@@ -351,7 +341,7 @@ class MainHandler(BaseHandler):
       post = {}
 
     try:
-      do_POST(post)
+      mserver.do_POST(post)
     except Exception as e:
       log(e)
     return
@@ -360,9 +350,7 @@ if __name__ == "__main__":
 
   server = HTTPServer((ADDRESS,int(PORT)), MainHandler)
 
-  mstate.loadNotes()
-
-  comm.intro()
+  mserver.comm.intro()
 
   try:
     _thread.start_new_thread(loopDM,())
@@ -374,5 +362,5 @@ if __name__ == "__main__":
   except KeyboardInterrupt as e:
     pass
 
-  comm.outro()
+  mserver.comm.outro()
  

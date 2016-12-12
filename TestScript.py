@@ -1,13 +1,110 @@
-import GroupyComm
-import MState
+## Test Scripts for Mafia Bot
 
-c = GroupyComm.GroupyCommTest()
-m = MState.MState(c)
+from MInfo import *
 
-m.nextPlayerIDs = ["1","2","3","4","5"]
+import MServer
 
-m.startGame()
+def makePost(group_id,text,user_id="",mentions=[]):
+  post = {}
+  post['group_id'] = group_id
+  post['text'] = text
+  post['user_id'] = user_id
+  post['attachments'] = [{'type':'mentions','user_ids':mention} for mention in mentions]
+  return post
 
-m.vote("1","2")
-m.vote("3","2")
-m.vote("4","2")
+def makeDM(sender_id,text):
+  DM = {}
+  DM['sender_id'] = sender_id
+  DM['text'] = text
+  return DM
+
+def basic_start():
+  m = MServer.MServer(restart=True)
+  p = makePost(LOBBY_GROUP_ID,"/help")
+  m.do_POST(p)
+  return m
+
+def get5In(m):
+  ps = [makePost(LOBBY_GROUP_ID,"/in",user) for user in ["1","2","3","4","5"]]
+  for p in ps:
+    m.do_POST(p)
+  return m
+
+def vote(m,ver,vee):
+  p = makePost(MAIN_GROUP_ID,"/vote @thum",ver, [vee])
+  m.do_POST(p)
+  return m
+
+def inPlayers(m,p_id):
+  for player in m.mstate.players:
+    if player.id_ == p_id:
+      return True
+  return False
+
+
+def simple_game():
+  m = basic_start()
+  get5In(m)
+  m.mstate.startGame(["TOWN","TOWN","TOWN","TOWN","MAFIA"])
+  assert m.mstate.time == "Day"
+  assert m.mstate.day == 1
+  vote(m,"2","1")
+  vote(m,"3","1")
+  vote(m,"4","1")
+  assert m.mstate.time == "Night"
+  assert m.mstate.day == 1
+  assert not inPlayers(m,"1")
+  m.do_POST(makePost(MAFIA_GROUP_ID,"/target 0"))
+  assert not inPlayers(m,"2")
+  assert m.mstate.time == "Day"
+  assert m.mstate.day == 2
+  vote(m,"5","3")
+  vote(m,"4","3")
+  assert m.mstate.day == 0
+
+def double_game():
+  m = basic_start()
+  get5In(m)
+  m.mstate.startGame(["TOWN","TOWN","TOWN","TOWN","MAFIA"])
+  vote(m,"2","1")
+  vote(m,"3","1")
+  vote(m,"4","1")
+  m.do_POST(makePost(MAFIA_GROUP_ID,"/target 0"))
+  vote(m,"3","5")
+  vote(m,"5","5")
+  get5In(m)
+  m.mstate.startGame(["TOWN","TOWN","TOWN","TOWN","MAFIA"])
+  assert m.mstate.time == "Day"
+  assert m.mstate.day == 1
+  vote(m,"2","1")
+  vote(m,"3","1")
+  vote(m,"4","1")
+  assert m.mstate.time == "Night"
+  assert m.mstate.day == 1
+  assert not inPlayers(m,"1")
+  m.do_POST(makePost(MAFIA_GROUP_ID,"/target 0"))
+  assert not inPlayers(m,"2")
+  assert m.mstate.time == "Day"
+  assert m.mstate.day == 2
+  vote(m,"5","3")
+  vote(m,"4","3")
+  assert m.mstate.day == 0
+
+def cop_game():
+  m = basic_start()
+  get5In(m)
+  m.mstate.startGame(["TOWN","COP","TOWN","TOWN","MAFIA"])
+  vote(m,"2","1")
+  vote(m,"3","1")
+  vote(m,"4","1")
+  m.do_POST(makePost(MAFIA_GROUP_ID,"/target 1"))
+  m.do_DM(makeDM("2","/target 2"))
+  vote(m,"2","5")
+  vote(m,"4","5")
+
+
+if __name__ == "__main__":
+
+  #simple_game()
+  #double_game()
+  cop_game()

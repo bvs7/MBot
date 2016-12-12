@@ -3,14 +3,14 @@
 import pickle  # For loading vars
 import os
 
-DEBUG = 5
+DEBUG = 4
 SILENT = False
 
 info_fname = "info"
 
 ### TIMING ##########
 
-SET_TIMER_VALUE = 1*60
+SET_TIMER_VALUE = 5*60
 
 try:
   f = open(info_fname,'r')
