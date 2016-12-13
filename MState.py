@@ -251,7 +251,7 @@ timerOn  - if Timer is on
 
   def getPlayer(self, p):
     """ p can be player or id, either way returns the player object associated. """
-    log("MStategetPlayer",5)
+    log("MState getPlayer",5)
     if type(p) == Player:
       return p
     elif type(p) == str:
@@ -398,6 +398,7 @@ timerOn  - if Timer is on
                       p.id_)
     
     self.__clearTargets()
+    self.timerOn = False
     return True
   
   def __toNight(self):
@@ -414,6 +415,7 @@ timerOn  - if Timer is on
       elif p.role == "DOCTOR":
         self.send_options("Use /target number (i.e. /target 0) to pick someone to save",p.id_)
     self.setTimer()
+    return True
 
   def __clearTargets(self):
     """ Clear all player's targets. """
@@ -443,6 +445,7 @@ timerOn  - if Timer is on
     log("MState __endGame",4)
     self.day = 0
     self.time = "Day"
+    self.timerOn = False
     self.players.clear()
     self.comm.clearMafia()
 
