@@ -12,9 +12,9 @@ import MState
 
 class MServer:
 
-  def __init__(self, CommType=GroupyComm.GroupyCommTest,
+  def __init__(self, CommType=GroupyComm.GroupyComm,
                      MStateType=MState.MState,
-                     restart=False):
+                     restart=True):
     log("MServer init",3)
     self.comm = CommType()
     self.mstate = MStateType(self.comm, restart)
@@ -31,6 +31,9 @@ class MServer:
       elif(post['group_id'] == MAFIA_GROUP_ID): ops = self.__MOPS
       elif(post['group_id'] == LOBBY_GROUP_ID): ops = self.__LOPS
       else:
+        # Check if this was posted by the DM bot
+        if '+' in post['group_id']:
+          return self.do_DM(post)
         log("POST group_id not found: {}".format(post['group_id']))
         return False
       return self.__do_POST_OPS(post,words,ops)
@@ -131,7 +134,7 @@ class MServer:
 
   def __lobby_status(self,post={},words=[]):
     log("MServer __lobby_status",5)
-    self.comm.cast(mstate.__str__(),LOBBY_GROUP_ID)
+    self.comm.cast(self.mstate.__str__(),LOBBY_GROUP_ID)
     return True
 
   def __lobby_start(self,post={},words=[]):
@@ -201,7 +204,7 @@ class MServer:
 
   def __status(self,post={},words=[]):
     log("MServer __status",5)
-    self.comm.cast(mstate.__str__())
+    self.comm.cast(self.mstate.__str__())
     return True
 
   def __help(self,post={},words=[]):
@@ -292,7 +295,7 @@ class MServer:
 
   def __dm_status(self,DM,words=[]):
     log("MServer __dm_status",5)
-    return self.comm.sendDM(mstate.__str__(),DM['sender_id'])
+    return self.comm.sendDM(self.mstate.__str__(),DM['sender_id'])
 
 
 
@@ -336,9 +339,11 @@ class MainHandler(BaseHandler):
     try:
       length = int(self.headers['Content-Length'])
       content = self.rfile.read(length).decode('utf-8')
+#      print(content)
       post = json.loads(content)
     except Exception as e:
       post = {}
+      log("failed to load content")
 
     try:
       mserver.do_POST(post)
@@ -353,8 +358,8 @@ if __name__ == "__main__":
   mserver.comm.intro()
 
   try:
-    _thread.start_new_thread(loopDM,())
-    _thread.start_new_thread(loopDMin,())
+#    _thread.start_new_thread(loopDM,())
+#    _thread.start_new_thread(loopDMin,())
     _thread.start_new_thread(server.serve_forever,())
 
     while True:

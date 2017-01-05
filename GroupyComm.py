@@ -13,7 +13,7 @@ try:
   import groupy
   import groupy.api.endpoint as groupyEP
 except Exception as e:
-  pass
+  log("FAILED TO LOAD GROUPY")
 
 class NoGroupError(Exception):
   def __init__(self,msg):
@@ -47,10 +47,10 @@ class GroupyComm:
       exit()
 
     # Setup Direct Messages
-    try:
-      self.recent_ids = loadNote("recent_ids")
-    except NoteError as e:
-      self.recent_ids = {}
+#    try:
+#      self.recent_ids = loadNote("recent_ids")
+#    except NoteError as e:
+    self.recent_ids = {}
 
 
   def getGroup(self,group_id):

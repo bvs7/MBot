@@ -91,7 +91,7 @@ ROLE_EXPLAIN= {
 
 SAVES = [
       "time","day","num_mafia","mafia_target","players","nextPlayerIDs", 
-      "idiot_winners", "savedRoles", "timer_value", "timerOn"
+      "idiot_winners", "savedRoles", "timer_value", "timerOn",
     ]
 
 # ROLE GENERATION
