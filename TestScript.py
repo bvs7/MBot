@@ -1,3 +1,4 @@
+#!/usr/bin/python3
 ## Test Scripts for Mafia Bot
 
 from MInfo import *
