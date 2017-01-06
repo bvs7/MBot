@@ -22,56 +22,62 @@ Target is similar.
   def __str__(self):
     return "[{}, {}]".format(self.id_,self.role)
 
-class MState:
-  """
-Attributes:
-
-comm - The Communication object used to respond to stimuli
-time, day  - "Day"/"Night", number representing current day. 0 is no game
-null  - A generic player object used for recording the number voting for no kill
-
-num_mafia  - INT, number of remaining mafia
-players  - A list of PLAYER objects currently in the game
-nextPlayerIDs  - A list of strings representing the IDs of those in the next game
-
-savedRoles  - A list of the roles people were assigned at the beginning of the game.
-  Used to reveal roles at the end
-
-mafia_target  - A player object that the mafia has targeted
-
-idiot_winners  - A list of players who won by being an idiot that was voted out
-
-timer_value  - The amount of time left when timer is on
-timerOn  - if Timer is on
-
+class Preferences:
+    """
+Holds all of the preference variables for how the game is played
 """
+    def __init__(self,
+                 known_roles=False,
+                 reveal_on_death=False,
+                 kick_on_death=True):
+        # Show the roles at the beginning of the game
+        self.known_roles = known_roles
+        # Show a player's role on their death
+        self.reveal_on_death = reveal_on_death
+        # Kick a player from the game when they die
+        self.kick_on_death = kick_on_death
+
+    def __str__(self):
+        return "known_roles:\t{}\nreveal_death:\t{}".format("ON" if self.known_roles else "OFF",
+                                                            "ON" if self.reveal_death else "OFF")
+
+class MState:
   def __init__(self,comm, restart=False):
     log("MState init",3)
 
+    # The GroupyComm object used to respond to stimuli
     self.comm = comm
 
+    # Preferences for the current game
+
+    self.pref = Preferences()
+
+    # Generic player object used for recording the number voting for no kill
     self.null = Player("0","null")
 
+    # "Day"/"Night" and number representing current day. 0 is no game
     self.time = "Day"
     self.day = 0
 
-    self.num_mafia = 0
-    self.players = []
-    self.nextPlayerIDs = []
+    self.num_mafia = 0  # number of remaining mafia
+    self.players = []  # A list of PLAYER objects currently in the game
+    self.nextPlayerIDs = []  # A list of strings representing the IDs of those in the next game
 
+    # A list of the roles people were assigned at the beginning of the game.
+    # Used to reveal roles at the end
     self.savedRoles = {}
 
-    self.mafia_target = None
+    self.mafia_target = None  # A player object that the mafia has targeted
 
-    self.idiot_winners = []
+    self.idiot_winners = []  # A list of players who won by being an idiot that was voted out
 
-    self.timer_value = 0
-    self.timerOn = False
+    self.timer_value = 0  # The amount of time left when timer is on
+    self.timerOn = False  # if Timer is on
 
-
+    # load saved state over defaults if not restarting
     if not restart:
       self.__loadNotes()
-
+    # Begin a thread that will keep track of the timer
     _thread.start_new_thread(self.__watchTimer,())
 
   def vote(self,voter_id,votee_id):
@@ -135,13 +141,13 @@ timerOn  - if Timer is on
     if not self.time == "Night":
       log("{} couldn't target {}: Not Night".format(p,target_option))
       return False
-    
+
     # Check if the player is represented as an object or a string
     try:
       player = self.getPlayer(p)
     except Exception as e:
       log("Couldn't find target from {}: {}".format(p,e))
-      return False    
+      return False
     try:
       if target_option == len(self.players):
         target = self.null
@@ -183,14 +189,20 @@ timerOn  - if Timer is on
     self.comm.cast(self.comm.getName(player.id_) + " is " + player.role)
     return True
 
-  def startGame(self,testRoles=None):
+  def startGame(self,testRoles=None, preferences=None):
     """ Gen roles, create player objects and start the game. """
     log("MState startGame",3)
+
+    # Set preference variables
+    if not preferences == None:
+        self.pref = preferences
+
     num_players = len(self.nextPlayerIDs)
     if num_players < 3:
       self.comm.cast("Not enough players to start",LOBBY_GROUP_ID)
       return False
 
+    # Initialize game variables
     self.day = 1
     self.time = "Day"
 
@@ -201,7 +213,7 @@ timerOn  - if Timer is on
 
     if testRoles == None:
       random.shuffle(self.nextPlayerIDs)
-    
+
     roles = self.__genRoles(num_players)
 
     if not testRoles == None:
@@ -213,7 +225,7 @@ timerOn  - if Timer is on
       self.players.append(player)
 
       self.savedRoles[player.id_] = player.role
-      
+
       if player.role in MAFIA_ROLES:
         self.num_mafia += 1
       log("{} - {}".format(self.comm.getName(player.id_),player.role))
@@ -231,9 +243,14 @@ timerOn  - if Timer is on
       if player.role in MAFIA_ROLES:
         self.comm.addMafia(player.id_)
 
-    self.comm.cast(("Dawn. Of the game and of this new day. You have learned "
-                    "that scum reside in this town... A scum you must purge. "
-                    "Kill Someone!"))
+    msg = ("Dawn. Of the game and of this new day. You have learned that scum "
+           "reside in this town... A scum you must purge. Kill Someone!")
+
+    if self.pref.known_roles:
+        msg += "\nThe Roles:" + self.__showRoles(roles)
+
+    self.comm.cast(msg)
+
     return True
 
   def inNext(self,player_id):
@@ -291,7 +308,7 @@ timerOn  - if Timer is on
     except Exception as e:
       log("Couldn't kill {}: {}".format(p,e))
       return False
-    
+
     # Remove player from game
     try:
       if player.role in MAFIA_ROLES:
@@ -304,6 +321,12 @@ timerOn  - if Timer is on
     if not self.__checkWinCond():
       # Game continues, let the person know roles
       self.comm.sendDM(self.__revealRoles(),player.id_)
+      # Depending on preferences, kick, or reveal
+      if self.pref.reveal_on_death:
+        self.reveal(player)
+      if self.pref.kick_on_death:
+        self.comm.remove(player.id_)
+
     return True
 
   def __checkVotes(self,p):
@@ -327,12 +350,11 @@ timerOn  - if Timer is on
         self.comm.cast("Vote successful: {} more vote{}to decide not to kill".format(
                   int((num_players+1)/2) - num_voters,
                   " " if (int((num_players+1)/2) - num_voters == 1) else "s "))
-        return True  
+        return True
     if num_voters > num_players/2:
       self.comm.cast("The vote to kill {} has passed".format(
                 self.comm.getName(player.id_)))
       if(self.__kill(player)):
-        self.comm.remove(player.id_)
         if player.role == "IDIOT":
           self.idiot_winners.append(player)
         if not self.day == 0:
@@ -351,7 +373,7 @@ timerOn  - if Timer is on
     for p in self.players:
       if p.role in ["COP","DOCTOR"] and p.target == None:
         cop_doc_done = False
-    
+
     if (self.mafia_target == None or not cop_doc_done):
       return False
     else:
@@ -382,8 +404,7 @@ timerOn  - if Timer is on
         self.__kill(self.mafia_target)
         msg = ("Tragedy has struck! {} is dead! Someone must pay for this! "
                "Vote to kill somebody!").format(self.comm.getName(self.mafia_target.id_))
-        self.comm.cast(msg)  
-        self.comm.remove(self.mafia_target.id_)
+        self.comm.cast(msg)
     # Mafia has no target
     else:
       msg = ("A peculiar feeling drifts about... everyone is still alive...")
@@ -396,11 +417,11 @@ timerOn  - if Timer is on
           "MAFIA" if (p.target.role in MAFIA_ROLES and
                       not p.target.role == "GODFATHER") else "TOWN"),
                       p.id_)
-    
+
     self.__clearTargets()
     self.timerOn = False
     return True
-  
+
   def __toNight(self):
     """ Change state to Night, send out relevant info. """
     self.time = "Night"
@@ -463,7 +484,21 @@ timerOn  - if Timer is on
       r += "\n" + self.comm.getName(player_id) + ": " + role
     return r
 
- 
+  def __showRoles(self,roles):
+    """ Make a string which describes the number of players with each role. """
+    log("MState __showRoles",4)
+
+    roleDict = {}
+    for role in roles:
+      if role in roleDict:
+        roleDict[role] += 1
+      else:
+        roleDict[role] = 1
+    msg = ""
+    for role in roleDict:
+        msg += "\n" + role + ": " + str(roleDict[role])
+    return msg
+
 
   def __addUntil(self, role, weights):
     """ Helper for genRoles """
@@ -526,7 +561,7 @@ timerOn  - if Timer is on
 
     # Roles contains a valid game
     return roles
-  
+
   def __loadNotes(self):
     """ Loads all notes that were saved """
     log("MState __loadNotes",4)
@@ -593,5 +628,4 @@ timerOn  - if Timer is on
           count += 1
           m += self.comm.getName(voter.id_) + ", "
         m += str(count) + "\n"
-    return m    
-    
+    return m

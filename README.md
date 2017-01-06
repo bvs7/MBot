@@ -70,7 +70,7 @@ and who is voting for whom.
 * `/options` - Lists the players to kill and their numbers for this night.
 * `/help` - Responds with a list of commands that can be used in Mafia Chat.
 
-### DM Commands
+#### DM Commands
 
 * `/status` - Gives the current status of the game.
 * `/help` - Responds with a help message specific to the player's role.
@@ -81,7 +81,7 @@ and who is voting for whom.
 
 The game begins when somebody sends the command /start to the main groupme. This assigns roles to everybody currently in the game, and sends out direct messages listing these roles. The Mafia are added to the mafia group chat. Messages are sent announcing the beginning of the game.
 
-Now the game is in the "Day" phase. During this time, everybody votes for somebody to kill. When a vote is determined, the game goes into "Night". During this phase, the mafia, doctor, and cop select who to target. This is resolved as the game returns to day, when the cop is sent a message with info on who they investigated, and the group is informed of a kill/unsuccessful kill.	
+Now the game is in the "Day" phase. During this time, everybody votes for somebody to kill. When a vote is determined, the game goes into "Night". During this phase, the mafia, doctor, and cop select who to target. This is resolved as the game returns to day, when the cop is sent a message with info on who they investigated, and the group is informed of a kill/unsuccessful kill.
 
 ## TODO
 
@@ -93,3 +93,7 @@ Now the game is in the "Day" phase. During this time, everybody votes for somebo
 - [ ] NPC - MODERATOR will play and be a very basic player, voting almost randomly and saying funny things.
 - [ ] Rule Voting - A system by which players in the lobby can vote on implementations of new rules.
 - [ ] Records - The results of each game are saved to help adjust for fairness and find problems.
+- [ ] Single Game MStates - Have an MState object be created with the start of a game and end with it finishing.
+- [ ] New Game Chats and Bots - Instead of reusing the same chats all the time, make a new chat for each game, deleting it after.
+  - [ ] Multi-Game - Allow multiple games to occur at once in different chats.
+  - [ ] Game Timeout - If a game takes longer than 24 hours, end it early. To prevent forgotten games.

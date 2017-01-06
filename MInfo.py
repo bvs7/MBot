@@ -90,8 +90,8 @@ ROLE_EXPLAIN= {
   }
 
 SAVES = [
-      "time","day","num_mafia","mafia_target","players","nextPlayerIDs", 
-      "idiot_winners", "savedRoles", "timer_value", "timerOn",
+      "time","day","num_mafia","mafia_target","players","nextPlayerIDs",
+      "idiot_winners", "savedRoles", "timer_value", "timerOn", "pref"
     ]
 
 # ROLE GENERATION
@@ -192,4 +192,3 @@ DM_HELP_MESSAGE = ("In the Main Groupme you can play mafia via these commands:\n
                    "/out  - If you change your mind, use this to get out of the "
                    "next game.\n"
                    "/start  - Use this to begin a game with those who have enrolled.\n")
-

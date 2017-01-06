@@ -5,6 +5,8 @@ from MInfo import *
 import time
 
 import MServer
+from GroupyComm import GroupyCommTest
+from MState import Preferences
 
 def makePost(group_id,text,user_id="",mentions=[]):
   post = {}
@@ -21,7 +23,7 @@ def makeDM(sender_id,text):
   return DM
 
 def basic_start():
-  m = MServer.MServer(restart=True)
+  m = MServer.MServer(CommType=GroupyCommTest,restart=True)
   p = makePost(LOBBY_GROUP_ID,"/help")
   m.do_POST(p)
   return m
@@ -121,10 +123,34 @@ def doc_game():
   vote(m,"4","4")
   vote(m,"5","4")
 
+def pref_game():
+    m = basic_start()
+    get5In(m)
+    m.mstate.startGame(["TOWN","TOWN","TOWN","TOWN","MAFIA"],
+                       Preferences(known_roles=True,
+                                   reveal_on_death=True,
+                                   kick_on_death=True))
+    assert m.mstate.time == "Day"
+    assert m.mstate.day == 1
+    vote(m,"2","1")
+    vote(m,"3","1")
+    vote(m,"4","1")
+    assert m.mstate.time == "Night"
+    assert m.mstate.day == 1
+    assert not inPlayers(m,"1")
+    m.do_POST(makePost(MAFIA_GROUP_ID,"/target 0"))
+    assert not inPlayers(m,"2")
+    assert m.mstate.time == "Day"
+    assert m.mstate.day == 2
+    vote(m,"5","3")
+    vote(m,"4","3")
+    assert m.mstate.day == 0
+
 
 if __name__ == "__main__":
 
   #simple_game()
   #double_game()
   #cop_game()
-  doc_game()
+  #doc_game()
+  pref_game()
