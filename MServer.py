@@ -160,7 +160,7 @@ class MServer:
     assert 'user_id' in post, "No user_id in __lobby_out post"
     player_id = post['user_id']
     # try to remove from list:
-    if player in self.mstate.nextPlayerIDs:
+    if player_id in self.mstate.nextPlayerIDs:
       self.mstate.nextPlayerIDs.remove(player)
       self.comm.cast("{} removed from next game".format(self.comm.getName(player)),
                      LOBBY_GROUP_ID)
@@ -301,7 +301,7 @@ class MServer:
 
 if __name__ == "__main__":
   mserver = MServer()
-    
+
   DMlock = _thread.allocate_lock()
 
 
@@ -368,4 +368,3 @@ if __name__ == "__main__":
     pass
 
   mserver.comm.outro()
- 
