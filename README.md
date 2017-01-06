@@ -12,8 +12,8 @@ and the MODERATOR account can be used to make posts or DMs in response.
 
 There are 3 group chats used in the game:
   * Lobby Chat
-	* Main Chat
-	* Mafia Chat
+* Main Chat
+* Mafia Chat
 
 Direct messages (DMs) are also used for certain purposes.
 
