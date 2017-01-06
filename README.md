@@ -1,5 +1,37 @@
-The purpose of this branch is to design a version of MBot where the main group chat is a lobby. That is to say that people can sign up for games there, but the games will be played in another chat. This will cut down on the spam the group receives.
+# MBot
+---
 
+## Introduction
+
+MBot or Mafia Bot is a simple python server that runs on a raspberry pi. It allows those
+in a Groupme chat to play mafia. Groupme Bots listen to chats and DMs for a "MODERATOR"
+groupme account. Each new post or direct message (DM) is processed and applied to the game state,
+and the MODERATOR account can be used to make posts or DMs in response.
+
+## System Overview
+
+There are 3 group chats used in the game:
+  * Lobby Chat
+	* Main Chat
+	* Mafia Chat
+
+Direct messages (DMs) are also used for certain purposes.
+
+### Lobby Chat
+
+The lobby system is designed to prevent players who aren't in the game from being
+spammed too much. From the lobby users can join the next game, watch games, or check
+the status of games.
+
+### Main Chat
+
+When the game starts, the players are added to the main chat. From here they can
+vote and perform other actions related to the game. This is the chat where the majority
+of the game takes place.
+
+### Mafia Chat
+
+## Features to implement
 
 
 This is Mafia Bot!
@@ -41,33 +73,3 @@ Features to add:
 MASONS		These roles would be for a large mafia group. This is a group chat where everyone is confirmed town.
 
 VIGILANTE		
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
