@@ -27,8 +27,8 @@ class Preferences:
 Holds all of the preference variables for how the game is played
 """
     def __init__(self,
-                 known_roles=False,
-                 reveal_on_death=False,
+                 known_roles=True,
+                 reveal_on_death=True,
                  kick_on_death=True):
         # Show the roles at the beginning of the game
         self.known_roles = known_roles
