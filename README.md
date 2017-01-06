@@ -87,8 +87,9 @@ Now the game is in the "Day" phase. During this time, everybody votes for somebo
 
 - [ ] Deescalation - If a group goes `/in` for the next game, but _x_ time passes without anything happening, drop them all. This will prevent people from joining a game accidentally while they are busy.
 	- [ ] Lock - A player can lock themself in to avoid getting dropped.
-- [ ] Known Roles - Make an option for the roles (but not the players who have them) to be shared at the beginning of the game.
-- [ ] Reveal on Death - Make an option for a person's role to be revealed when they die.
+- [x] Known Roles - Make an option for the roles (but not the players who have them) to be shared at the beginning of the game.
+- [x] Reveal on Death - Make an option for a person's role to be revealed when they die.
+  - [ ] Preferences - Decide on a way to choose how preferences are done at the beginning of each game
 - [ ] Masons - A new role. Masons share a chat and know each other are confirmed town.
 - [ ] NPC - MODERATOR will play and be a very basic player, voting almost randomly and saying funny things.
 - [ ] Rule Voting - A system by which players in the lobby can vote on implementations of new rules.
@@ -96,4 +97,6 @@ Now the game is in the "Day" phase. During this time, everybody votes for somebo
 - [ ] Single Game MStates - Have an MState object be created with the start of a game and end with it finishing.
 - [ ] New Game Chats and Bots - Instead of reusing the same chats all the time, make a new chat for each game, deleting it after.
   - [ ] Multi-Game - Allow multiple games to occur at once in different chats.
+    - [ ] Instance GroupyComms - Have GroupyComms be independent, having their own Main groups, mafia groups, etc, and be able to cast to them all without knowing ids
   - [ ] Game Timeout - If a game takes longer than 24 hours, end it early. To prevent forgotten games.
+- [ ] Update Help text
