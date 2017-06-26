@@ -1,0 +1,22 @@
+Creating Game #1
+known_roles:	ON
+reveal_on_death:	ON
+kick_on_death:	ON
+know_if_saved:	ON
+GG, here were the roles:
+Name of 3: COP
+Name of 2: DOCTOR
+Name of 1: MAFIA
+Name of 4: TOWN
+Game Begins
+Name of 1 votes for Name of 2
+Name of 3 votes for Name of 2
+Name of 4 votes for Name of 2
+Name of 2 (DOCTOR) is killed (3-1)
+Name of 2is revealed asDOCTOR
+Night 1 begins
+Mafia targets Name of 4
+Name of 3 (COP) targets Name of 4
+Day 1 begins
+Name of 4 (TOWN) is killed (2-1)
+MAFIA WINS

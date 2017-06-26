@@ -1,0 +1,71 @@
+5:
+GG, here were the roles:
+Name of 1: COP
+Name of 2: DOCTOR
+Name of 3: MAFIA
+TOWN WON!
+17:
+GG, here were the roles:
+Name of 2: DOCTOR
+Name of 3: MAFIA
+Name of 1: COP
+MAFIA WON!
+20:
+GG, here were the roles:
+Name of 1: COP
+Name of 2: MAFIA
+Name of 3: DOCTOR
+TOWN WON!
+2:
+GG, here were the roles:
+Name of 2: DOCTOR
+Name of 3: COP
+Name of 1: MAFIA
+MAFIA WON!
+6:
+GG, here were the roles:
+Name of 3: COP
+Name of 2: DOCTOR
+Name of 1: MAFIA
+MAFIA WON!
+7:
+GG, here were the roles:
+Name of 3: COP
+Name of 2: DOCTOR
+Name of 1: MAFIA
+TOWN WON!
+8:
+GG, here were the roles:
+Name of 3: COP
+Name of 2: DOCTOR
+Name of 1: MAFIA
+MAFIA WON!
+
+Creating Game #13
+  Preferences: 
+known_roles:	ON
+reveal_death:	ON
+kick_on_death:	ON
+GG, here were the roles:
+Name of 1: MAFIA
+Name of 2: DOCTOR
+Name of 3: COP
+Game Begins
+Name of 1 votes for Name of 1
+Name of 2 votes for Name of 1
+Name of 1 is killed
+TOWN WINS
+Creating Game #1
+  Preferences: 
+known_roles:	ON
+reveal_death:	ON
+kick_on_death:	ON
+GG, here were the roles:
+Name of 2: DOCTOR
+Name of 3: COP
+Name of 1: MAFIA
+Game Begins
+Name of 1 votes for Name of 1
+Name of 2 votes for Name of 1
+Name of 1 is killed (2-0)
+TOWN WINS
