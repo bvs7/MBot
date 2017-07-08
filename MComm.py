@@ -95,7 +95,7 @@ class GroupComm(MComm):
         except groupy.api.errors.GroupMeError:
             log("FAILED TO GET GROUP")
         if len(groups) >= 1:
-            reutrn groups[0]
+            return groups[0]
         else:
             log("Could not find group with id " + group_id)
 
@@ -128,10 +128,10 @@ class GroupComm(MComm):
 
     def setTitle(self, new_title):
         msg = "TITLE "+self.title+"->"
-        
+
         self.title = new_title
         groupyEP.Groups.update(self.group_id, name=new_title)
-        
+
         msg += self.title
 
         log(msg)
@@ -169,4 +169,3 @@ class GroupComm(MComm):
 
     def __str__(self):
         return "[{}, {}]".format(self.title,self.group_id)
-    
