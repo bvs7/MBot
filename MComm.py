@@ -116,7 +116,7 @@ class GroupComm(MComm):
 
     def cast(self, msg):
         try:
-            groupyEP.Messages.create(group_id, message)
+            groupyEP.Messages.create(self.group_id, msg)
         except groupy.api.errors.GroupMeError:
             log("Failed to Cast")
             return False
@@ -156,7 +156,7 @@ class GroupComm(MComm):
         self.group.refresh()
         members = self.group.members()
         for m in members:
-            if m.user_id == player_id:
+            if m.user_id == member_id:
                 return m.nickname
         log("Failed to get Name")
         return "__"

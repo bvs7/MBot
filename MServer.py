@@ -17,9 +17,9 @@ class MServer:
                      MStateType=MState, # default MState type
                      restart=True):
     log("MServer init",3)
-    self.ctrl = MController()
     self.MCommType = MCommType
     self.MStateType = MStateType
+    self.ctrl = MController(self.MCommType(LOBBY_GROUP_ID), GROUP_IDS)
 
   def do_POST(self,post):
     """Process a POST request from bots watching the chats"""
@@ -35,13 +35,13 @@ class MServer:
         try:
             words = post['text'][len(ACCESS_KW):].split()
             player_id = post['user_id']
-            message_id = post['message_id']
+            message_id = post['id']
             group_id = post['group_id']
         except KeyError as e:
             log("KeyError:" + str(e))
             return
 
-        if group_id == ctrl.lobbyComm.group_id:
+        if group_id == self.ctrl.lobbyComm.group_id:
             if words[0] in self.ctrl.LOBBY_OPS:
                 return self.ctrl.LOBBY_OPS[words[0]](player_id,words,message_id)
         for mstate in self.ctrl.mstates:
@@ -98,21 +98,20 @@ class MainHandler(BaseHandler):
         post = {}
         log("failed to load content")
 
-    try:
-        mserver.do_POST(post)
-    except Exception as e:
-        log(e)
+  #  try:
+    print(post)
+    mserver.do_POST(post)
+#    except Exception as e:
+ #       log(e)
     return
 
 if __name__ == "__main__":
 
-    mserver = HTTPServer((ADDRESS,int(PORT)), MainHandler)
+    server = HTTPServer((ADDRESS,int(PORT)), MainHandler)
 
-    serverThread = threading.Thread(name="Server Thread", target=mserver.serve_forever)
+    serverThread = threading.Thread(name="Server Thread", target=server.serve_forever)
 
     serverThread.start()
 
     while True:
-        pass
-  except KeyboardInterrupt as e:
         pass
