@@ -62,7 +62,7 @@ class MServer:
                                     votee = "0"
                                 elif 'attachments' in post:
                                     mentions = [a for a in post['attachments'] if a['type'] == 'mentions']
-                                    if len(mentions) > 0 and 'user_ids' in mentions[0] and len(mentions[0]['user_ids']) >= 1):
+                                    if len(mentions) > 0 and 'user_ids' in mentions[0] and len(mentions[0]['user_ids']) >= 1:
                                         votee = mentions[0]['user_ids'][0]
                             player_id = (player_id, votee)
 
