@@ -125,7 +125,7 @@ class GroupComm(MComm):
 
     def ack(self, message_id):
         try:
-            groupyEP.Likes.create(self.group_id, self.message_id)
+            groupyEP.Likes.create(self.group_id, message_id)
         except groupy.api.errors.GroupMeError:
             log("Failed to Ack")
             return False
