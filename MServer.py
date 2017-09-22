@@ -13,62 +13,62 @@ from MController import MController
 
 class MServer:
 
-  def __init__(self, MCommType=MComm, #default MComm type
+    def __init__(self, MCommType=MComm, #default MComm type
                      MStateType=MState, # default MState type
                      restart=True):
-    log("MServer init",3)
-    self.MCommType = MCommType
-    self.MStateType = MStateType
-    self.ctrl = MController(self.MCommType(LOBBY_GROUP_ID), GROUP_IDS)
+        log("MServer init",3)
+        self.MCommType = MCommType
+        self.MStateType = MStateType
+        self.ctrl = MController(self.MCommType(LOBBY_GROUP_ID), GROUP_IDS)
 
-  def do_POST(self,post):
-    """Process a POST request from bots watching the chats"""
-    log("MServer do_POST",3)
+    def do_POST(self,post):
+        """Process a POST request from bots watching the chats"""
+        log("MServer do_POST",3)
 
-    # Check that this is a command
-    if post['text'][0:len(ACCESS_KW)] == ACCESS_KW:
+        # Check that this is a command
+        if post['text'][0:len(ACCESS_KW)] == ACCESS_KW:
 
-        # Check if this was posted by the DM bot
-        if '+' in post['group_id']:
-            return self.do_DM(post)
+            # Check if this was posted by the DM bot
+            if '+' in post['group_id']:
+                return self.do_DM(post)
 
-        try:
-            words = post['text'][len(ACCESS_KW):].split()
-            player_id = post['user_id']
-            message_id = post['id']
-            group_id = post['group_id']
-        except KeyError as e:
-            log("KeyError:" + str(e))
-            return
+            try:
+                words = post['text'][len(ACCESS_KW):].split()
+                player_id = post['user_id']
+                message_id = post['id']
+                group_id = post['group_id']
+            except KeyError as e:
+                log("KeyError:" + str(e))
+                return
 
-        if group_id == self.ctrl.lobbyComm.group_id:
-            if words[0] in self.ctrl.LOBBY_OPS:
-                return self.ctrl.LOBBY_OPS[words[0]](player_id,words,message_id)
-        for mstate in self.ctrl.mstates:
-            if group_id == mstate.mainComm.group_id:
-                if words[0] in self.ctrl.MAIN_OPS:
+            if group_id == self.ctrl.lobbyComm.group_id:
+                if words[0] in self.ctrl.LOBBY_OPS:
+                    return self.ctrl.LOBBY_OPS[words[0]](player_id,words,message_id)
+            for mstate in self.ctrl.mstates:
+                if group_id == mstate.mainComm.group_id:
+                    if words[0] in self.ctrl.MAIN_OPS:
 
-                    # CHECK FOR A VOTE
-                    if words[0] == VOTE_KW:
-                        if len(words) < 2: # shouldn't happen?
-                            votee = None
-                        else:
-                            if words[1].lower() == "me":
-                                votee = player_id
-                            elif words[1].lower() == "none":
+                        # CHECK FOR A VOTE
+                        if words[0] == VOTE_KW:
+                            if len(words) < 2: # shouldn't happen?
                                 votee = None
-                            elif words[1].lower() == "nokill":
-                                votee = "0"
-                            elif 'attachments' in post:
-                                mentions = [a for a in post['attachments'] if a['type'] == 'mentions']
-                                if len(mentions) > 0 and 'user_ids' in mentions[0] and len(mentions[0]['user_ids'] >= 1):
-                                    votee = mentions[0]['user_ids'][0]
-                        player_id = (player_id, votee)
+                            else:
+                                if words[1].lower() == "me":
+                                    votee = player_id
+                                elif words[1].lower() == "none":
+                                    votee = None
+                                elif words[1].lower() == "nokill":
+                                    votee = "0"
+                                elif 'attachments' in post:
+                                    mentions = [a for a in post['attachments'] if a['type'] == 'mentions']
+                                    if len(mentions) > 0 and 'user_ids' in mentions[0] and len(mentions[0]['user_ids'] >= 1):
+                                        votee = mentions[0]['user_ids'][0]
+                            player_id = (player_id, votee)
 
-                    return self.ctrl.MAIN_OPS[words[0]](mstate,player_id,words,message_id)
-            elif gorup_id == mstate.mafiaComm.group_id:
-                if words[0] in self.ctrl.MAFIA_OPS:
-                    return self.ctrl.MAFIA_OPS[words[0]](mstate,player_id,words,message_id)
+                        return self.ctrl.MAIN_OPS[words[0]](mstate,player_id,words,message_id)
+                elif gorup_id == mstate.mafiaComm.group_id:
+                    if words[0] in self.ctrl.MAFIA_OPS:
+                        return self.ctrl.MAFIA_OPS[words[0]](mstate,player_id,words,message_id)
 
     def do_DM(self,DM):
         """Process a DM from a player"""
