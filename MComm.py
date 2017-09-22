@@ -109,6 +109,7 @@ class GroupComm(MComm):
             groups = [g for g in groupy.Group.list() if g.group_id == group_id]
         except groupy.api.errors.GroupMeError:
             log("FAILED TO GET GROUP")
+            return False
         if len(groups) >= 1:
             return groups[0]
         else:
@@ -161,8 +162,8 @@ class GroupComm(MComm):
         log("Failed to get Name")
         return "__"
 
-    def add(self, player_id, player_name):
-        self.group.add({'user_id':player_id, 'nickname':player_name})
+    def add(self, player_id):
+        self.group.add({'user_id':player_id})
         log("ADD  {}: {}".format(self.title,player_id))
         return True
 
