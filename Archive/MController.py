@@ -14,12 +14,12 @@ from MComm import MComm
 
 class MController:
 
-    def __init__(self,lobbyComm,group_ids,CommType=MComm, determined=False):
+    def __init__(self,lobby,group_ids,CommType=MComm, determined=False):
 
         # Current Games
         self.mstates = []
 
-        self.lobbyComm = lobbyComm # MComm lobby
+        self.lobby = lobby
 
         self.pref = Preferences()
 
@@ -66,7 +66,7 @@ class MController:
     # TODO: use a word for more specific help
     def LOBBY_help(self, player_id=None, words=[], message_id=None):
         log("MServer __lobby_help",5)
-        self.lobbyComm.cast(LOBBY_HELP_MESSAGE)
+        self.lobby.cast(LOBBY_HELP_MESSAGE)
         return True
 
     # TODO: Select a game for more status
@@ -74,7 +74,7 @@ class MController:
     def LOBBY_status(self, player_id=None,words=[], message_id=None):
         log("MServer __lobby_status",5)
         msg = self.__get_status()
-        self.lobbyComm.cast(msg)
+        self.lobby.cast(msg)
         return True
 
     def __get_status(self):
@@ -96,12 +96,12 @@ class MController:
         # Add to next list
         if player_id not in self.nextIds:
             self.nextIds.append(player_id)
-            msg = "{} added to next game:".format(self.lobbyComm.getName(player_id))
+            msg = "{} added to next game:".format(self.lobby.getName(player_id))
         else:
             msg = "You are already in the next game"
         for p_id in self.nextIds:
-            msg += "\n" + self.lobbyComm.getName(p_id)
-        self.lobbyComm.cast(msg)
+            msg += "\n" + self.lobby.getName(p_id)
+        self.lobby.cast(msg)
         return True
 
     def LOBBY_out(self, player_id,words=[], message_id=None):
@@ -109,11 +109,11 @@ class MController:
         # try to remove from list:
         if player_id in self.nextIds:
             self.nextIds.remove(player_id)
-            self.lobbyComm.cast(
-                "{} removed from next game".format(self.lobbyComm.getName(player_id)))
+            self.lobby.cast(
+                "{} removed from next game".format(self.lobby.getName(player_id)))
         else:
-            self.lobbyComm.cast(
-                "{} wasn't in the next game".format(self.lobbyComm.getName(player_id)))
+            self.lobby.cast(
+                "{} wasn't in the next game".format(self.lobby.getName(player_id)))
         return True
 
 
@@ -123,38 +123,38 @@ class MController:
             if len(self.availComms) >= 2:
                 mainComm = self.availComms.pop()
                 mafiaComm = self.availComms.pop()
-                mstate = MState(self.nextIds,mainComm,mafiaComm,self.lobbyComm,
+                mstate = MState(self.nextIds,mainComm,mafiaComm,self.lobby,
                                 final=self.mstate_final, determined = self.determined)
                 self.mstates.append(mstate)
                 self.nextIds.clear()
             else:
-                self.lobbyComm.cast("Too many games")
+                self.lobby.cast("Too many games")
         else:
-            self.lobbyComm.cast("Not enough players to start a game")
+            self.lobby.cast("Not enough players to start a game")
         return True
 
     def mstate_final(self,mstate):
         self.availComms.append(mstate.mainComm)
         self.availComms.append(mstate.mafiaComm)
-        self.lobbyComm.cast(mstate.roleString)
+        self.lobby.cast(mstate.roleString)
         self.mstates.remove(mstate)
 
     def LOBBY_watch(self, player_id,words=[], message_id=None):
         log("MServer __lobby_watch",5)
         if len(self.mstates) == 0:
-            self.lobbyComm.cast("No game to watch")
+            self.lobby.cast("No game to watch")
             return True
         if len(self.mstates) == 1:
-            return self.mstates[0].mainComm.add(player_id)
+            return self.mstates[0].mainComm.add(player_id, self.lobby.getName(player_id))
 
         if words[1].isnumeric() and int(words[1]) < len(self.mstates):
-            return self.mstates[int(words[1])].mainComm.add(player_id)
+            return self.mstates[int(words[1])].mainComm.add(player_id, self.lobby.getName(player_id))
         else:
             msg = "Watch which game?:\n"
             for m in self.mstates:
                 msg += "{}: {} {}; {} players\n".format(
                     m.id, m.time, m.day, len(m.players) )
-            self.lobbyComm.cast(msg)
+            self.lobby.cast(msg)
             return True
 
     def LOBBY_rule(self, player_id=None,words=[], message_id=None):
@@ -173,10 +173,20 @@ class MController:
         return True
 
     def MAIN_vote(self,mstate,player_ids,words=[], message_id=None):
-        # where player_ids is a tuple of voter, votee
         log("MServer __vote",5)
         voter = player_ids[0]
-        votee = player_ids[1]
+
+        if len(words) < 2:
+            votee = player_ids[1]
+        else:
+            if words[1].lower() == "me":
+                votee = voter
+            elif words[1].lower() == "none":
+                votee = None
+            elif words[1].lower() == "nokill":
+                votee = "0"
+            else:
+                votee = player_ids[1]
 
         return mstate.vote(voter,votee)
 
@@ -200,7 +210,7 @@ class MController:
 
     def MAFIA_options(self,mstate,player_id=None,words=[], message_id=None):
         log("MServer __mafia_options",5)
-        return mstate.mafia_options()
+        return mstate.mafiaOptions()
 
     # DM ACTIONS
 
@@ -213,7 +223,7 @@ class MController:
         m = None
 
         if len(sender_mstates) == 0:
-            #self.lobbyComm.sendDM(LOBBY_HELP_MESSAGE,sender_id)
+            #self.lobby.sendDM(LOBBY_HELP_MESSAGE,sender_id)
             return None
         elif len(sender_mstates) == 1:
             m = sender_mstates[0]
@@ -283,7 +293,7 @@ class MController:
             prompt = "Use /target number (i.e. /target 0) to pick someone to save"
         elif player.role == "COP":
             prompt = "Use /target number (i.e. /target 2) to pick someone to investigate"
-        m.send_options(prompt,sender_id)
+        m.sendOptions(prompt,sender_id)
         return True
 
     def DM_reveal(self,sender_id,words):

@@ -14,7 +14,19 @@ info_fname = "info"
 
 SET_TIMER_VALUE = 5*60
 
-
+# try:
+#     f = open(info_fname,'r')
+#     lines = f.readlines()
+#     f.close()
+# except Exception as e:
+#     print("Error loading info: {}".format(e))
+#
+# for line in lines:
+#     words = line.split()
+#     if len(words) == 2:
+#         globals()[words[0]] = words[1]
+#     else:
+#         print("Couldn't load a line: {}".format(words))
 
 LOBBY_GROUP_ID = '25833774'
 GROUP_IDS = ['29746651','29746647','29746639',

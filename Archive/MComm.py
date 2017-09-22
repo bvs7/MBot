@@ -15,10 +15,8 @@ except ImportError:
     log("FAILED TO LOAD GROUPY")
 
 
-""" MComm Class Description
-
-Variables:
-    group_id
+"""
+MComm Class Description
 
 Methods:
     cast(msg)
@@ -30,6 +28,7 @@ Methods:
     remove(player_id)
     clear()
 """
+
 
 class MComm:
 
@@ -49,6 +48,7 @@ class MComm:
 
     def ack(self, message_id):
         """ Acknowledge the message given by message_id """
+
         print("ACK  "+self.title+": "+message_id)
         return True
 

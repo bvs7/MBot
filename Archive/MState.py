@@ -4,7 +4,7 @@ from MInfo import *
 from MComm import MComm
 
 import random
-import threading
+import _thread
 import time
 
 # TODO: create an exception for the game ending
@@ -65,9 +65,7 @@ Methods:
     reveal(p)
     startGame(nextPlayerIDs, pref)
     getPlayer(p)
-    setTimer()
 """
-
 class MState:
     """Holds the state of a Mafia game. When it is created, two chats are created with it
     And it creates a GroupyComm to communicate with those chats"""
@@ -149,8 +147,7 @@ class MState:
         self.startGame(playerIDs,preferences=self.pref)
 
         # Begin a thread that will keep track of the timer
-        self.timerThread = threading.Thread(name="Timer"+str(self.game_num), thread=self.__watchTimer)
-        self.timerThread.start()
+        _thread.start_new_thread(self.__watchTimer,())
 
     def vote(self,voter_id,votee_id):
         """ Makes voter change vote to votee, then checks for lynch. """
@@ -202,9 +199,9 @@ class MState:
         self.__checkToDay()
         return True
 
-    def mafia_options(self):
+    def mafiaOptions(self):
         """ Send the mafia's options to the mafia chat. """
-        log("MState mafia_options",3)
+        log("MState mafiaOptions",3)
         msg = "Use /target number (i.e. /target 1) to select someone to kill:"
         c = 'A'
         for player in self.players:
@@ -248,9 +245,9 @@ class MState:
         self.__checkToDay()
         return True
 
-    def send_options(self,prompt,p):
+    def sendOptions(self,prompt,p):
         """ Send list of options to player p with preface prompt. """
-        log("MState send_options",3)
+        log("MState sendOptions",3)
         try:
             player = self.getPlayer(p)
         except Exception as e:
@@ -316,10 +313,10 @@ class MState:
         random.shuffle(self.players)
 
         for player in self.players:
-            self.mainComm.add(player.id)
+            self.mainComm.add(player.id, self.lobbyComm.getName(player_id))
             self.mainComm.send(ROLE_EXPLAIN[player.role],player.id)
             if player.role in MAFIA_ROLES:
-                self.mafiaComm.add(player.id)
+                self.mafiaComm.add(player.id, self.lobbyComm.getName(player_id))
 
         # Get roleString for later
         self.roleString = self.__revealRoles()
@@ -523,13 +520,13 @@ class MState:
         self.mainComm.cast("Night falls and everyone sleeps")
         self.mafiaComm.cast("As the sky darkens, so too do your intentions. "
                             "Pick someone to kill")
-        self.mafia_options()
+        self.mafiaOptions()
         for p in self.players:
             if p.role == "COP":
-                self.send_options("Use /target number (i.e. /target 2) "
+                self.sendOptions("Use /target number (i.e. /target 2) "
                                   "to pick someone to investigate",p.id)
             elif p.role == "DOCTOR":
-                self.send_options("Use /target number (i.e. /target 0) "
+                self.sendOptions("Use /target number (i.e. /target 0) "
                                   "to pick someone to save",p.id)
         self.setTimer()
         return True
