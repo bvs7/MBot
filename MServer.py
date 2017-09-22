@@ -19,7 +19,7 @@ class MServer:
         log("MServer init",3)
         self.MCommType = MCommType
         self.MStateType = MStateType
-        self.ctrl = MController(self.MCommType(LOBBY_GROUP_ID), GROUP_IDS)
+        self.ctrl = MController(self.MCommType(LOBBY_GROUP_ID), GROUP_IDS, GroupComm)
 
     def do_POST(self,post):
         """Process a POST request from bots watching the chats"""
@@ -76,12 +76,10 @@ class MServer:
         assert 'sender_id' in DM, "No sender_id in DM for do_DM"
         assert 'text' in DM, "No text in DM for do_DM"
         # Check that this is a valid command
-        if (not DM['sender_id'] == MODERATOR and DM['text'][0:len(ACCESS_KW)] == ACCESS_KW):
+        if (not DM['sender_id'] == MODERATOR) and DM['text'][0:len(ACCESS_KW)] == ACCESS_KW:
             words = DM['text'][len(ACCESS_KW):].split()
-
             sender_id = DM['sender_id']
-
-            if len(words) > 1:
+            if len(words) > 0:
                 return self.ctrl.DM_OPS[words[0]](sender_id,words)
 
 if __name__ == "__main__":

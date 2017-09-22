@@ -149,7 +149,7 @@ class MState:
         self.startGame(playerIDs,preferences=self.pref)
 
         # Begin a thread that will keep track of the timer
-        self.timerThread = threading.Thread(name="Timer"+str(self.game_num), thread=self.__watchTimer)
+        self.timerThread = threading.Thread(name="Timer"+str(self.game_num), target=self.__watchTimer)
         self.timerThread.start()
 
     def vote(self,voter_id,votee_id):

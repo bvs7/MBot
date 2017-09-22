@@ -258,18 +258,19 @@ class MController:
 
         if m == None:
             #self.LOBBY().sendDM(DM_HELP_MESSAGE,sender_id)
+            self.lobbyComm.send(DM_HELP_MESSAGE, sender_id)
             return True
         player = m.getPlayer(sender_id)
         role = player.role
         m.mainComm.send(ROLE_EXPLAIN[role],sender_id)
-
+        return True
 
     def DM_status(self,sender_id,words):
         log("MController DM_status",5)
         m = self.__DM_get_mstate(words,sender_id)
 
         if m == None:
-            #self.LOBBY().sendDM(self.__get_status(),sender_id)
+            self.lobbyComm.send(self.__get_status(),sender_id)
             return True
 
         m.mainComm.send(str(m),sender_id)
