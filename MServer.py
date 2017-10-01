@@ -67,7 +67,7 @@ class MServer:
                             player_id = (player_id, votee)
 
                         return self.ctrl.MAIN_OPS[words[0]](mstate,player_id,words,message_id)
-                elif gorup_id == mstate.mafiaComm.group_id:
+                elif group_id == mstate.mafiaComm.group_id:
                     if words[0] in self.ctrl.MAFIA_OPS:
                         return self.ctrl.MAFIA_OPS[words[0]](mstate,player_id,words,message_id)
 

@@ -1,0 +1,726 @@
+Creating Game #3
+known_roles:      	ON
+reveal_on_death:	ON
+kick_on_death:  	ON
+know_if_saved:  	ON
+GG, here were the roles:
+Dan Batan: TOWN
+Kevin Linsey: DOCTOR
+Diane Sutyak: MAFIA
+Actually God: TOWN
+Kyra Butler: TOWN
+Game Begins
+Kevin Linsey votes for __
+Dan Batan votes for __
+Kevin Linsey votes for Actually God
+Actually God votes for Kevin Linsey
+Dan Batan votes for Brian
+Kyra Butler votes for Kevin Linsey
+Diane Sutyak votes for Kevin Linsey
+Kevin Linsey (DOCTOR) is killed (3-1)
+Kevin Linsey is revealed as DOCTOR
+Night 1 begins
+Day 1 begins
+Brian votes for Kyra Butler
+Kyra Butler votes for Diane Sutyak
+Dan Batan votes for Kyra Butler
+Diane Sutyak votes for Kyra Butler
+Kyra Butler (TOWN) is killed (2-1)
+Kyra Butler is revealed as TOWN
+Night 2 begins
+Mafia targets Dan Batan
+Day 2 begins
+Dan Batan (TOWN) is killed (1-1)
+MAFIA WINS
+Creating Game #4
+known_roles:      	ON
+reveal_on_death:	ON
+kick_on_death:  	ON
+know_if_saved:  	ON
+GG, here were the roles:
+Sydney Eisenberg: CELEB
+Dan Batan: CELEB
+Kyra Butler: TOWN
+Kevin Linsey: MAFIA
+Allan Buchness: IDIOT
+Diane Sutyak: TOWN
+Brian Scaramella: TOWN
+Benito De Leon: MAFIA
+Casandra Moisanu: TOWN
+Game Begins
+Benito De Leon votes for Allan Buchness
+Dan Batan votes for __
+Diane Sutyak votes for Allan Buchness
+Brian Scaramella votes for Diane Sutyak
+Kyra Butler votes for Diane Sutyak
+Sydney Eisenberg votes for Allan Buchness
+Kevin Linsey votes for Diane Sutyak
+Dan Batan votes for Diane Sutyak
+Allan Buchness votes for __
+Casandra Moisanu votes for __
+Benito De Leon votes for __
+Allan Buchness votes for Diane Sutyak
+Diane Sutyak (TOWN) is killed (6-2)
+Diane Sutyak is revealed as TOWN
+Night 1 begins
+Mafia targets Brian Scaramella
+Day 1 begins
+Brian Scaramella (TOWN) is killed (5-2)
+Brian Scaramella is revealed as TOWN
+Kyra Butler votes for Sydney Eisenberg
+Benito De Leon votes for Sydney Eisenberg
+Dan Batan votes for Kevin Linsey
+Sydney Eisenberg is revealed as CELEB
+Kevin Linsey votes for Dan Batan
+Benito De Leon votes for Sydney Eisenberg
+Dan Batan is revealed as CELEB
+Sydney Eisenberg votes for Dan Batan
+Benito De Leon votes for Dan Batan
+Kyra Butler votes for Kevin Linsey
+Kevin Linsey votes for __
+Sydney Eisenberg votes for Kevin Linsey
+Kyra Butler votes for __
+Dan Batan votes for Kevin Linsey
+Kevin Linsey votes for __
+Casandra Moisanu votes for __
+Benito De Leon votes for __
+Kyra Butler votes for Allan Buchness
+Kevin Linsey votes for Allan Buchness
+Kyra Butler votes for __
+Sydney Eisenberg votes for Allan Buchness
+Kyra Butler votes for Sydney Eisenberg
+Kyra Butler votes for __
+Sydney Eisenberg votes for Kevin Linsey
+Allan Buchness votes for Kevin Linsey
+Casandra Moisanu votes for Kevin Linsey
+Kevin Linsey (MAFIA) is killed (5-1)
+Kevin Linsey is revealed as MAFIA
+Night 2 begins
+Mafia targets Allan Buchness
+Day 2 begins
+Allan Buchness (IDIOT) is killed (4-1)
+Allan Buchness is revealed as IDIOT
+Kyra Butler votes for Benito De Leon
+Sydney Eisenberg votes for Benito De Leon
+Benito De Leon votes for Kyra Butler
+Dan Batan votes for Kyra Butler
+Kyra Butler votes for Casandra Moisanu
+Sydney Eisenberg votes for Casandra Moisanu
+Benito De Leon votes for Casandra Moisanu
+Casandra Moisanu (TOWN) is killed (3-1)
+Casandra Moisanu is revealed as TOWN
+Night 3 begins
+Mafia targets Sydney Eisenberg
+Day 3 begins
+Sydney Eisenberg (CELEB) is killed (2-1)
+Sydney Eisenberg is revealed as CELEB
+Kyra Butler votes for Benito De Leon
+Benito De Leon votes for Dan Batan
+Benito De Leon votes for Kyra Butler
+Dan Batan is revealed as CELEB
+Dan Batan votes for Kyra Butler
+Kyra Butler (TOWN) is killed (1-1)
+MAFIA WINS
+Creating Game #6
+known_roles:      	ON
+reveal_on_death:	ON
+kick_on_death:  	ON
+know_if_saved:  	ON
+GG, here were the roles:
+Kevin Linsey: COP
+Dan Batan: COP
+Alex Wong: TOWN
+Kyra Butler: TOWN
+Brian Scaramella: MAFIA
+Benito De Leon: TOWN
+Game Begins
+Brian Scaramella votes for __
+Alex Wong votes for Kevin Linsey
+Kevin Linsey votes for __
+Alex Wong votes for __
+Nobody is killed
+Night 1 begins
+Mafia targets Kyra Butler
+Day 1 begins
+Kyra Butler (TOWN) is killed (4-1)
+Kyra Butler is revealed as TOWN
+Kevin Linsey votes for Benito De Leon
+Brian Scaramella votes for Kevin Linsey
+Kevin Linsey votes for Brian Scaramella
+Brian Scaramella votes for __
+Kevin Linsey votes for Dan Batan
+Brian Scaramella votes for Dan Batan
+Night 2 begins
+Mafia targets Kevin Linsey
+Kevin Linsey (COP) targets Alex Wong
+Day 2 begins
+Kevin Linsey (COP) is killed (3-1)
+Kevin Linsey is revealed as COP
+Night 3 begins
+Mafia targets Dan Batan
+Day 3 begins
+Dan Batan (COP) is killed (2-1)
+Dan Batan is revealed as COP
+Alex Wong votes for Brian Scaramella
+Benito De Leon votes for Alex Wong
+Brian Scaramella votes for Alex Wong
+Alex Wong (TOWN) is killed (1-1)
+MAFIA WINS
+Creating Game #7
+known_roles:      	ON
+reveal_on_death:	ON
+kick_on_death:  	ON
+know_if_saved:  	ON
+GG, here were the roles:
+Kevin Linsey: MAFIA
+Alex Wong: TOWN
+Kyra Butler: TOWN
+Brian Scaramella: COP
+Diane Sutyak: CELEB
+Allan Buchness: DOCTOR
+Anthony Montoya: MAFIA
+Michael Miller: TOWN
+Game Begins
+Kyra Butler votes for __
+Brian Scaramella votes for __
+Allan Buchness votes for __
+Kevin Linsey votes for __
+Nobody is killed
+Night 1 begins
+Allan Buchness (DOCTOR) targets Allan Buchness
+Mafia targets Diane Sutyak
+Brian Scaramella (COP) targets Anthony Montoya
+Day 1 begins
+Diane Sutyak (CELEB) is killed (5-2)
+Diane Sutyak is revealed as CELEB
+Brian Scaramella investigates Anthony Montoya (MAFIA)
+Brian Scaramella votes for Anthony Montoya
+Kyra Butler votes for Anthony Montoya
+Anthony Montoya votes for __
+Kyra Butler votes for __
+Kevin Linsey votes for Michael Miller
+Kyra Butler votes for Anthony Montoya
+Michael Miller votes for Kevin Linsey
+Night 2 begins
+Brian Scaramella (COP) targets Kevin Linsey
+Mafia targets Allan Buchness
+Mafia targets Alex Wong
+Day 2 begins
+Alex Wong (TOWN) is killed (4-2)
+Alex Wong is revealed as TOWN
+Brian Scaramella investigates Kevin Linsey (MAFIA)
+Michael Miller votes for Kevin Linsey
+Kyra Butler votes for Kevin Linsey
+Brian Scaramella votes for Kevin Linsey
+Allan Buchness votes for Kevin Linsey
+Kevin Linsey (MAFIA) is killed (4-1)
+Kevin Linsey is revealed as MAFIA
+Night 3 begins
+Brian Scaramella (COP) targets Michael Miller
+Day 3 begins
+Brian Scaramella investigates Michael Miller (TOWN)
+Kyra Butler votes for Anthony Montoya
+Brian Scaramella votes for Anthony Montoya
+Allan Buchness votes for Anthony Montoya
+Anthony Montoya (MAFIA) is killed (4-0)
+TOWN WINS
+Creating Game #8
+known_roles:      	ON
+reveal_on_death:	ON
+kick_on_death:  	ON
+know_if_saved:  	ON
+GG, here were the roles:
+Kevin Linsey: MAFIA
+Dan Batan: TOWN
+Alex Wong: TOWN
+Kyra Butler: COP
+Juan Meriles: CELEB
+Olivia Scott: MAFIA
+Brian Scaramella: TOWN
+Benito De Leon: COP
+Game Begins
+Brian Scaramella votes for __
+Benito De Leon votes for Benito De Leon
+Kyra Butler votes for __
+Dan Batan votes for __
+Juan Meriles votes for Brian Scaramella
+Benito De Leon votes for __
+Nobody is killed
+Night 1 begins
+Benito De Leon (COP) targets Juan Meriles
+Kyra Butler (COP) targets Benito De Leon
+Mafia targets Juan Meriles
+Day 1 begins
+Juan Meriles (CELEB) is killed (5-2)
+Juan Meriles is revealed as CELEB
+Benito De Leon investigates __ (CELEB)
+Kyra Butler investigates Benito De Leon (COP)
+Benito De Leon votes for Brian Scaramella
+Dan Batan votes for Benito De Leon
+Brian Scaramella votes for Dan Batan
+Kevin Linsey votes for Brian Scaramella
+Kyra Butler votes for Dan Batan
+Brian Scaramella votes for __
+Dan Batan votes for Brian Scaramella
+Alex Wong votes for Alex Wong
+Benito De Leon votes for __
+Alex Wong votes for Brian Scaramella
+Kyra Butler votes for Alex Wong
+Brian Scaramella votes for Alex Wong
+Kevin Linsey votes for Alex Wong
+Benito De Leon votes for Alex Wong
+Alex Wong (TOWN) is killed (4-2)
+Alex Wong is revealed as TOWN
+Night 2 begins
+Kyra Butler (COP) targets Brian Scaramella
+Benito De Leon (COP) targets Brian Scaramella
+Mafia targets Kyra Butler
+Day 2 begins
+Kyra Butler (COP) is killed (3-2)
+Kyra Butler is revealed as COP
+Benito De Leon investigates Brian Scaramella (TOWN)
+Brian Scaramella votes for Dan Batan
+Benito De Leon votes for Dan Batan
+Brian Scaramella votes for __
+Kevin Linsey votes for Dan Batan
+Benito De Leon votes for Kevin Linsey
+Olivia Scott votes for Benito De Leon
+Kevin Linsey votes for Benito De Leon
+Brian Scaramella votes for Kevin Linsey
+Dan Batan votes for Kevin Linsey
+Kevin Linsey (MAFIA) is killed (3-1)
+Kevin Linsey is revealed as MAFIA
+Night 3 begins
+Benito De Leon (COP) targets Olivia Scott
+Mafia targets Brian Scaramella
+Day 3 begins
+Brian Scaramella (TOWN) is killed (2-1)
+Brian Scaramella is revealed as TOWN
+Benito De Leon investigates Olivia Scott (MAFIA)
+Dan Batan votes for Benito De Leon
+Benito De Leon votes for Olivia Scott
+Olivia Scott votes for Benito De Leon
+Benito De Leon (COP) is killed (1-1)
+MAFIA WINS
+Creating Game #9
+known_roles:      	ON
+reveal_on_death:	ON
+kick_on_death:  	ON
+know_if_saved:  	ON
+GG, here were the roles:
+Kevin Linsey: TOWN
+Dan Batan: MAFIA
+Alex Wong: TOWN
+Kyra Butler: MAFIA
+Olivia Scott: TOWN
+Diane Sutyak: DOCTOR
+Brian Scaramella: TOWN
+Benito De Leon: TOWN
+Game Begins
+Benito De Leon votes for Kevin Linsey
+Brian Scaramella votes for Kevin Linsey
+Alex Wong votes for Kevin Linsey
+Kevin Linsey votes for __
+Diane Sutyak votes for Kevin Linsey
+Brian Scaramella votes for __
+Benito De Leon votes for __
+Dan Batan votes for __
+Alex Wong votes for __
+Benito De Leon votes for __
+Nobody is killed
+Night 1 begins
+Diane Sutyak (DOCTOR) targets Brian Scaramella
+Mafia targets Brian Scaramella
+Day 1 begins
+Brian Scaramella was saved
+Alex Wong votes for Brian Scaramella
+Diane Sutyak votes for Alex Wong
+Alex Wong votes for Diane Sutyak
+Kevin Linsey votes for Diane Sutyak
+Dan Batan votes for Diane Sutyak
+Kevin Linsey votes for __
+Benito De Leon votes for Benito De Leon
+Kevin Linsey votes for Benito De Leon
+Alex Wong votes for Alex Wong
+Benito De Leon votes for Kyra Butler
+Olivia Scott votes for Olivia Scott
+Benito De Leon votes for Olivia Scott
+Kevin Linsey votes for Olivia Scott
+Olivia Scott votes for Benito De Leon
+Kevin Linsey votes for Benito De Leon
+Brian Scaramella votes for Benito De Leon
+Dan Batan votes for Benito De Leon
+Kyra Butler votes for Benito De Leon
+Benito De Leon (TOWN) is killed (5-2)
+Benito De Leon is revealed as TOWN
+Night 2 begins
+Mafia targets Diane Sutyak
+Diane Sutyak (DOCTOR) targets Kyra Butler
+Day 2 begins
+Diane Sutyak (DOCTOR) is killed (4-2)
+Diane Sutyak is revealed as DOCTOR
+Kevin Linsey votes for Dan Batan
+Dr. Mafia M.D./D.O./O.G. votes for Dan Batan
+Olivia Scott votes for Kevin Linsey
+Kevin Linsey votes for __
+Kevin Linsey votes for Dan Batan
+Kevin Linsey votes for Dan Batan
+Olivia Scott votes for __
+Kevin Linsey votes for __
+Olivia Scott votes for __
+Kevin Linsey votes for Dan Batan
+Kyra Butler votes for Dan Batan
+Brian Scaramella votes for Dan Batan
+Dan Batan (MAFIA) is killed (4-1)
+Dan Batan is revealed as MAFIA
+Night 3 begins
+Mafia targets Brian Scaramella
+Day 3 begins
+Brian Scaramella (TOWN) is killed (3-1)
+Brian Scaramella is revealed as TOWN
+Kevin Linsey votes for __
+Kyra Butler votes for Kevin Linsey
+Kyra Butler votes for __
+Nobody is killed
+Night 4 begins
+Mafia targets Dr. Mafia M.D./D.O./O.G.
+Day 4 begins
+Dr. Mafia M.D./D.O./O.G. (TOWN) is killed (2-1)
+Dr. Mafia M.D./D.O./O.G. is revealed as TOWN
+Kyra Butler votes for Kevin Linsey
+Kevin Linsey votes for Kyra Butler
+Kyra Butler votes for __
+Olivia Scott votes for Kyra Butler
+Kyra Butler (MAFIA) is killed (2-0)
+TOWN WINS
+Creating Game #10
+known_roles:      	ON
+reveal_on_death:	ON
+kick_on_death:  	ON
+know_if_saved:  	ON
+GG, here were the roles:
+Dan Batan: COP
+Kevin Linsey: MAFIA
+Brian Scaramella: DOCTOR
+Janice Scott: TOWN
+Kyra Butler: TOWN
+Olivia Scott: TOWN
+Adam Ziccardi: MAFIA
+Alex Wong: TOWN
+Game Begins
+Alex Wong votes for __
+Janice Scott votes for __
+Adam Ziccardi votes for __
+Dan Batan votes for __
+Nobody is killed
+Night 1 begins
+Brian Scaramella (DOCTOR) targets Brian Scaramella
+Dan Batan (COP) targets Kevin Linsey
+Mafia targets Janice Scott
+Day 1 begins
+Janice Scott (TOWN) is killed (5-2)
+Janice Scott is revealed as TOWN
+Dan Batan investigates Kevin Linsey (MAFIA)
+Dan Batan votes for Kevin Linsey
+Adam Ziccardi votes for Brian Scaramella
+Brian Scaramella votes for Alex Wong
+Kyra Butler votes for Alex Wong
+Dan Batan votes for Kevin Linsey
+Brian Scaramella votes for __
+Kyra Butler votes for __
+Adam Ziccardi votes for __
+Brian Scaramella votes for Kevin Linsey
+Olivia Scott votes for Kevin Linsey
+Kyra Butler votes for Kevin Linsey
+Kevin Linsey (MAFIA) is killed (5-1)
+Kevin Linsey is revealed as MAFIA
+Night 2 begins
+Dan Batan (COP) targets Adam Ziccardi
+Brian Scaramella (DOCTOR) targets Brian Scaramella
+Mafia targets Dan Batan
+Day 2 begins
+Dan Batan (COP) is killed (4-1)
+Alex Wong votes for Kyra Butler
+Kyra Butler votes for Adam Ziccardi
+Brian Scaramella votes for Adam Ziccardi
+Alex Wong votes for Adam Ziccardi
+Adam Ziccardi (MAFIA) is killed (4-0)
+TOWN WINS
+Creating Game #11
+known_roles:      	ON
+reveal_on_death:	ON
+kick_on_death:  	ON
+know_if_saved:  	ON
+GG, here were the roles:
+Patrick Clobridge: TOWN
+Kevin Linsey: DOCTOR
+Kyra Butler: MAFIA
+Adam Ziccardi: DOCTOR
+Olivia Scott: TOWN
+Brian Scaramella: DOCTOR
+Dan Batan: GODFATHER
+Game Begins
+Kevin Linsey votes for __
+Dan Batan votes for __
+Patrick Clobridge votes for __
+Adam Ziccardi votes for __
+Nobody is killed
+Night 1 begins
+Brian Scaramella (DOCTOR) targets Brian Scaramella
+Kevin Linsey (DOCTOR) targets Patrick Clobridge
+Mafia targets Kevin Linsey
+Adam Ziccardi (DOCTOR) targets Brian Scaramella
+Day 1 begins
+Kevin Linsey (DOCTOR) is killed (4-2)
+Kevin Linsey is revealed as DOCTOR
+Adam Ziccardi votes for __
+Patrick Clobridge votes for __
+Kyra Butler votes for __
+Nobody is killed
+Night 2 begins
+Mafia targets Olivia Scott
+Adam Ziccardi (DOCTOR) targets Adam Ziccardi
+Brian Scaramella (DOCTOR) targets Brian Scaramella
+Day 2 begins
+Olivia Scott (TOWN) is killed (3-2)
+Olivia Scott is revealed as TOWN
+Adam Ziccardi votes for Kyra Butler
+Patrick Clobridge votes for Kyra Butler
+Dan Batan votes for __
+Patrick Clobridge votes for __
+Patrick Clobridge votes for __
+Dan Batan votes for __
+Adam Ziccardi votes for Kyra Butler
+Brian Scaramella votes for __
+Nobody is killed
+Night 3 begins
+Brian Scaramella (DOCTOR) targets Brian Scaramella
+Mafia targets Brian Scaramella
+Adam Ziccardi (DOCTOR) targets Adam Ziccardi
+Day 3 begins
+Brian Scaramella was saved
+Patrick Clobridge votes for Adam Ziccardi
+Dan Batan votes for Adam Ziccardi
+Kyra Butler votes for Adam Ziccardi
+Adam Ziccardi (DOCTOR) is killed (2-2)
+MAFIA WINS
+Creating Game #12
+known_roles:      	ON
+reveal_on_death:	ON
+kick_on_death:  	ON
+know_if_saved:  	ON
+GG, here were the roles:
+Kevin Linsey: DOCTOR
+Patrick Clobridge: MAFIA
+Adam Ziccardi: COP
+Game Begins
+Kevin Linsey votes for Patrick Clobridge
+Patrick Clobridge votes for Kevin Linsey
+Adam Ziccardi votes for __
+Patrick Clobridge votes for __
+Nobody is killed
+Night 1 begins
+Kevin Linsey (DOCTOR) targets Kevin Linsey
+Adam Ziccardi (COP) targets Kevin Linsey
+Mafia targets Adam Ziccardi
+Day 1 begins
+Adam Ziccardi (COP) is killed (1-1)
+MAFIA WINS
+Creating Game #13
+known_roles:      	ON
+reveal_on_death:	ON
+kick_on_death:  	ON
+know_if_saved:  	ON
+GG, here were the roles:
+Dan Batan: TOWN
+Kevin Linsey: MAFIA
+Brian Scaramella: DOCTOR
+Dr. Mafia M.D./D.O./O.G.: COP
+Game Begins
+Brian Scaramella votes for __
+Dan Batan votes for __
+Nobody is killed
+Night 1 begins
+Brian Scaramella (DOCTOR) targets Brian Scaramella
+Mafia targets Dr. Mafia M.D./D.O./O.G.
+Dr. Mafia M.D./D.O./O.G. (COP) targets Dan Batan
+Day 1 begins
+Dr. Mafia M.D./D.O./O.G. (COP) is killed (2-1)
+Dr. Mafia M.D./D.O./O.G. is revealed as COP
+Brian Scaramella votes for __
+Brian Scaramella votes for Kevin Linsey
+Brian Scaramella votes for __
+Brian Scaramella votes for Kevin Linsey
+Brian Scaramella votes for __
+Kevin Linsey votes for __
+Brian Scaramella votes for Kevin Linsey
+Kevin Linsey votes for Brian Scaramella
+Dan Batan votes for Brian Scaramella
+Brian Scaramella (DOCTOR) is killed (1-1)
+MAFIA WINS
+Creating Game #14
+known_roles:      	ON
+reveal_on_death:	ON
+kick_on_death:  	ON
+know_if_saved:  	ON
+GG, here were the roles:
+Dan Batan: DOCTOR
+Kevin Linsey: COP
+Brian Scaramella: TOWN
+Alex Wong: MAFIA
+Game Begins
+Kevin Linsey votes for __
+Brian Scaramella votes for __
+Nobody is killed
+Night 1 begins
+Kevin Linsey (COP) targets Dan Batan
+Dan Batan (DOCTOR) targets Dan Batan
+Mafia targets Brian Scaramella
+Day 1 begins
+Brian Scaramella (TOWN) is killed (2-1)
+Brian Scaramella is revealed as TOWN
+Kevin Linsey investigates Dan Batan (DOCTOR)
+Kevin Linsey votes for Alex Wong
+Dan Batan votes for Alex Wong
+Alex Wong (MAFIA) is killed (2-0)
+TOWN WINS
+Creating Game #16
+known_roles:      	ON
+reveal_on_death:	ON
+kick_on_death:  	ON
+know_if_saved:  	ON
+GG, here were the roles:
+Kevin Linsey: DOCTOR
+Juan Meriles: COP
+Adam Ziccardi: MAFIA
+Alex Wong: DOCTOR
+Kyra Butler: COP
+Game Begins
+Kevin Linsey votes for __
+Kyra Butler votes for __
+Adam Ziccardi votes for __
+Nobody is killed
+Night 1 begins
+Kyra Butler (COP) targets Adam Ziccardi
+Day 1 begins
+Kevin Linsey (DOCTOR) targets Juan Meriles
+Kyra Butler investigates Adam Ziccardi (MAFIA)
+Kyra Butler votes for __
+Adam Ziccardi votes for __
+Kyra Butler votes for __
+Kyra Butler votes for Adam Ziccardi
+Kevin Linsey votes for Adam Ziccardi
+Juan Meriles votes for Adam Ziccardi
+Adam Ziccardi (MAFIA) is killed (4-0)
+TOWN WINS
+Creating Game #17
+known_roles:      	ON
+reveal_on_death:	ON
+kick_on_death:  	ON
+know_if_saved:  	ON
+GG, here were the roles:
+Dan Batan: CELEB
+Kevin Linsey: MAFIA
+Alex Wong: TOWN
+Kyra Butler: TOWN
+Brian Scaramella: IDIOT
+Adam Ziccardi: TOWN
+Game Begins
+Alex Wong votes for __
+Kevin Linsey votes for __
+Kyra Butler votes for __
+Nobody is killed
+Night 1 begins
+Mafia targets Kyra Butler
+Day 1 begins
+Kyra Butler (TOWN) is killed (4-1)
+Kyra Butler is revealed as TOWN
+Dan Batan votes for Alex Wong
+Kevin Linsey votes for Alex Wong
+Dan Batan votes for __
+Kevin Linsey votes for __
+Dan Batan votes for Brian Scaramella
+Night 2 begins
+Mafia targets Brian Scaramella
+Day 2 begins
+Brian Scaramella (IDIOT) is killed (3-1)
+Brian Scaramella is revealed as IDIOT
+Dan Batan votes for __
+Kevin Linsey votes for __
+Nobody is killed
+Night 3 begins
+Mafia targets Alex Wong
+Day 3 begins
+Alex Wong (TOWN) is killed (2-1)
+Alex Wong is revealed as TOWN
+Dan Batan is revealed as CELEB
+Kevin Linsey votes for Adam Ziccardi
+Adam Ziccardi votes for Kevin Linsey
+Dan Batan votes for Adam Ziccardi
+Adam Ziccardi (TOWN) is killed (1-1)
+MAFIA WINS
+Creating Game #18
+known_roles:      	ON
+reveal_on_death:	ON
+kick_on_death:  	ON
+know_if_saved:  	ON
+GG, here were the roles:
+Kevin Linsey: TOWN
+Dan Batan: TOWN
+Alex Wong: TOWN
+Kyra Butler: TOWN
+Peter VandeVort: MAFIA
+Brian Scaramella: MAFIA
+Adam Ziccardi: TOWN
+Zach Siper: TOWN
+Game Begins
+Adam Ziccardi votes for Kevin Linsey
+Kyra Butler votes for Adam Ziccardi
+Alex Wong votes for Adam Ziccardi
+Kyra Butler votes for __
+Adam Ziccardi votes for __
+Alex Wong votes for Alex Wong
+Kyra Butler votes for Alex Wong
+Alex Wong votes for __
+Dan Batan votes for Kevin Linsey
+Peter VandeVort votes for __
+Alex Wong votes for Kyra Butler
+Zach Siper votes for Adam Ziccardi
+Kyra Butler votes for Zach Siper
+Brian Scaramella votes for Alex Wong
+Kyra Butler votes for Alex Wong
+Dan Batan votes for Alex Wong
+Zach Siper votes for Alex Wong
+Peter VandeVort votes for Alex Wong
+Alex Wong (TOWN) is killed (5-2)
+Alex Wong is revealed as TOWN
+Night 1 begins
+Mafia targets Kyra Butler
+Day 1 begins
+Kyra Butler (TOWN) is killed (4-2)
+Kyra Butler is revealed as TOWN
+Dan Batan votes for Brian Scaramella
+Kevin Linsey votes for __
+Zach Siper votes for Brian Scaramella
+Adam Ziccardi votes for Zach Siper
+Adam Ziccardi votes for Brian Scaramella
+Zach Siper votes for Adam Ziccardi
+Brian Scaramella votes for __
+Peter VandeVort votes for Adam Ziccardi
+Adam Ziccardi votes for __
+Nobody is killed
+Night 2 begins
+Mafia targets Kevin Linsey
+Day 2 begins
+Kevin Linsey (TOWN) is killed (3-2)
+Kevin Linsey is revealed as TOWN
+Zach Siper votes for Adam Ziccardi
+Adam Ziccardi votes for Brian Scaramella
+Dan Batan votes for Brian Scaramella
+Adam Ziccardi votes for Brian Scaramella
+Dan Batan votes for __
+Dan Batan votes for Zach Siper
+Adam Ziccardi votes for Zach Siper
+Brian Scaramella votes for Zach Siper
+Zach Siper (TOWN) is killed (2-2)
+MAFIA WINS
