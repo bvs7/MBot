@@ -143,7 +143,7 @@ class GroupComm(MComm):
         msg_id = str(int(message_id)-1) # Subtract 1 so that our message shows up
         for msg in self.group.messages(after=msg_id):
             if msg.id == message_id:
-                return msg.likes
+                return msg.likes()
         return []
 
     def send(self, msg, player_id):

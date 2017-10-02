@@ -42,7 +42,7 @@ class MController:
         self.init_OPS()
 
         self.timerThread = threading.Thread(target=self.timer_thread)
-        timerThread.start()
+        self.timerThread.start()
 
     def init_OPS(self):
         self.LOBBY_OPS={ HELP_KW   : self.LOBBY_help  ,
@@ -377,6 +377,7 @@ class MController:
         while True:
             time.sleep(1)
             if self.timer_on:
+                print("Counting " + str(self.time_left))
                 self.time_left -= 1
                 if self.time_left <= 0:
                     self.callback()
