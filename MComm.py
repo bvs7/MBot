@@ -52,6 +52,11 @@ class MComm:
         print("ACK  "+self.title+": "+message_id)
         return True
 
+    def getAcks(self, message_id):
+        """ Get the number of acknowledgements for a message """
+        print("getACK not impl")
+        return False
+
     def send(self, msg, player_id):
         """ Send a DM to the player with player_id """
 
@@ -117,12 +122,12 @@ class GroupComm(MComm):
 
     def cast(self, msg):
         try:
-            groupyEP.Messages.create(self.group_id, msg)
+            msg_dict = groupyEP.Messages.create(self.group_id, msg)
         except groupy.api.errors.GroupMeError:
             log("Failed to Cast")
             return False
         log("CAST "+self.title+": "+msg)
-        return True
+        return msg_dict["message"]["id"]
 
     def ack(self, message_id):
         try:
@@ -132,6 +137,14 @@ class GroupComm(MComm):
             return False
         log("ACK  "+self.title+": "+message_id)
         return True
+
+    def getAcks(self, message_id):
+        self.group.refresh()
+        msg_id = str(int(message_id)-1) # Subtract 1 so that our message shows up
+        for msg in self.group.messages(after=msg_id):
+            if msg.id == message_id:
+                return msg.likes
+        return []
 
     def send(self, msg, player_id):
         try:

@@ -29,6 +29,11 @@ class MController:
 
         self.determined = determined
 
+        self.time_left = 0
+        self.timer_on = False
+        self.callback = None
+        self.start_message_id = ""
+
         # Ids of players to be added to next game
         self.nextIds = []
 
@@ -128,6 +133,28 @@ class MController:
         log("MServer __lobby_start",5)
         self.lobbyComm.ack(message_id)
 
+        if len(words) > 1:
+            try:
+                minutes = int(words[1])
+                if minutes < 1:
+                    minutes = 1
+            except ValueError:
+                minutes = 1
+        else:
+            minutes = 1
+        msg = "Game will start in {} minute{}. Like this to join.".format(minutes, '' if minutes==1 else 's')
+        self.start_message_id = self.lobbyComm.cast(msg)
+        self.start_timer(minutes, self.start_game)
+        return True
+
+    def start_game(self):
+
+        toAdd = self.lobbyComm.getAcks(self.start_message_id)
+
+        for member in toAdd:
+            if not member.user_id in self.nextIds:
+                self.nextIds.append(member.user_id)
+
         if len(self.nextIds) >= 3:
             if len(self.availComms) >= 2:
                 mainComm = self.availComms.pop()
@@ -224,7 +251,7 @@ class MController:
     def MAFIA_options(self,mstate,player_id=None,words=[], message_id=None):
         log("MServer __mafia_options",5)
         mstate.mafiaComm.ack(message_id)
-        
+
         return mstate.mafia_options()
 
     # DM ACTIONS
@@ -325,3 +352,17 @@ class MController:
 
         m.reveal(sender_id)
         return True
+
+    def start_timer(self, minutes, callback):
+        self.time_left = minutes * 60
+        self.timer_on = True
+        self.callback = callback
+
+    def timer_thread(self):
+        while True:
+            sleep(1)
+            if self.timer_on:
+                self.time_left -= 1
+                if self.time_left <= 0:
+                    self.callback()
+                    self.timer_on = False
