@@ -7,7 +7,8 @@ MAIN/MAFIA  (mstate,player_id,words,message_id)
 DM          (sender_id,words)
 """
 
-
+import time
+import threading
 from MInfo import *
 from MState import MState, Preferences
 from MComm import MComm
@@ -38,6 +39,9 @@ class MController:
         self.nextIds = []
 
         self.init_OPS()
+
+        self.timerThread = threading.Thread(target=self.timer_thread)
+        timerThread.start()
 
     def init_OPS(self):
         self.LOBBY_OPS={ HELP_KW   : self.LOBBY_help  ,
@@ -360,7 +364,7 @@ class MController:
 
     def timer_thread(self):
         while True:
-            sleep(1)
+            time.sleep(1)
             if self.timer_on:
                 self.time_left -= 1
                 if self.time_left <= 0:
