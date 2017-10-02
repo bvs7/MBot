@@ -34,6 +34,7 @@ class MController:
         self.timer_on = False
         self.callback = None
         self.start_message_id = ""
+        self.minplayers = 3
 
         # Ids of players to be added to next game
         self.nextIds = []
@@ -137,15 +138,25 @@ class MController:
         log("MServer __lobby_start",5)
         self.lobbyComm.ack(message_id)
 
-        if len(words) > 1:
+        minutes = 1
+        minplayers = 3
+        if len(words) > 2:
+            try:
+                minutes = int(words[1])
+                minplayers = int(words[2])
+                if minutes < 1:
+                    minutes = 1
+            except ValueError:
+                pass
+        elif len(words) > 1:
             try:
                 minutes = int(words[1])
                 if minutes < 1:
                     minutes = 1
             except ValueError:
-                minutes = 1
-        else:
-            minutes = 1
+                pass
+
+        self.minplayers = minplayers
         msg = "Game will start in {} minute{}. Like this to join.".format(minutes, '' if minutes==1 else 's')
         self.start_message_id = self.lobbyComm.cast(msg)
         self.start_timer(minutes, self.start_game)
@@ -159,7 +170,7 @@ class MController:
             if not member.user_id in self.nextIds:
                 self.nextIds.append(member.user_id)
 
-        if len(self.nextIds) >= 3:
+        if len(self.nextIds) >= 3 and len(self.nextIds) >= self.minplayers:
             if len(self.availComms) >= 2:
                 mainComm = self.availComms.pop()
                 mafiaComm = self.availComms.pop()
