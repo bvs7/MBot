@@ -317,7 +317,7 @@ class MState:
 
         for player in self.players:
             self.mainComm.add(player.id)
-            self.mainComm.send(ROLE_EXPLAIN[player.role],player.id)
+            self.mainComm.send("You are {}\n".format(player.role)+ ROLE_EXPLAIN[player.role],player.id)
             if player.role in MAFIA_ROLES:
                 self.mafiaComm.add(player.id)
 
