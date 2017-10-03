@@ -77,8 +77,18 @@ class MController:
     def LOBBY_help(self, player_id=None, words=[], message_id=None):
         log("MServer __lobby_help",5)
         self.lobbyComm.ack(message_id)
-
-        self.lobbyComm.cast(LOBBY_HELP_MESSAGE)
+        if len(words) > 1:
+            if words[1] in LOBBY_HELP_MSGS:
+                self.lobbyComm.cast(LOBBY_HELP_MSGS[words[1]])
+                return True
+            elif words[1] in ALL_HELP_MSGS:
+                self.lobbyComm.cast(ALL_HELP_MSGS[words[1]])
+                return True
+            else:
+                self.lobbyComm.cast("No help for '"+words[1]+"'")
+                return True
+        else:
+            self.lobbyComm.cast(LOBBY_HELP_MSGS[""])
         return True
 
     # TODO: Select a game for more status
@@ -211,15 +221,26 @@ class MController:
             return True
 
     def LOBBY_rule(self, player_id=None,words=[], message_id=None):
-        pass
+        self.lobbyComm.cast("Not implemented yet, sorry")
+        return True
 
     # MAIN ACTIONS
 
     def MAIN_help(self,mstate, player_id=None,words=[], message_id=None):
         log("MServer __help",5)
         mstate.mainComm.ack(message_id)
-
-        mstate.mainComm.cast(MAIN_HELP_MESSAGE)
+        if len(words) > 1:
+            if words[1] in MAIN_HELP_MSGS:
+                mstate.mainComm.cast(MAIN_HELP_MSGS[words[1]])
+                return True
+            elif words[1] in ALL_HELP_MSGS:
+                mstate.mainComm.cast(ALL_HELP_MSGS[words[1]])
+                return True
+            else:
+                mstate.mainComm.cast("No help for '"+words[1]+"'")
+                return True
+        else:
+            mstate.mainComm.cast(MAIN_HELP_MSGS[""])
         return True
 
     def MAIN_status(self,mstate,player_id=None,words=[], message_id=None):
@@ -249,8 +270,18 @@ class MController:
     def MAFIA_help(self,mstate,player_id=None,words=[], message_id=None):
         log("MServer __mafia_help",5)
         mstate.mafiaComm.ack(message_id)
-
-        mstate.mafiaComm.cast(MAFIA_HELP_MESSAGE)
+        if len(words) > 1:
+            if words[1] in MAFIA_HELP_MSGS:
+                mstate.mafiaComm.cast(MAFIA_HELP_MSGS[words[1]])
+                return True
+            elif words[1] in ALL_HELP_MSGS:
+                mstate.mafiaComm.cast(ALL_HELP_MSGS[words[1]])
+                return True
+            else:
+                mstate.mafiaComm.cast("No help for '"+words[1]+"'")
+                return True
+        else:
+            mstate.mafiaComm.cast(MAFIA_HELP_MSGS[""])
         return True
 
     def MAFIA_target(self,mstate,player_id=None,words=[], message_id=None):
@@ -295,16 +326,18 @@ class MController:
 
     def DM_help(self,sender_id,words):
         log("MController DM_help",5)
-
-        m = self.__DM_get_mstate(words,sender_id)
-
-        if m == None:
-            #self.LOBBY().sendDM(DM_HELP_MESSAGE,sender_id)
-            self.lobbyComm.send(DM_HELP_MESSAGE, sender_id)
-            return True
-        player = m.getPlayer(sender_id)
-        role = player.role
-        m.mainComm.send(ROLE_EXPLAIN[role],sender_id)
+        if len(words) > 1:
+            if words[1] in DM_HELP_MSGS:
+                self.lobbyComm.send(DM_HELP_MSGS[words[1]], sender_id)
+                return True
+            elif words[1] in ALL_HELP_MSGS:
+                self.lobbyComm.send(ALL_HELP_MSGS[words[1]], sender_id)
+                return True
+            else:
+                self.lobbyComm.send("No help for '"+words[1]+"'", sender_id)
+                return True
+        else:
+            self.lobbyComm.send(DM_HELP_MSGS[""], sender_id)
         return True
 
     def DM_status(self,sender_id,words):
