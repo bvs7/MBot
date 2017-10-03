@@ -226,7 +226,7 @@ MAFIA_HELP_MSG_OPTIONS = (
 )
 
 DM_HELP_MSG = (
-    HELP_MSG
+    HELP_MSG +
     "\nIn DM, use /help lobby, /help main, /help mafia for different chat commands"
 )
 
@@ -244,7 +244,7 @@ DM_HELP_MSG_RULE = "In Lobby Chat:\n"+LOBBY_HELP_MSG_RULE
 DM_HELP_MSG_VOTE = "In Main Chat:\n"+MAIN_HELP_MSG_VOTE
 DM_HELP_MSG_TIMER = "In Main Chat:\n"+MAIN_HELP_MSG_TIMER
 DM_HELP_MSG_TARGET = (
-    "In Mafia Chat:\n"+MAFIA_HELP_MSG_TARGET
+    "In Mafia Chat:\n"+MAFIA_HELP_MSG_TARGET +
     "\nIf you are COP or DOCTOR, use /target [letter] to investigate/save someone here.\n"
     " As COP, upon morning you will learn if that player is MAFIA or NOT MAFIA\n"
     " As DOCTOR, if the mafia tries to save that person, they will live,"
