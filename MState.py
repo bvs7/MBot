@@ -565,12 +565,10 @@ class MState:
         self.time = "Day"
         self.timerOn = False
         self.players.clear()
-        self.mafiaComm.clear()
 
         for winner in self.idiot_winners:
             self.mainComm.cast(self.maiComm.getName(winner.id)+" WON!")
         self.idiot_winners.clear()
-        self.mainComm.clear()
 
         rfp = DET_RECORDS_FILE_PATH if self.determined else RECORDS_FILE_PATH
         self.__recordGame(rfp,winners)
