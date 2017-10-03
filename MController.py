@@ -167,7 +167,9 @@ class MController:
                 pass
 
         self.minplayers = minplayers
-        msg = "Game will start in {} minute{}. Like this to join.".format(minutes, '' if minutes==1 else 's')
+        msg = ("Game will start in {} minute{}. (If there are at least {} players)"
+               " Like this to join.").format(minutes, '' if minutes==1 else 's',
+                                             minplayers)
         self.start_message_id = self.lobbyComm.cast(msg)
         self.start_timer(minutes, self.start_game)
         return True
@@ -182,6 +184,7 @@ class MController:
 
         if len(self.nextIds) >= 3 and len(self.nextIds) >= self.minplayers:
             if len(self.availComms) >= 2:
+                self.lobbyComm.cast("Starting Game")
                 mainComm = self.availComms.pop()
                 mafiaComm = self.availComms.pop()
                 mstate = MState(self.nextIds,mainComm,mafiaComm,self.lobbyComm,
@@ -192,6 +195,7 @@ class MController:
                 self.lobbyComm.cast("Too many games")
         else:
             self.lobbyComm.cast("Not enough players to start a game")
+            self.nextIds.clear()
         return True
 
     def mstate_final(self,mstate):
