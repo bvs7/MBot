@@ -482,13 +482,13 @@ class MState:
                 self.__record(self.mainComm.getName(self.mafia_target.id) +" was saved")
             # Doctor couldn't save the target
             else:
-                self.__kill(self.mafia_target)
                 if self.day == 0:
                     return True
                 try:
                     msg = ("Tragedy has struck! {} is dead! Someone must pay for this! "
                              "Vote to kill somebody!").format(self.mainComm.getName(self.mafia_target.id))
                     self.mainComm.cast(msg)
+                    self.__kill(self.mafia_target)
                 except Exception:
                     pass
         # Mafia has no target
@@ -502,7 +502,7 @@ class MState:
                 msg = "{} is {}".format(
                     self.mainComm.getName(p.target.id),
                     "MAFIA" if (p.target.role in MAFIA_ROLES and
-                    not p.target.role == "GODFATHER") else "TOWN")
+                    not p.target.role == "GODFATHER") else "NOT MAFIA")
                 self.mainComm.send(msg,p.id)
                 self.__record(self.mainComm.getName(p.id) +" investigates " +
                               self.mainComm.getName(p.target.id) + " (" +
@@ -531,7 +531,8 @@ class MState:
             elif p.role == "DOCTOR":
                 self.send_options("Use /target number (i.e. /target 0) "
                                   "to pick someone to save",p.id)
-        self.setTimer()
+        #self.setTimer()
+        self.timerOn = False
         return True
 
     def __clearTargets(self):
@@ -564,12 +565,10 @@ class MState:
         self.time = "Day"
         self.timerOn = False
         self.players.clear()
-        self.mafiaComm.clear()
 
         for winner in self.idiot_winners:
             self.mainComm.cast(self.maiComm.getName(winner.id)+" WON!")
         self.idiot_winners.clear()
-        self.mainComm.clear()
 
         rfp = DET_RECORDS_FILE_PATH if self.determined else RECORDS_FILE_PATH
         self.__recordGame(rfp,winners)
