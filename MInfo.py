@@ -85,7 +85,7 @@ ROLE_SCORES = {
 # Probability of town roles being chosen
 TOWN_WEIGHTS = [
     ["TOWN", "DOCTOR", "COP", "CELEB"],
-    [ 75,     25,       25,    10]
+    [ 75,     15,       15,    10]
 ]
 
 # Probability of anti-town roles being chosen
