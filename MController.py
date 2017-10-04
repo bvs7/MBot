@@ -22,7 +22,7 @@ class MController:
 
         self.lobbyComm = lobbyComm # MComm lobby
 
-        self.pref = Preferences()
+        self.pref = self.load_pref()
 
         self.availComms = []
         for group_id in group_ids:
@@ -237,6 +237,7 @@ class MController:
         if words[1] in RULE_BOOK:
             if words[2] in RULE_BOOK[words[1]]:
                 self.pref.book[words[1]] = words[2]
+                self.save_rules()
                 self.lobbyComm.cast("Changed {} to {}".format(words[1],words[2]))
                 return True
             else:
@@ -245,6 +246,23 @@ class MController:
         else:
             self.lobbyComm.cast("\"{}\" not a valid rule, use '/help rules' for help".format(words[1]))
             return False
+
+    def save_rules(self):
+        f = open(RULES_FILE_PATH, 'w')
+        for rule in self.pref.book:
+            f.write(rule+"|"+self.pref.book[rule]+"\n")
+        f.close()
+        return True
+
+    def load_rules(self):
+        pref = Preferences()
+        f = open(RULES_FILE_PATH, 'r')
+        line = f.readline()
+        while '\n' in line:
+            words = line.strip().split("|")
+            pref.book[words[0]] = words[1]
+        f.close()
+        return pref
 
 
     # MAIN ACTIONS
