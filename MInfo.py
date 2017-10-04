@@ -266,8 +266,8 @@ DM_HELP_MSG_REVEAL = (
 
 RULES_HELP_MSG = (
     "List of rules (use /help [rule] for details)\n"
-    "known_roles : ON | OFF\n"
-    "reveal_on_death : ON | OFF\n"
+    "known_roles : ON | TEAM | OFF\n"
+    "reveal_on_death : ON | TEAM | OFF\n"
     "kick_on_death : ON | OFF\n"
     "know_if_saved : ON | OFF"
 )
@@ -275,17 +275,14 @@ RULES_HELP_MSG = (
 RULES_HELP_MSG_KNOWN_ROLES = (
     "known_roles : ON | OFF\n"
     "ON: A list of roles is given at the beginning of a game.\n"
-    "OFF: Not that ¯\\_(ツ)_/¯"
+    "TEAM: The number of players on each team is given at start.\n"
+    "OFF: Nothing is given at start."
 )
 
 RULES_HELP_MSG_REVEAL_ON_DEATH = (
     "reveal_on_death : ON | ONLY_ON_DAY | ONLY_ON_NIGHT | MAF_TOWN | OFF\n"
     "ON: A player's role is revealed when they die\n"
-    "ONLY_ON_DAY: (Not implemented) The role is revealed only when a player"
-    " is voted out\n"
-    "ONLY_ON_NIGHT: (Not implemented) The role is revealed only when killed by "
-    "mafia\n"
-    "MAF_TOWN: (Not implemented) Only reveal what team the death was on\n"
+    "TEAM: A player's team is revealed on death\n"
     "OFF: Don't reveal on death"
 )
 

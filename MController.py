@@ -188,7 +188,7 @@ class MController:
                 mainComm = self.availComms.pop()
                 mafiaComm = self.availComms.pop()
                 mstate = MState(self.nextIds,mainComm,mafiaComm,self.lobbyComm,
-                                preferences=self.pref
+                                preferences=self.pref,
                                 final=self.mstate_final, determined = self.determined)
                 self.mstates.append(mstate)
                 self.nextIds.clear()
@@ -229,13 +229,14 @@ class MController:
 
         self.lobbyComm.ack(message_id)
 
-        if len(words < 3): # Not enough to specify rule
+        if len(words)<3: # Not enough to specify rule
             self.lobbyComm.cast("To change a rule, use /rule [rule] [setting]")
             return False
 
         if words[1] in RULE_BOOK:
             if words[2] in RULE_BOOK[words[1]]:
                 self.pref.book[words[1]] = words[2]
+                self.lobbyComm.cast("Changed {} to {}".format(words[1],words[2]))
                 return True
             else:
                 self.lobbyComm.cast("\"{}\" not a valid setting for {}".format(words[2],words[1]))
