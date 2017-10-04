@@ -273,15 +273,14 @@ RULES_HELP_MSG = (
 )
 
 RULES_HELP_MSG_KNOWN_ROLES = (
-    "known_roles : ON | OFF\n"
+    "known_roles : ON | TEAM | OFF\n"
     "ON: A list of roles is given at the beginning of a game.\n"
     "TEAM: The number of players on each team is given at start.\n"
     "OFF: Nothing is given at start."
 )
 
 RULES_HELP_MSG_REVEAL_ON_DEATH = (
-    "reveal_on_death : ON | ONLY_ON_DAY | ONLY_ON_NIGHT | MAF_TOWN | OFF\n"
-    "ON: A player's role is revealed when they die\n"
+    "reveal_on_death : ON | TEAM | OFF\n"
     "TEAM: A player's team is revealed on death\n"
     "OFF: Don't reveal on death"
 )
