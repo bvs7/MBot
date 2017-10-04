@@ -169,7 +169,7 @@ class MController:
         self.minplayers = minplayers
         msg = ("Game will start in {} minute{} ({}). (If there are at least {} players)"
                " Like this to join.").format(minutes, '' if minutes==1 else 's',
-                                             time.strftime("%I:%M",time.gmtime(time.time()+(minutes*60))),
+                                             time.strftime("%I:%M",time.localtime(time.time()+(minutes*60))),
                                              minplayers)
         self.start_message_id = self.lobbyComm.cast(msg)
         self.start_timer(minutes, self.start_game)
