@@ -231,8 +231,11 @@ class MController:
         self.lobbyComm.ack(message_id)
 
         if len(words)<3: # Not enough to specify rule
-            self.lobbyComm.cast("To change a rule, use /rule [rule] [setting]")
-            return False
+            msg = "To change a rule, use /rule [rule] [setting]"
+            for rule in self.pref.book:
+                msg += "\n{}: {}".format(rule,self.pref.book[rule])
+            self.lobbyComm.cast(msg)
+            return True
 
         if words[1] in RULE_BOOK:
             if words[2] in RULE_BOOK[words[1]]:
