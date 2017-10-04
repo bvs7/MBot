@@ -54,7 +54,7 @@ class Preferences:
     def __str__(self):
 
         result = ""
-        for rule,setting in self.book.items:
+        for rule,setting in self.book.items():
             result += rule + ": " + setting + "\n"
         result = result[0:-1]
         return result
@@ -123,7 +123,9 @@ class MState:
         if preferences == None:
             self.pref = Preferences() #TODO: default pref setting
         else:
-            self.pref = preferences.deepcopy()
+            self.pref = Preferences()
+            for rule in preferences.book:
+                self.pref.book[rule] = preferences.book[rule]
 
         self.__record(str(self.pref))
 
