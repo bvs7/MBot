@@ -29,26 +29,35 @@ class Preferences:
     Holds all of the preference variables for how the game is played
     """
     def __init__(self,
-                 known_roles=True,
-                 reveal_on_death=True,
-                 kick_on_death=True,
-                 know_if_saved=True):
+                 known_roles="ON",
+                 reveal_on_death="ON",
+                 kick_on_death="ON",
+                 know_if_saved="ON"):
+        self.book = {}
         # Show the roles at the beginning of the game
-        self.known_roles = known_roles
+        # known_roles ON | TEAM | OFF
+        #   ON: All roles are known at the start
+        #   TEAM: Amount of Mafia and Town is known
+        #   OFF: No roles are known
+        self.book["known_roles"] = known_roles
         # Show a player's role on their death
-        self.reveal_on_death = reveal_on_death
+        # reveal_on_death ON | TEAM | OFF
+        #   ON: Show role on death
+        #   TEAM: Show MAFIA or TOWN on death
+        #   OFF: Don't show role on death
+        self.book["reveal_on_death"] = reveal_on_death
         # Kick a player from the game when they die
-        self.kick_on_death = kick_on_death
+        self.book["kick_on_death"] = kick_on_death
         # If the doctor successfully saves, everyone knows who was saved
-        self.know_if_saved = know_if_saved
+        self.book["know_if_saved"] = know_if_saved
 
     def __str__(self):
 
-        return (
-            "known_roles:      \t" + ("ON" if self.known_roles else "OFF") +
-            "\nreveal_on_death:\t" + ("ON" if self.reveal_on_death else "OFF") +
-            "\nkick_on_death:  \t" + ("ON" if self.kick_on_death else "OFF") +
-            "\nknow_if_saved:  \t" + ("ON" if self.know_if_saved else "OFF") )
+        result = ""
+        for rule,setting in self.book.items:
+            result += rule + ": " + setting + "\n"
+        result = result[0:-1]
+        return result
 
 """
 MState Class Description
@@ -112,9 +121,9 @@ class MState:
 
         # Preferences for the current game
         if preferences == None:
-            self.pref = Preferences()
+            self.pref = Preferences() #TODO: default pref setting
         else:
-            self.pref = preferences
+            self.pref = preferences.deepcopy()
 
         self.__record(str(self.pref))
 
@@ -275,13 +284,29 @@ class MState:
         self.__record(self.mainComm.getName(player.id) + " is revealed as " + player.role)
         return True
 
+    def revealTeam(self,p):
+        """ Reveal a player's team to the Main Chat """
+        log("MState revealTeam",3)
+        try:
+            player = self.getPlayer(p)
+        except Exception as e:
+            log("Could not reveal team {}: {}".format(p,e))
+            return False
+        if player.role in MAFIA_ROLES:
+            team = "Mafia"
+        elif player.role in TOWN_ROLES:
+            team = "Town"
+        self.mainComm.cast(self.mainComm.getName(player.id) + " is on team " + team)
+        self.__record(self.mainComm.getName(player.id) + " is revealed on team " + team)
+        return True
+
     def startGame(self, nextPlayerIDs, preferences=None):
         """ Gen roles, create player objects and start the game. """
         log("MState startGame",3)
 
         # Set preference variables
         if not preferences == None:
-                self.pref = preferences
+            self.pref = preferences
 
         num_players = len(nextPlayerIDs)
         if num_players < 3:
@@ -329,10 +354,18 @@ class MState:
         msg = ("Dawn. Of the game and of this new day. You have learned that scum "
                      "reside in this town... A scum you must purge. Kill Someone!")
 
-        if self.pref.known_roles:
-                msg += "\nThe Roles:" + self.__showRoles(roles)
+        if self.pref.book["known_roles"] == "ON":
+            msg += "\nThe Roles:" + self.__showRoles(roles)
+        elif self.pref.book["known_roles"] == "TEAM":
+            msg += "\nThe Teams:" + self.__showTeams(roles)
 
         self.mainComm.cast(msg)
+
+        msg = "Heyo this is maf chat get it done chaos yeah\nYour friends are:"
+        for p in self.players:
+            if p.role in MAFIA_ROLES:
+                msg += "\n" + self.mafiaComm.getName(p.id)
+        self.mafiaComm.cast(msg)
 
         self.__record("Game Begins")
 
@@ -394,9 +427,11 @@ class MState:
             # Game continues, let the person know roles
             self.mainComm.send(self.roleString,player.id)
             # Depending on preferences, kick, or reveal
-            if self.pref.reveal_on_death:
+            if self.pref.book["reveal_on_death"] == "ON":
                 self.reveal(player)
-            if self.pref.kick_on_death:
+            elif self.pref.book["reveal_on_death"] == "TEAM":
+                self.revealTeam(player)
+            if self.pref.book["kick_on_death"] == "ON":
                 self.mainComm.remove(player.id)
                 self.mafiaComm.remove(player.id)
 
@@ -472,7 +507,7 @@ class MState:
                         p.target.id == self.mafia_target.id):
                     target_saved = True
             if target_saved:
-                if self.pref.know_if_saved:
+                if self.pref.book["know_if_saved"] == "ON":
                     msg = ("Tragedy has struck! {} is ... wait! They've been saved by "
                            "the doctor! Someone must pay for this! Vote to kill "
                            "somebody!").format(self.mainComm.getName(self.mafia_target.id))
@@ -607,6 +642,20 @@ class MState:
         msg = ""
         for role in roleDict:
                 msg += "\n" + role + ": " + str(roleDict[role])
+        return msg
+
+    def __showTeams(self,roles):
+        """ Make a string which describes the number of players on each team. """
+        log("MState __showTeams",4)
+
+        teamDict = {"Mafia":0, "Town":0}
+        for role in roles:
+            if role in MAFIA_ROLES:
+                teamDict["Mafia"] += 1
+            elif role in TOWN_ROLES:
+                teamDict["Town"] += 1
+
+        msg = "Mafia: {}\nTown: {}".format(str(teamDict["Mafia"]), str(teamDict["Town"]))
         return msg
 
 

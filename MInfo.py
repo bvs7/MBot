@@ -91,8 +91,16 @@ TOWN_WEIGHTS = [
 # Probability of anti-town roles being chosen
 MAFIA_WEIGHTS = [
     ["MAFIA", "IDIOT", "GODFATHER"],
-    [ 85,      15,      5],
+    [ 85,      5,       15],
 ]
+
+# Rulebook
+RULE_BOOK = {
+    "known_roles": ("ON", "TEAM", "OFF"),
+    "reveal_on_death": ("ON", "TEAM", "OFF"),
+    "kick_on_death": ("ON", "OFF"),
+    "know_if_saved": ("ON", "OFF")
+}
 
 
 # OP KEYWORDS
