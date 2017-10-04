@@ -32,6 +32,7 @@ def log(msg, debug=2):
 
 MSTATE_ID_PATH = "data/id"
 RECORDS_FILE_PATH = "data/records"
+RULES_FILE_PATH = "data/rules"
 DET_RECORDS_FILE_PATH = "data/det_records"
 
 MAFIA_ROLES = [ "MAFIA" , "GODFATHER"]
