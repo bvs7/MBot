@@ -22,7 +22,7 @@ class MController:
 
         self.lobbyComm = lobbyComm # MComm lobby
 
-        self.pref = self.load_pref()
+        self.pref = self.load_rules()
 
         self.availComms = []
         for group_id in group_ids:
@@ -264,6 +264,7 @@ class MController:
         while '\n' in line:
             words = line.strip().split("|")
             pref.book[words[0]] = words[1]
+            line = f.readline()
         f.close()
         return pref
 
