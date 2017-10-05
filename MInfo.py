@@ -64,8 +64,9 @@ ROLE_EXPLAIN= {
                " care whether the mafia win or lose, as long as everyone"
                " votes for them."),
     "CELEB" : ("The CELEB is a celebrity. Everybody knows who they are, but everyone "
-               "doesn't recognize you right now. CELEB can reveal themselves during Day "
-               "by sending MODERATOR '/reveal'. But they ought to be careful! "
+               "doesn't recognize them right now. CELEB can reveal themselves during Day "
+               "by sending MODERATOR '/reveal' and then everyone will know they"
+               " are Town. But they ought to be careful! "
                "They'll be quite the target once revealed!")
     }
 
@@ -270,7 +271,8 @@ RULES_HELP_MSG = (
     "known_roles : ON | TEAM | OFF\n"
     "reveal_on_death : ON | TEAM | OFF\n"
     "kick_on_death : ON | OFF\n"
-    "know_if_saved : ON | OFF"
+    "know_if_saved : ON | DOC | SELF | DOC_SELF | OFF\n"
+    "start_night : ON | EVEN | OFF"
 )
 
 RULES_HELP_MSG_KNOWN_ROLES = (
@@ -282,7 +284,8 @@ RULES_HELP_MSG_KNOWN_ROLES = (
 
 RULES_HELP_MSG_REVEAL_ON_DEATH = (
     "reveal_on_death : ON | TEAM | OFF\n"
-    "TEAM: A player's team is revealed on death\n"
+    "ON: A player's role (TOWN, COP, MAFIA, etc) is revealed when they die\n"
+    "TEAM: A player's team (Maifa, Town) is revealed on death\n"
     "OFF: Don't reveal on death"
 )
 
@@ -293,11 +296,21 @@ RULES_HELP_MSG_KICK_ON_DEATH = (
 )
 
 RULES_HELP_MSG_KNOW_IF_SAVED = (
-    "know_if_saved : ON | OFF\n"
+    "know_if_saved : ON | DOC | SELF | DOC_SELF | OFF\n"
     "ON: When a doctor saves someone that the mafia tried to kill, everybody "
     "learns about it.\n"
+    "DOC: A doctor is told if their save is successful.\n"
+    "SELF: When a person is successfully saved, they learn about it.\n"
+    "DOC_SELF: Both DOC and SELF\n"
     "OFF: Nobody (except mafia I guess) can tell the difference between mafia "
     "not killing and doctor successfully saving"
+)
+
+RULES_HELP_MSG_START_NIGHT = (
+    "start_night : ON | EVEN | OFF\n"
+    "ON: The game begins with Night\n"
+    "EVEN: The game begins with Night when an even number of people are playing.\n"
+    "OFF: The game begins with Day\n"
 )
 
 ALL_HELP_MSGS = {
@@ -306,7 +319,7 @@ ALL_HELP_MSGS = {
     "reveal_on_death":  RULES_HELP_MSG_REVEAL_ON_DEATH,
     "kick_on_death":    RULES_HELP_MSG_KICK_ON_DEATH,
     "know_if_saved":    RULES_HELP_MSG_KNOW_IF_SAVED,
-
+    "start_night":      RULES_HELP_MSG_START_NIGHT,
 }
 
 LOBBY_HELP_MSGS={

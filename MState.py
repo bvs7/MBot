@@ -319,6 +319,7 @@ class MState:
         self.time = "Day"
 
         self.mafiaComm.clear()
+        self.mainComm.clear()
         self.players.clear()
         self.savedRoles.clear()
         self.num_mafia = 0
@@ -368,6 +369,10 @@ class MState:
             if p.role in MAFIA_ROLES:
                 msg += "\n" + self.mafiaComm.getName(p.id)
         self.mafiaComm.cast(msg)
+
+        if (self.pref.book["start_night"] == "ON" or
+           (self.pref.book["start_night"] == "EVEN" and len(self.players)%2 == 0)):
+            self.__toNight()
 
         self.__record("Game Begins")
 
@@ -508,6 +513,10 @@ class MState:
                 if (p.role == "DOCTOR" and not p.target == None and
                         p.target.id == self.mafia_target.id):
                     target_saved = True
+                    if "DOC" in self.pref.book["know_if_saved"]:
+                        self.mainComm.send("Your save was successful!",p.id)
+                    if "SELF" in self.pref.book["know_if_saved"]:
+                        self.mainComm.send("You were saved!", p.target.id)
             if target_saved:
                 if self.pref.book["know_if_saved"] == "ON":
                     msg = ("Tragedy has struck! {} is ... wait! They've been saved by "
@@ -657,7 +666,7 @@ class MState:
             elif role in TOWN_ROLES:
                 teamDict["Town"] += 1
 
-        msg = "Mafia: {}\nTown: {}".format(str(teamDict["Mafia"]), str(teamDict["Town"]))
+        msg = "\nMafia: {}\nTown: {}".format(str(teamDict["Mafia"]), str(teamDict["Town"]))
         return msg
 
 
