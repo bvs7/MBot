@@ -32,7 +32,8 @@ class Preferences:
                  known_roles="ON",
                  reveal_on_death="ON",
                  kick_on_death="ON",
-                 know_if_saved="ON"):
+                 know_if_saved="ON"
+                 start_night="OFF"):
         self.book = {}
         # Show the roles at the beginning of the game
         # known_roles ON | TEAM | OFF
@@ -50,6 +51,8 @@ class Preferences:
         self.book["kick_on_death"] = kick_on_death
         # If the doctor successfully saves, everyone knows who was saved
         self.book["know_if_saved"] = know_if_saved
+
+        self.book["start_night"] = start_night
 
     def __str__(self):
 
