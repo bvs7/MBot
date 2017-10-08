@@ -32,7 +32,7 @@ class Preferences:
                  known_roles="ON",
                  reveal_on_death="ON",
                  kick_on_death="ON",
-                 know_if_saved="ON"
+                 know_if_saved="ON",
                  start_night="OFF"):
         self.book = {}
         # Show the roles at the beginning of the game

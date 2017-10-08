@@ -101,7 +101,8 @@ RULE_BOOK = {
     "known_roles": ("ON", "TEAM", "OFF"),
     "reveal_on_death": ("ON", "TEAM", "OFF"),
     "kick_on_death": ("ON", "OFF"),
-    "know_if_saved": ("ON", "OFF")
+    "know_if_saved": ("ON", "DOC", "SELF", "DOC_SELF", "OFF"),
+    "start_night": ("ON", "EVEN", "OFF"),
 }
 
 
