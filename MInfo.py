@@ -72,11 +72,11 @@ ROLE_EXPLAIN= {
 
 # ROLE GENERATION
 
-BASE_SCORE = -6
+BASE_SCORE = -4
 
 ROLE_SCORES = {
-    "MAFIA"    : -4,
-    "GODFATHER" : -4,
+    "MAFIA"    : -5,
+    "GODFATHER" : -5,
     "DOCTOR" :    4,
     "COP"        :    4,
     "TOWN"     :    2,
