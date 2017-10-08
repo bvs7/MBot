@@ -103,6 +103,7 @@ RULE_BOOK = {
     "kick_on_death": ("ON", "OFF"),
     "know_if_saved": ("ON", "DOC", "SELF", "DOC_SELF", "OFF"),
     "start_night": ("ON", "EVEN", "OFF"),
+    "standard_roles": ("COP_DOC","OFF"),
 }
 
 
@@ -273,7 +274,8 @@ RULES_HELP_MSG = (
     "reveal_on_death : ON | TEAM | OFF\n"
     "kick_on_death : ON | OFF\n"
     "know_if_saved : ON | DOC | SELF | DOC_SELF | OFF\n"
-    "start_night : ON | EVEN | OFF"
+    "start_night : ON | EVEN | OFF\n"
+    "standard_roles : COP_DOC | OFF"
 )
 
 RULES_HELP_MSG_KNOWN_ROLES = (
@@ -314,6 +316,12 @@ RULES_HELP_MSG_START_NIGHT = (
     "OFF: The game begins with Day\n"
 )
 
+RULES_HELP_MSG_STANDARD_ROLES = (
+    "standard_roles : COP_DOC | OFF\n"
+    "COP_DOC: There is at least 1 COP and 1 DOCTOR per game\n"
+    "OFF: No guarantees for roles"
+)
+
 ALL_HELP_MSGS = {
     "rules":    RULES_HELP_MSG,
     "known_roles":      RULES_HELP_MSG_KNOWN_ROLES,
@@ -321,6 +329,7 @@ ALL_HELP_MSGS = {
     "kick_on_death":    RULES_HELP_MSG_KICK_ON_DEATH,
     "know_if_saved":    RULES_HELP_MSG_KNOW_IF_SAVED,
     "start_night":      RULES_HELP_MSG_START_NIGHT,
+    "standard_roles":   RULES_HELP_MSG_STANDARD_ROLES,
 }
 
 LOBBY_HELP_MSGS={
