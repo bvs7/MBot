@@ -34,7 +34,7 @@ class MController:
         self.timer_on = False
         self.callback = None
         self.start_message_id = ""
-        self.minplayers = 3
+        self.minplayers = 25
 
         # Ids of players to be added to next game
         self.nextIds = []
