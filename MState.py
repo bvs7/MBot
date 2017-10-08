@@ -33,7 +33,8 @@ class Preferences:
                  reveal_on_death="ON",
                  kick_on_death="ON",
                  know_if_saved="ON",
-                 start_night="OFF"):
+                 start_night="OFF",
+                 standard_roles="OFF"):
         self.book = {}
         # Show the roles at the beginning of the game
         # known_roles ON | TEAM | OFF
@@ -53,6 +54,8 @@ class Preferences:
         self.book["know_if_saved"] = know_if_saved
 
         self.book["start_night"] = start_night
+
+        self.book["standard_roles"] = standard_roles
 
     def __str__(self):
 
@@ -157,6 +160,8 @@ class MState:
         self.timerOn = False    # if Timer is on
 
         self.roleString = ""    # Listing of roles
+
+        self.getNameMemory = {}
 
 
         # Start this game
@@ -698,12 +703,17 @@ class MState:
             mafia_sum = sum(MAFIA_WEIGHTS[1])
             role = "TOWN"
 
+            if self.pref.book["standard_roles"] == "COP_DOC":
+                roles = ["COP","DOCTOR"]
+                num_town = 2
+                score += ROLE_SCORES["COP"] + ROLE_SCORES["DOCTOR"]
+
             if num_players == 4:
                 return ["TOWN", "DOCTOR", "COP", "MAFIA"]
             elif num_players == 3:
                 return ["DOCTOR", "MAFIA", "COP"]
             while(n < num_players):
-                r = random.randint(-3,3)
+                r = random.randint(-1,1)
                 if r >= score:
                     # Add Town
                     t = random.randint(0,town_sum)
@@ -798,4 +808,9 @@ class MState:
                     count += 1
                     m += self.mainComm.getName(voter.id) + ", "
                 m += str(count) + "\n"
+
+        if self.pref.book["known_roles"] == "ON" and self.pref.book["reveal_on_death"] == ON:
+            m += self.showRoles([p.role for p in self.players])
+        elif self.pref.book["known_roles"] in ("ON","TEAM") and self.pref.book["reveal_on_death"] in ("ON","TEAM"):
+            m += self.showTeams([p.role for p in self.players])
         return m
