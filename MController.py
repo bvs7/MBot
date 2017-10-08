@@ -111,6 +111,7 @@ class MController:
             for m in self.mstates:
                 msg += "{}: {} {}; {} Players\n".format(
                     m.id, m.time, m.day, len(m.players) )
+        if self.timer_on:
         return msg
 
     # TODO: have LOBBY like the /in to acknowledge
@@ -219,10 +220,10 @@ class MController:
         if words[1].isnumeric() and int(words[1]) < len(self.mstates):
             return self.mstates[int(words[1])].mainComm.add(player_id)
         else:
-            msg = "Watch which game?:\n"
+            msg = "Watch which game? (use /watch [#]):\n"
             for m in self.mstates:
                 msg += "{}: {} {}; {} players\n".format(
-                    m.id, m.time, m.day, len(m.players) )
+                    m.game_num, m.time, m.day, len(m.players) )
             self.lobbyComm.cast(msg)
             return True
 
@@ -308,8 +309,11 @@ class MController:
     def MAIN_timer(self,mstate,player_id=None,words=[], message_id=None):
         log("MServer __timer",5)
         mstate.mainComm.ack(message_id)
-
-        return mstate.setTimer()
+        result = False
+        for player in mstate.players:
+            if player.id == player_id:
+                result = mstate.setTimer()
+        return result
 
     # MAFIA ACTIONS
     def MAFIA_help(self,mstate,player_id=None,words=[], message_id=None):
@@ -448,6 +452,7 @@ class MController:
 
     def start_timer(self, minutes, callback):
         self.time_left = minutes * 60
+        self.time_to_start =
         self.timer_on = True
         self.callback = callback
 

@@ -566,6 +566,8 @@ class MState:
 
         self.__record("Night " + str(self.day) + " begins")
 
+        self.timerOn = False
+
         self.time = "Night"
         for p in self.players:
             p.vote = None
@@ -581,7 +583,6 @@ class MState:
                 self.send_options("Use /target number (i.e. /target 0) "
                                   "to pick someone to save",p.id)
         #self.setTimer()
-        self.timerOn = False
         return True
 
     def __clearTargets(self):
