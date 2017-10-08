@@ -111,7 +111,6 @@ class MController:
             for m in self.mstates:
                 msg += "{}: {} {}; {} Players\n".format(
                     m.id, m.time, m.day, len(m.players) )
-        if self.timer_on:
         return msg
 
     # TODO: have LOBBY like the /in to acknowledge
@@ -452,7 +451,6 @@ class MController:
 
     def start_timer(self, minutes, callback):
         self.time_left = minutes * 60
-        self.time_to_start =
         self.timer_on = True
         self.callback = callback
 

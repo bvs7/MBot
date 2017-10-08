@@ -156,6 +156,7 @@ class MState:
 
         self.idiot_winners = []    # A list of players who won by being an idiot that was voted out
 
+
         self.timer_value = 0    # The amount of time left when timer is on
         self.timerOn = False    # if Timer is on
 
@@ -809,8 +810,8 @@ class MState:
                     m += self.mainComm.getName(voter.id) + ", "
                 m += str(count) + "\n"
 
-        if self.pref.book["known_roles"] == "ON" and self.pref.book["reveal_on_death"] == ON:
-            m += self.showRoles([p.role for p in self.players])
+        if self.pref.book["known_roles"] == "ON" and self.pref.book["reveal_on_death"] == "ON":
+            m += self.__showRoles([p.role for p in self.players])
         elif self.pref.book["known_roles"] in ("ON","TEAM") and self.pref.book["reveal_on_death"] in ("ON","TEAM"):
-            m += self.showTeams([p.role for p in self.players])
+            m += self.__showTeams([p.role for p in self.players])
         return m

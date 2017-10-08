@@ -6541,3 +6541,33 @@ Michael Miller votes for Michael Miller
 Rebekah Koutereba votes for Michael Miller
 Michael Miller (MAFIA) is killed (4-0)
 TOWN WINS
+Creating Game #132
+kick_on_death: ON
+known_roles: ON
+know_if_saved: ON
+start_night: EVEN
+standard_roles: COP_DOC
+reveal_on_death: ON
+GG, here were the roles:
+Allan Buchness: DOCTOR
+Lake: COP
+Brian: TOWN
+Devyn Ottman: MAFIA
+Night 1 begins
+Game Begins
+Allan Buchness (DOCTOR) targets Allan Buchness
+Mafia targets Brian
+Lake (COP) targets Devyn Ottman
+Day 1 begins
+Brian (TOWN) is killed (2-1)
+Brian is revealed as TOWN
+Lake investigates Devyn Ottman (MAFIA)
+Allan Buchness votes for Devyn Ottman
+Allan Buchness votes for __
+Lake votes for Devyn Ottman
+Devyn Ottman votes for Lake
+Allan Buchness votes for __
+Allan Buchness votes for __
+Allan Buchness votes for Devyn Ottman
+Devyn Ottman (MAFIA) is killed (2-0)
+TOWN WINS
