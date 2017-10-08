@@ -707,6 +707,7 @@ class MState:
             if self.pref.book["standard_roles"] == "COP_DOC":
                 roles = ["COP","DOCTOR"]
                 num_town = 2
+                n = 2
                 score += ROLE_SCORES["COP"] + ROLE_SCORES["DOCTOR"]
 
             if num_players == 4:
