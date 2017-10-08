@@ -6571,3 +6571,79 @@ Allan Buchness votes for __
 Allan Buchness votes for Devyn Ottman
 Devyn Ottman (MAFIA) is killed (2-0)
 TOWN WINS
+Creating Game #135
+reveal_on_death: ON
+standard_roles: COP_DOC
+start_night: EVEN
+know_if_saved: ON
+kick_on_death: OFF
+known_roles: ON
+GG, here were the roles:
+Devyn Ottman: TOWN
+Rebekah Koutereba: MAFIA
+Claire Coulter: DOCTOR
+Kerri D: MAFIA
+Kyra Butler: COP
+Brian: COP
+Lake: COP
+not mafia :(: COP
+Peter VandeVort: GODFATHER
+Amanda Williams: TOWN
+Night 1 begins
+Game Begins
+Lake (COP) targets Devyn Ottman
+Brian (COP) targets Claire Coulter
+Claire Coulter (DOCTOR) targets Claire Coulter
+not mafia :( (COP) targets Kyra Butler
+Kyra Butler (COP) targets Devyn Ottman
+Mafia targets Kyra Butler
+Day 1 begins
+Kyra Butler (COP) is killed (6-3)
+Kyra Butler is revealed as COP
+Brian investigates Claire Coulter (DOCTOR)
+Lake investigates Devyn Ottman (TOWN)
+not mafia :( investigates Kyra Butler (COP)
+Amanda Williams votes for Devyn Ottman
+Devyn Ottman votes for Kerri D
+Lake votes for Kerri D
+Brian votes for Devyn Ottman
+Peter VandeVort votes for Devyn Ottman
+not mafia :( votes for Peter VandeVort
+Rebekah Koutereba votes for Peter VandeVort
+Devyn Ottman votes for Peter VandeVort
+Lake votes for __
+Lake votes for Peter VandeVort
+Brian votes for Peter VandeVort
+Peter VandeVort (GODFATHER) is killed (6-2)
+Peter VandeVort is revealed as GODFATHER
+Night 2 begins
+Lake (COP) targets Rebekah Koutereba
+not mafia :( (COP) targets Brian
+Brian (COP) targets Rebekah Koutereba
+Claire Coulter (DOCTOR) targets Claire Coulter
+Mafia targets not mafia :(
+Day 2 begins
+not mafia :( (COP) is killed (5-2)
+not mafia :( is revealed as COP
+Brian investigates Rebekah Koutereba (MAFIA)
+Lake investigates Rebekah Koutereba (MAFIA)
+Brian votes for Rebekah Koutereba
+Devyn Ottman votes for Rebekah Koutereba
+Lake votes for Rebekah Koutereba
+Amanda Williams votes for Rebekah Koutereba
+Rebekah Koutereba (MAFIA) is killed (5-1)
+Rebekah Koutereba is revealed as MAFIA
+Night 3 begins
+Lake (COP) targets Kerri D
+Mafia targets Lake
+Brian (COP) targets Devyn Ottman
+Claire Coulter (DOCTOR) targets Brian
+Day 3 begins
+Lake (COP) is killed (4-1)
+Lake is revealed as COP
+Brian investigates Devyn Ottman (TOWN)
+Brian votes for Kerri D
+Devyn Ottman votes for Kerri D
+Amanda Williams votes for Kerri D
+Kerri D (MAFIA) is killed (4-0)
+TOWN WINS
