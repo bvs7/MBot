@@ -36,7 +36,7 @@ RULES_FILE_PATH = "data/rules"
 DET_RECORDS_FILE_PATH = "data/det_records"
 
 MAFIA_ROLES = [ "MAFIA" , "GODFATHER"]
-TOWN_ROLES    = [ "TOWN", "COP", "DOCTOR", "IDIOT", "CELEB" ]
+TOWN_ROLES    = [ "TOWN", "COP", "DOCTOR", "CELEB" ]
 
 ROLE_EXPLAIN= {
     "MAFIA" : ("The MAFIA is part of the mafia chat to talk "
@@ -51,12 +51,12 @@ ROLE_EXPLAIN= {
                "during the day!"),
     "COP"   : ("The COP is the one of the most offensive members of "
                "the townspeople. During the night, they send a direct message to MODERATOR "
-               "with the letter of the person you want to investigate, and "
+               "with the letter of the person they want to investigate, and "
                "upon morning, MODERATOR will tell them whether that person is MAFIA or "
                "NOT MAFIA."),
     "DOCTOR": ("The DOCTOR's job is to save the townspeople from "
                "the mafia scum. During the night, they send a direct message to MODERATOR"
-               " with the letter of the person you want to save. If the mafia"
+               " with the letter of the person they want to save. If the mafia"
                " targets that person, they will have a near death experience, but "
                "survive."),
     "IDIOT" : ("The IDIOT's dream is to be such an"
@@ -72,7 +72,7 @@ ROLE_EXPLAIN= {
 
 # ROLE GENERATION
 
-BASE_SCORE = -4
+BASE_SCORE = -8
 
 ROLE_SCORES = {
     "MAFIA"    : -5,
@@ -92,6 +92,13 @@ TOWN_WEIGHTS = [
 
 # Probability of anti-town roles being chosen
 MAFIA_WEIGHTS = [
+    ["MAFIA", "IDIOT", "GODFATHER"],
+    [ 90,      5,       5],
+]
+
+ROLE_WEIGHTS =[
+    ["TOWN", "DOCTOR", "COP", "CELEB"],
+    [ 100,    10,       10,    10],
     ["MAFIA", "IDIOT", "GODFATHER"],
     [ 90,      5,       5],
 ]
@@ -269,14 +276,16 @@ DM_HELP_MSG_REVEAL = (
 )
 
 RULES_HELP_MSG = (
-    "List of rules (use /help [rule] for details)\n"
-    "known_roles : ON | TEAM | OFF\n"
-    "reveal_on_death : ON | TEAM | OFF\n"
-    "kick_on_death : ON | OFF\n"
-    "know_if_saved : ON | DOC | SELF | DOC_SELF | OFF\n"
-    "start_night : ON | EVEN | OFF\n"
-    "standard_roles : COP_DOC | OFF"
+    "List of rules (use /help [rule] for details)"
 )
+for rule in RULE_BOOK:
+    RULES_HELP_MSG += "\n" + rule + " : "
+    settings = RULE_BOOK[rule]
+    last = len(settings) - 1
+    for i in range(last):
+        RULES_HELP_MSG += settings[i]
+        if not last == i:
+            RULES_HELP_MSG += " | "
 
 RULES_HELP_MSG_KNOWN_ROLES = (
     "known_roles : ON | TEAM | OFF\n"
