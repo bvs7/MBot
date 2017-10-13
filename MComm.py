@@ -23,6 +23,7 @@ Variables:
 Methods:
     cast(msg)
     ack(msg_id)
+    getAcks(msg_id)
     send(msg, player_id)
     setTitle(new_title)
     getName(member_id)
@@ -109,6 +110,8 @@ class GroupComm(MComm):
 
         self.title = self.group.name
 
+        self.savedNames = {}
+
     def getGroup(self, group_id):
         try:
             groups = [g for g in groupy.Group.list() if g.group_id == group_id]
@@ -167,10 +170,13 @@ class GroupComm(MComm):
         return True
 
     def getName(self,member_id):
+        if member_id in self.savedNames:
+            return self.savedNames[member_id]
         self.group.refresh()
         members = self.group.members()
         for m in members:
             if m.user_id == member_id:
+                self.savedNames[member_id] == m.nickname
                 return m.nickname
         log("Failed to get Name")
         return "__"

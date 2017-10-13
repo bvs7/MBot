@@ -225,7 +225,7 @@ class MState:
     def mafia_options(self):
         """ Send the mafia's options to the mafia chat. """
         log("MState mafia_options",3)
-        msg = "Use /target number (i.e. /target 1) to select someone to kill:"
+        msg = "Use /target letter (i.e. /target B) to select someone to kill:"
         c = 'A'
         for player in self.players:
             msg += "\n"+c+" "+self.mainComm.getName(player.id)
@@ -363,9 +363,18 @@ class MState:
 
         self.__record(self.roleString)
 
+        score = BASE_SCORE
+        for role in roles:
+            score += ROLE_SCORES[role]
+
         msg = ("Dawn. Of the game and of this new day. You have learned that scum "
                      "reside in this town... A scum you must purge. Kill Someone!")
 
+        msg += "\nDifficulty Score: " + str(score)
+
+        msg += "\nPlayers:"
+        for p in self.players:
+            msg += "\n " + self.mainComm.getName(p.id)
         if self.pref.book["known_roles"] == "ON":
             msg += "\nThe Roles:" + self.__showRoles(roles)
         elif self.pref.book["known_roles"] == "TEAM":
@@ -583,10 +592,10 @@ class MState:
         self.mafia_options()
         for p in self.players:
             if p.role == "COP":
-                self.send_options("Use /target number (i.e. /target 2) "
+                self.send_options("Use /target letter (i.e. /target C) "
                                   "to pick someone to investigate",p.id)
             elif p.role == "DOCTOR":
-                self.send_options("Use /target number (i.e. /target 0) "
+                self.send_options("Use /target letter (i.e. /target D) "
                                   "to pick someone to save",p.id)
         #self.setTimer()
         return True
@@ -675,8 +684,14 @@ class MState:
                 teamDict["Mafia"] += 1
             elif role in TOWN_ROLES:
                 teamDict["Town"] += 1
+            elif role == "IDIOT":
+                if not "Unaligned" in teamDict:
+                    teamDict["Unaligned"] = 0
+                teamDict["Unaligned"] += 1
 
-        msg = "\nMafia: {}\nTown: {}".format(str(teamDict["Mafia"]), str(teamDict["Town"]))
+        msg = ""
+        for key in teamDict:
+            msg += "\n" + key + ": " + str(teamDict[key])
         return msg
 
 
@@ -700,6 +715,7 @@ class MState:
             roles = []
             num_mafia = 0
             num_town = 0
+            num_idiot = 0
             town_sum = sum(TOWN_WEIGHTS[1])
             mafia_sum = sum(MAFIA_WEIGHTS[1])
             role = "TOWN"
@@ -715,24 +731,25 @@ class MState:
             elif num_players == 3:
                 return ["DOCTOR", "MAFIA", "COP"]
             while(n < num_players):
-                r = random.randint(-1,1)
-                if r >= score:
+                if score < 0:
                     # Add Town
                     t = random.randint(0,town_sum)
-                    for trole in TOWN_WEIGHTS[0]:
-                        if t < self.__addUntil(trole,TOWN_WEIGHTS):
-                            role = trole
+                    for i in range(len(TOWN_WEIGHTS[0])):
+                        if t < sum(TOWN_WEIGHTS[1][0:(i+1)]):
+                            role = TOWN_WEIGHTS[0][i]
                             break
                     num_town += 1
                 else:
                     # Add Mafia
                     m = random.randint(0,mafia_sum)
-                    for mrole in MAFIA_WEIGHTS[0]:
-                        if m < self.__addUntil(mrole,MAFIA_WEIGHTS):
-                            role = mrole
+                    for i in range(len(MAFIA_WEIGHTS[0])):
+                        if m < sum(len(MAFIA_WEIGHTS[1][0:(i+1)])):
+                            role = MAFIA_WEIGHTS[0][i]
                             break
                     if not role == "IDIOT":
                         num_mafia += 1
+                    else:
+                        num_idiot += 1
                 roles.append(role)
                 score += ROLE_SCORES[role]
                 if role == "GODFATHER":
@@ -742,7 +759,7 @@ class MState:
                 n += 1
 
             # Done making roles, ensure this isn't a bad game
-            if not ((num_mafia + 2 >= num_town) or (num_mafia == 0)):
+            if not ((num_mafia + num_idiot + 2 >= num_town) or (num_mafia == 0)):
                 break
 
         # Roles contains a valid game
@@ -815,4 +832,13 @@ class MState:
             m += self.__showRoles([p.role for p in self.players])
         elif self.pref.book["known_roles"] in ("ON","TEAM") and self.pref.book["reveal_on_death"] in ("ON","TEAM"):
             m += self.__showTeams([p.role for p in self.players])
+        else:
+            roles = []
+            for r in self.savedRoles.values():
+                roles.append(r)
+            if self.pref.book["known_roles"] == "ON":
+                m += "\nOriginal Roles:" + self.__showRoles([self.savedRoles.values()])
+            elif self.pref.book["known_roles"] == "TEAM":
+                m += "\nOriginal Teams:" + self.__showTeams([self.savedRoles.values()])
+
         return m

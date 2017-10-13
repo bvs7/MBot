@@ -75,7 +75,6 @@ class MController:
     # LOBBY ACTIONS
     # TODO: use a word for more specific help
     def LOBBY_help(self, player_id=None, words=[], message_id=None):
-        log("MServer __lobby_help",5)
         self.lobbyComm.ack(message_id)
         if len(words) > 1:
             if words[1] in LOBBY_HELP_MSGS:
@@ -94,7 +93,6 @@ class MController:
     # TODO: Select a game for more status
 
     def LOBBY_status(self, player_id=None,words=[], message_id=None):
-        log("MServer __lobby_status",5)
         self.lobbyComm.ack(message_id)
 
         msg = self.__get_status()
@@ -111,11 +109,13 @@ class MController:
             for m in self.mstates:
                 msg += "{}: {} {}; {} Players\n".format(
                     m.id, m.time, m.day, len(m.players) )
+        if self.timer_on:
+            m = self.time_left//60
+            msg += "\nNew Game starting within {} minute{}".format(m,'s' if m == 1 else '')
         return msg
 
     # TODO: have LOBBY like the /in to acknowledge
     def LOBBY_in(self, player_id,words=[], message_id=None):
-        log("MServer __lobby_in",5)
         self.lobbyComm.ack(message_id)
 
         # Add to next list
@@ -130,7 +130,6 @@ class MController:
         return True
 
     def LOBBY_out(self, player_id,words=[], message_id=None):
-        log("MServer __lobby_out",5)
         self.lobbyComm.ack(message_id)
 
         # try to remove from list:
@@ -145,7 +144,6 @@ class MController:
 
 
     def LOBBY_start(self, player_id=None, words=[], message_id=None):
-        log("MServer __lobby_start",5)
         self.lobbyComm.ack(message_id)
 
         minutes = 1
@@ -207,7 +205,6 @@ class MController:
         self.mstates.remove(mstate)
 
     def LOBBY_watch(self, player_id,words=[], message_id=None):
-        log("MServer __lobby_watch",5)
         self.lobbyComm.ack(message_id)
 
         if len(self.mstates) == 0:
@@ -272,7 +269,6 @@ class MController:
     # MAIN ACTIONS
 
     def MAIN_help(self,mstate, player_id=None,words=[], message_id=None):
-        log("MServer __help",5)
         mstate.mainComm.ack(message_id)
         if len(words) > 1:
             if words[1] in MAIN_HELP_MSGS:
@@ -289,7 +285,6 @@ class MController:
         return True
 
     def MAIN_status(self,mstate,player_id=None,words=[], message_id=None):
-        log("MServer __status",5)
         mstate.mainComm.ack(message_id)
 
         mstate.mainComm.cast(str(mstate))
@@ -297,7 +292,6 @@ class MController:
 
     def MAIN_vote(self,mstate,player_ids,words=[], message_id=None):
         # where player_ids is a tuple of voter, votee
-        log("MServer __vote",5)
         mstate.mainComm.ack(message_id)
 
         voter = player_ids[0]
@@ -306,7 +300,6 @@ class MController:
         return mstate.vote(voter,votee)
 
     def MAIN_timer(self,mstate,player_id=None,words=[], message_id=None):
-        log("MServer __timer",5)
         mstate.mainComm.ack(message_id)
         result = False
         for player in mstate.players:
@@ -316,7 +309,6 @@ class MController:
 
     # MAFIA ACTIONS
     def MAFIA_help(self,mstate,player_id=None,words=[], message_id=None):
-        log("MServer __mafia_help",5)
         mstate.mafiaComm.ack(message_id)
         if len(words) > 1:
             if words[1] in MAFIA_HELP_MSGS:
@@ -333,17 +325,18 @@ class MController:
         return True
 
     def MAFIA_target(self,mstate,player_id=None,words=[], message_id=None):
-        log("MServer __mafia_target",5)
         mstate.mafiaComm.ack(message_id)
 
-        try:
-            return mstate.mafiaTarget(words[1][0])
-        except Exception as e:
-            log("Invalid Mafia Target {}".format(e))
-            return False
+        for player in mstate.players:
+            if player.id == player_id and player.role in MAFIA_ROLES:
+
+                try:
+                    return mstate.mafiaTarget(words[1][0])
+                except Exception as e:
+                    log("Invalid Mafia Target {}".format(e))
+        return False
 
     def MAFIA_options(self,mstate,player_id=None,words=[], message_id=None):
-        log("MServer __mafia_options",5)
         mstate.mafiaComm.ack(message_id)
 
         return mstate.mafia_options()
@@ -373,7 +366,6 @@ class MController:
         return m
 
     def DM_help(self,sender_id,words):
-        log("MController DM_help",5)
         if len(words) > 1:
             if words[1] in DM_HELP_MSGS:
                 self.lobbyComm.send(DM_HELP_MSGS[words[1]], sender_id)
@@ -389,7 +381,6 @@ class MController:
         return True
 
     def DM_status(self,sender_id,words):
-        log("MController DM_status",5)
         m = self.__DM_get_mstate(words,sender_id)
 
         if m == None:
@@ -400,7 +391,6 @@ class MController:
         return True
 
     def DM_target(self,sender_id,words):
-        log("MController DM_target",5)
         m = self.__DM_get_mstate(words,sender_id)
 
         if m == None:
@@ -418,7 +408,6 @@ class MController:
         return self.DM_options(words,sender_id)
 
     def DM_options(self,sender_id,words):
-        log("MController DM_options",5)
         m = self.__DM_get_mstate(words,sender_id)
 
         if m == None:
@@ -436,7 +425,6 @@ class MController:
         return True
 
     def DM_reveal(self,sender_id,words):
-        log("MController DM_reveal",5)
         m = self.__DM_get_mstate(words,sender_id)
 
         if m == None:
@@ -458,7 +446,6 @@ class MController:
         while True:
             time.sleep(1)
             if self.timer_on:
-                print("Counting " + str(self.time_left))
                 self.time_left -= 1
                 if self.time_left <= 0:
                     self.callback()

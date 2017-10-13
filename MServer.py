@@ -100,7 +100,6 @@ class MainHandler(BaseHandler):
         log("failed to load content")
 
   #  try:
-    print(post)
     mserver.do_POST(post)
 #    except Exception as e:
  #       log(e)
