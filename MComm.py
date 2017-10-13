@@ -176,7 +176,7 @@ class GroupComm(MComm):
         members = self.group.members()
         for m in members:
             if m.user_id == member_id:
-                self.savedNames[member_id] == m.nickname
+                self.savedNames[member_id] = m.nickname
                 return m.nickname
         log("Failed to get Name")
         return "__"

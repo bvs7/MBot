@@ -10214,3 +10214,52 @@ Mafia targets Zach Mooney
 Day 3 begins
 Zach Mooney (COP) is killed (2-2)
 MAFIA WINS
+Creating Game #209
+standard_roles: COP_DOC
+kick_on_death: OFF
+know_if_saved: ON
+known_roles: ON
+start_night: EVEN
+reveal_on_death: TEAM
+GG, here were the roles:
+Claire Coulter: TOWN
+Drumline’s Fault: COP
+Brian: DOCTOR
+Alex's Fault: MAFIA
+Night 1 begins
+Game Begins
+Drumline’s Fault (COP) targets Alex's Fault
+Mafia targets Drumline’s Fault
+Brian (DOCTOR) targets Brian
+Day 1 begins
+Drumline’s Fault (COP) is killed (2-1)
+Drumline’s Fault is revealed on team Town
+Alex's Fault votes for Claire Coulter
+Brian votes for Claire Coulter
+Claire Coulter (TOWN) is killed (1-1)
+MAFIA WINS
+Creating Game #210
+standard_roles: COP_DOC
+kick_on_death: OFF
+know_if_saved: ON
+known_roles: ON
+start_night: EVEN
+reveal_on_death: TEAM
+GG, here were the roles:
+Clurrrr: MAFIA
+Josh Mooney: COP
+Brian Scaramella: DOCTOR
+Kyra Butler: TOWN
+Night 1 begins
+Game Begins
+Mafia targets Brian Scaramella
+Brian Scaramella (DOCTOR) targets Brian Scaramella
+Josh Mooney (COP) targets Clurrrr
+Day 1 begins
+Brian Scaramella was saved
+Josh Mooney investigates Clurrrr (MAFIA)
+Josh Mooney votes for Clurrrr
+Brian Scaramella votes for Clurrrr
+Kyra Butler votes for Clurrrr
+Clurrrr (MAFIA) is killed (3-0)
+TOWN WINS
