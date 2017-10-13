@@ -743,7 +743,7 @@ class MState:
                     # Add Mafia
                     m = random.randint(0,mafia_sum)
                     for i in range(len(MAFIA_WEIGHTS[0])):
-                        if m < sum(len(MAFIA_WEIGHTS[1][0:(i+1)])):
+                        if m < sum(MAFIA_WEIGHTS[1][0:(i+1)]):
                             role = MAFIA_WEIGHTS[0][i]
                             break
                     if not role == "IDIOT":
