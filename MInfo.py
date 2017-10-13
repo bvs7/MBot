@@ -72,22 +72,22 @@ ROLE_EXPLAIN= {
 
 # ROLE GENERATION
 
-BASE_SCORE = -4
+BASE_SCORE = -7
 
 ROLE_SCORES = {
-    "MAFIA"    : -5,
-    "GODFATHER" : -5,
+    "MAFIA"    : -3,
+    "GODFATHER" : -3,
     "DOCTOR" :    4,
-    "COP"        :    4,
+    "COP"        :    3,
     "TOWN"     :    2,
-    "IDIOT"    : -2,
-    "CELEB"    :    3,
+    "IDIOT"    : -1,
+    "CELEB"    :    2,
 }
 
 # Probability of town roles being chosen
 TOWN_WEIGHTS = [
     ["TOWN", "DOCTOR", "COP", "CELEB"],
-    [ 100,    10,       10,    10]
+    [ 80,    10,       15,    10]
 ]
 
 # Probability of anti-town roles being chosen

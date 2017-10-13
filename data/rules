@@ -1,6 +1,6 @@
-know_if_saved|ON
-reveal_on_death|OFF
-standard_roles|COP_DOC
 known_roles|ON
+know_if_saved|ON
 kick_on_death|OFF
+reveal_on_death|TEAM
+standard_roles|COP_DOC
 start_night|EVEN
