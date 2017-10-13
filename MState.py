@@ -363,8 +363,14 @@ class MState:
 
         self.__record(self.roleString)
 
+        score = BASE_SCORE
+        for role in roles:
+            score += ROLE_SCORES[role]
+
         msg = ("Dawn. Of the game and of this new day. You have learned that scum "
                      "reside in this town... A scum you must purge. Kill Someone!")
+
+        msg += "\nGame Score: " + str(score)
 
         msg += "\nPlayers:"
         for p in self.players:
