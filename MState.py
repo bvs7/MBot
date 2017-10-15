@@ -720,11 +720,11 @@ class MState:
             mafia_sum = sum(MAFIA_WEIGHTS[1])
             role = "TOWN"
 
-            if self.pref.book["standard_roles"] == "COP_DOC":
-                roles = ["COP","DOCTOR"]
-                num_town = 2
-                n = 2
-                score += ROLE_SCORES["COP"] + ROLE_SCORES["DOCTOR"]
+            # if self.pref.book["standard_roles"] == "COP_DOC":
+            #     roles = ["COP","DOCTOR"]
+            #     num_town = 2
+            #     n = 2
+            #     score += ROLE_SCORES["COP"] + ROLE_SCORES["DOCTOR"]
 
             if num_players == 4:
                 return ["TOWN", "DOCTOR", "COP", "MAFIA"]
@@ -757,6 +757,10 @@ class MState:
                 if role == "COP":
                     score -= len([None for g in roles if g == "GODFATHER"])
                 n += 1
+
+            if self.pref.book["standard_roles"] == "COP_DOC":
+                if len(c for c in roles if c == "COP") < 1 or len(d for d in roles if d == "DOCTOR") < 1:
+                    continue # Try generating again. Until we have a game with COP and DOC...    
 
             # Done making roles, ensure this isn't a bad game
             if not ((num_mafia + num_idiot + 2 >= num_town) or (num_mafia == 0)):
