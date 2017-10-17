@@ -45,7 +45,7 @@ class Preferences:
         # Show a player's role on their death
         # reveal_on_death ON | TEAM | OFF
         #   ON: Show role on death
-        #   TEAM: Show MAFIA or TOWN on death
+        #   TEAM: Show MILKY or RED_BAND on death
         #   OFF: Don't show role on death
         self.book["reveal_on_death"] = reveal_on_death
         # Kick a player from the game when they die
@@ -93,7 +93,7 @@ class MState:
                  preferences=None, final=None, determined = False):
         log("MState init",3)
 
-        self.record = ""
+        self.record_log = ""
 
         # This mstate is determined and won't have any randomness
         self.determined = determined
@@ -115,7 +115,7 @@ class MState:
                 self.game_num = -1
                 log(e)
 
-        self.__record("Creating Game #"+str(self.game_num))
+        self.record("CREATE "+str(self.game_num))
 
         self.mainComm = mainComm
         self.mafiaComm = mafiaComm
@@ -123,7 +123,7 @@ class MState:
 
         # The GroupComm objects used to respond to stimuli
         self.mainComm.setTitle("MAIN CHAT #"+str(self.game_num))
-        self.mafiaComm.setTitle("MAFIA CHAT #"+str(self.game_num))
+        self.mafiaComm.setTitle("MILKY CHAT #"+str(self.game_num))
 
         # Preferences for the current game
         if preferences == None:
@@ -133,7 +133,7 @@ class MState:
             for rule in preferences.book:
                 self.pref.book[rule] = preferences.book[rule]
 
-        self.__record(str(self.pref))
+        self.record(str(self.pref))
 
         # fn run on completion
         self.final = final
@@ -191,8 +191,12 @@ class MState:
             log(e)
             return False
         voter.vote = votee
-        self.__record(self.mainComm.getName(voter_id) + " votes for " +
-                      self.mainComm.getName(votee_id))
+
+        if type(votee) == Player:
+            votee_role = votee.role
+        else:
+            votee_role = "_"
+        self.record(' '.join(["VOTE",voter.id,voter.role,votee_id,votee_role]))
         self.__checkVotes(votee)
         return True
 
@@ -216,7 +220,13 @@ class MState:
         self.mafia_target = target
         self.mafiaComm.cast("It is done")
 
-        self.__record("Mafia targets " + self.mainComm.getName(target.id))
+        if type(target) == Player:
+            target_id = target.id
+            target_role = target.role
+        else:
+            target_id = '_'
+            target_role = "_"
+        self.record(' '.join(["MTARGET",target_id,target_role]))
 
         # Check if Night is over
         self.__checkToDay()
@@ -261,9 +271,15 @@ class MState:
             return False
 
         self.mainComm.send("It is done",player.id)
-        self.__record("{} ({}) targets {}".format(self.mainComm.getName(player.id),
-                                                  player.role,
-                                                  self.mainComm.getName(target.id)))
+
+        if type(target) == Player:
+            target_id = target.id
+            target_role = target.role
+        else:
+            target_id = "_"
+            target_role = "_"
+
+        self.record(' '.join(["TARGET",player.id,player.role,target_id,target_role]))
         # Check if Night is over
         self.__checkToDay()
         return True
@@ -292,7 +308,6 @@ class MState:
             log("Could not reveal {}: {}".format(p,e))
             return False
         self.mainComm.cast(self.mainComm.getName(player.id) + " is " + player.role)
-        self.__record(self.mainComm.getName(player.id) + " is revealed as " + player.role)
         return True
 
     def revealTeam(self,p):
@@ -303,12 +318,11 @@ class MState:
         except Exception as e:
             log("Could not reveal team {}: {}".format(p,e))
             return False
-        if player.role in MAFIA_ROLES:
+        if player.role in MILKY_ROLES:
             team = "Mafia"
-        elif player.role in TOWN_ROLES:
+        elif player.role in RED_BAND_ROLES:
             team = "Town"
         self.mainComm.cast(self.mainComm.getName(player.id) + " is on team " + team)
-        self.__record(self.mainComm.getName(player.id) + " is revealed on team " + team)
         return True
 
     def startGame(self, nextPlayerIDs, preferences=None):
@@ -347,7 +361,7 @@ class MState:
             log("Adding player: {},{}".format(player.id,self.mainComm.getName(player.id)))
             self.savedRoles[player.id] = player.role
 
-            if player.role in MAFIA_ROLES:
+            if player.role in MILKY_ROLES:
                 self.num_mafia += 1
 
         random.shuffle(self.players)
@@ -355,13 +369,17 @@ class MState:
         for player in self.players:
             self.mainComm.add(player.id)
             self.mainComm.send("You are {}\n".format(player.role)+ ROLE_EXPLAIN[player.role],player.id)
-            if player.role in MAFIA_ROLES:
+            if player.role in MILKY_ROLES:
                 self.mafiaComm.add(player.id)
 
         # Get roleString for later
         self.roleString = self.__revealRoles()
 
-        self.__record(self.roleString)
+        # Record the roles by id
+        rec = "ROLES:"
+        for player in self.players:
+            rec += "\n" + player.id + " " + player.role
+        self.record(rec)
 
         score = BASE_SCORE
         for role in roles:
@@ -384,7 +402,7 @@ class MState:
 
         msg = "Heyo this is maf chat get it done chaos yeah\nYour friends are:"
         for p in self.players:
-            if p.role in MAFIA_ROLES:
+            if p.role in MILKY_ROLES:
                 msg += "\n" + self.mafiaComm.getName(p.id)
         self.mafiaComm.cast(msg)
 
@@ -392,7 +410,7 @@ class MState:
            (self.pref.book["start_night"] == "EVEN" and len(self.players)%2 == 0)):
             self.__toNight()
 
-        self.__record("Game Begins")
+        self.record("START")
 
         return True
 
@@ -428,7 +446,6 @@ class MState:
         """ Remove player p from the game. """
         log("MState __kill",4)
 
-        rec = self.mainComm.getName(p.id) + " (" + p.role + ")" + " is killed "
         # Check if the player is represented as an object or a string
         try:
             player = self.getPlayer(p)
@@ -436,17 +453,18 @@ class MState:
             log("Couldn't kill {}: {}".format(p,e))
             return False
 
+        rec = ' '.join(["KILL",p.id,p.role])
+        self.record(rec)
+
         # Remove player from game
         try:
-            if player.role in MAFIA_ROLES:
+            if player.role in MILKY_ROLES:
                 self.num_mafia = self.num_mafia - 1
             self.players.remove(player)
         except Exception as e:
             log("Failed to kill {}: {}".format(player,e))
             return False
 
-        self.__record(rec + "(" + str(len(self.players) - self.num_mafia) +
-                            "-" + str(self.num_mafia) + ")")
         # Check win conditions
         if not self.__checkWinCond():
             # Game continues, let the person know roles
@@ -477,7 +495,7 @@ class MState:
         if player == self.null:
             if num_voters >= num_players/2:
                 self.mainComm.cast("You have decided not to kill anyone")
-                self.__record("Nobody is killed")
+                self.record("DECIDE nokill")
                 self.__toNight()
                 return True
             else:
@@ -518,8 +536,6 @@ class MState:
         """ Change state to day, realizing the mafia's target and all other targets. """
         log("MState __toDay",4)
 
-        self.__record("Day " + str(self.day) + " begins")
-
         self.time = "Day"
         self.day = self.day + 1
         self.mainComm.cast("Uncertainty dawns, as does this day")
@@ -543,7 +559,7 @@ class MState:
                 else:
                     msg = ("A peculiar feeling drifts about... everyone is still alive...")
                 self.mainComm.cast(msg)
-                self.__record(self.mainComm.getName(self.mafia_target.id) +" was saved")
+                self.record("SAVED")
             # Doctor couldn't save the target
             else:
                 if self.day == 0:
@@ -565,13 +581,14 @@ class MState:
             if p.role == "COP" and (not p.target in [None, self.null]):
                 msg = "{} is {}".format(
                     self.mainComm.getName(p.target.id),
-                    "MAFIA" if (p.target.role in MAFIA_ROLES and
-                    not p.target.role == "GODFATHER") else "NOT MAFIA")
+                    "MILKY" if (p.target.role in MILKY_ROLES and
+                    not p.target.role == "GODFATHER") else "NOT MILKY")
                 self.mainComm.send(msg,p.id)
-                self.__record(self.mainComm.getName(p.id) +" investigates " +
+                self.record(self.mainComm.getName(p.id) +" investigates " +
                               self.mainComm.getName(p.target.id) + " (" +
                               p.target.role + ")")
 
+        self.record("DAY " + str(self.day))
         self.__clearTargets()
         self.timerOn = False
         return True
@@ -579,7 +596,7 @@ class MState:
     def __toNight(self):
         """ Change state to Night, send out relevant info. """
 
-        self.__record("Night " + str(self.day) + " begins")
+        self.record("NIGHT " + str(self.day))
 
         self.timerOn = False
 
@@ -612,14 +629,14 @@ class MState:
         log("MState __checkWinCond",4)
         # Check win conditions
         if self.num_mafia == 0:
-            self.mainComm.cast("TOWN WINS")
-            self.__record("TOWN WINS")
-            self.__endGame("TOWN")
+            self.mainComm.cast("RED_BAND WINS")
+            self.record("RED_BAND WINS")
+            self.__endGame("RED_BAND")
             return True
         elif self.num_mafia >= len(self.players)/2:
-            self.mainComm.cast("MAFIA WINS")
-            self.__record("MAFIA WINS")
-            self.__endGame("MAFIA")
+            self.mainComm.cast("MILKY WINS")
+            self.record("MILKY WINS")
+            self.__endGame("MILKY")
             return True
         return False
 
@@ -636,21 +653,25 @@ class MState:
         self.idiot_winners.clear()
 
         rfp = DET_RECORDS_FILE_PATH if self.determined else RECORDS_FILE_PATH
-        self.__recordGame(rfp,winners)
+        self.recordGame(rfp,winners)
 
-        self.final(self)
+        try:
+            self.final(self)
+        except:
+            pass
         return True
 
-    def __record(self, msg):
-        self.record += msg + "\n"
+    def record(self, msg):
+        self.record_log += msg + "\n"
 
-    def __recordGame(self,rec_path,winners):
+    def recordGame(self,rec_path,winners):
         f = open(rec_path, 'a')
-        f.write(self.record)
+        f.write(self.record_log)
         f.close()
 
 
     # TODO: Get this string at the start of the game
+
     def __revealRoles(self):
         """ Make a string of the original roles that the game started with. """
         log("MState __revealRoles",4)
@@ -680,9 +701,9 @@ class MState:
 
         teamDict = {"Mafia":0, "Town":0}
         for role in roles:
-            if role in MAFIA_ROLES:
+            if role in MILKY_ROLES:
                 teamDict["Mafia"] += 1
-            elif role in TOWN_ROLES:
+            elif role in RED_BAND_ROLES:
                 teamDict["Town"] += 1
             elif role == "IDIOT":
                 if not "Unaligned" in teamDict:
@@ -716,9 +737,9 @@ class MState:
             num_mafia = 0
             num_town = 0
             num_idiot = 0
-            town_sum = sum(TOWN_WEIGHTS[1])
-            mafia_sum = sum(MAFIA_WEIGHTS[1])
-            role = "TOWN"
+            town_sum = sum(RED_BAND_WEIGHTS[1])
+            mafia_sum = sum(MILKY_WEIGHTS[1])
+            role = "RED_BAND"
 
             # if self.pref.book["standard_roles"] == "COP_DOC":
             #     roles = ["COP","DOCTOR"]
@@ -727,24 +748,24 @@ class MState:
             #     score += ROLE_SCORES["COP"] + ROLE_SCORES["DOCTOR"]
 
             if num_players == 4:
-                return ["TOWN", "DOCTOR", "COP", "MAFIA"]
+                return ["RED_BAND", "DOCTOR", "COP", "MILKY"]
             elif num_players == 3:
-                return ["DOCTOR", "MAFIA", "COP"]
+                return ["DOCTOR", "MILKY", "COP"]
             while(n < num_players):
                 if score < 0:
                     # Add Town
                     t = random.randint(0,town_sum)
-                    for i in range(len(TOWN_WEIGHTS[0])):
-                        if t < sum(TOWN_WEIGHTS[1][0:(i+1)]):
-                            role = TOWN_WEIGHTS[0][i]
+                    for i in range(len(RED_BAND_WEIGHTS[0])):
+                        if t < sum(RED_BAND_WEIGHTS[1][0:(i+1)]):
+                            role = RED_BAND_WEIGHTS[0][i]
                             break
                     num_town += 1
                 else:
                     # Add Mafia
                     m = random.randint(0,mafia_sum)
-                    for i in range(len(MAFIA_WEIGHTS[0])):
-                        if m < sum(MAFIA_WEIGHTS[1][0:(i+1)]):
-                            role = MAFIA_WEIGHTS[0][i]
+                    for i in range(len(MILKY_WEIGHTS[0])):
+                        if m < sum(MILKY_WEIGHTS[1][0:(i+1)]):
+                            role = MILKY_WEIGHTS[0][i]
                             break
                     if not role == "IDIOT":
                         num_mafia += 1
@@ -760,7 +781,7 @@ class MState:
 
             if self.pref.book["standard_roles"] == "COP_DOC":
                 if len(c for c in roles if c == "COP") < 1 or len(d for d in roles if d == "DOCTOR") < 1:
-                    continue # Try generating again. Until we have a game with COP and DOC...    
+                    continue # Try generating again. Until we have a game with COP and DOC...
 
             # Done making roles, ensure this isn't a bad game
             if not ((num_mafia + num_idiot + 2 >= num_town) or (num_mafia == 0)):
