@@ -780,7 +780,7 @@ class MState:
                 n += 1
 
             if self.pref.book["standard_roles"] == "COP_DOC":
-                if len(c for c in roles if c == "COP") < 1 or len(d for d in roles if d == "DOCTOR") < 1:
+                if len([c for c in roles if c == "COP"]) < 1 or len([d for d in roles if d == "DOCTOR"]) < 1:
                     continue # Try generating again. Until we have a game with COP and DOC...
 
             # Done making roles, ensure this isn't a bad game
