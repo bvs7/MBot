@@ -1,4 +1,3 @@
 *.pyc
 outputs/*
-log.txt
 .groupy.key
