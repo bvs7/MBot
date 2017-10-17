@@ -5,7 +5,7 @@
 import pickle    # For loading vars
 import os
 
-DEBUG = 4
+DEBUG = 0
 SILENT = False
 
 info_fname = "info"
@@ -31,7 +31,7 @@ def log(msg, debug=2):
 ### DATA FOR MSTATE #############
 
 MSTATE_ID_PATH = "data/id"
-RECORDS_FILE_PATH = "data/new_records"
+RECORDS_FILE_PATH = "data/records"
 RULES_FILE_PATH = "data/rules"
 DET_RECORDS_FILE_PATH = "data/det_records"
 

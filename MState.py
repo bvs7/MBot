@@ -22,7 +22,7 @@ class Player:
         self.target = target
 
     def __str__(self):
-        return "[{}, {}]".format(self.id,self.role)
+        return "{} {}".format(self.id,self.role)
 
 class Preferences:
     """
@@ -364,7 +364,8 @@ class MState:
             if player.role in MILKY_ROLES:
                 self.num_mafia += 1
 
-        random.shuffle(self.players)
+        if not self.determined:
+            random.shuffle(self.players)
 
         for player in self.players:
             self.mainComm.add(player.id)
@@ -388,7 +389,14 @@ class MState:
         msg = ("Dawn. Of the game and of this new day. You have learned that scum "
                      "reside in this town... A scum you must purge. Kill Someone!")
 
-        msg += "\nDifficulty Score: " + str(score)
+        if score > 0:
+            ds = "GOOD FOR RED_BAND"
+        elif score < 0:
+            ds = "GOOD FOR MILKY"
+        else:
+            ds = "EQUAL"
+
+        msg += "\nDifficulty Score: " + ds
 
         msg += "\nPlayers:"
         for p in self.players:
@@ -584,9 +592,7 @@ class MState:
                     "MILKY" if (p.target.role in MILKY_ROLES and
                     not p.target.role == "GODFATHER") else "NOT MILKY")
                 self.mainComm.send(msg,p.id)
-                self.record(self.mainComm.getName(p.id) +" investigates " +
-                              self.mainComm.getName(p.target.id) + " (" +
-                              p.target.role + ")")
+                self.record(' '.join(["INVESTIGATE",p.id,p.role,str(p.target)]))
 
         self.record("DAY " + str(self.day))
         self.__clearTargets()
