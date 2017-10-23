@@ -756,6 +756,12 @@ class MState:
 
         assert(num_players >= 3)
 
+
+        if num_players == 3:
+            return ["COP","DOCTOR","MAFIA"]
+        elif num_players == 4:
+            return ["COP","DOCTOR","STRIPPER","CELEB"]
+
         while(True):
 
             n = 0
