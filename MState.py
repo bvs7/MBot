@@ -587,10 +587,12 @@ class MState:
         # If cop is still alive and has chosen a target
         for p in self.players:
             if p.role == "COP" and (not p.target in [None, self.null]):
-                msg = "{} is {}".format(
-                    self.mainComm.getName(p.target.id),
-                    "MAFIA" if (p.target.role in MAFIA_ROLES and
-                    not p.target.role == "GODFATHER") else "NOT MAFIA")
+                name = self.mainComm.getName(p.target.id)
+                if (p.target.role in MAFIA_ROLES and p.target.role == "GODFATHER") or p.target.role == "MILLER":
+                    team = "MAFIA"
+                else:
+                    team = "NOT MAFIA"
+                msg = "{} is {}".format(name, team)
                 self.mainComm.send(msg,p.id)
                 self.record(' '.join(["INVESTIGATE",p.id,p.role,str(p.target)]))
 

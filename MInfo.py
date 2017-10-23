@@ -36,7 +36,7 @@ RULES_FILE_PATH = "data/rules"
 DET_RECORDS_FILE_PATH = "data/det_records"
 
 MAFIA_ROLES = [ "MAFIA" , "GODFATHER"]
-TOWN_ROLES    = [ "TOWN", "COP", "DOCTOR", "CELEB" ]
+TOWN_ROLES    = [ "TOWN", "COP", "DOCTOR", "CELEB", "MILLER"]
 
 ROLE_EXPLAIN= {
     "MAFIA" : ("The MAFIA is part of the mafia chat to talk "
@@ -67,7 +67,9 @@ ROLE_EXPLAIN= {
                "doesn't recognize them right now. CELEB can reveal themselves during Day "
                "by sending MODERATOR '/reveal' and then everyone will know they"
                " are Town. But they ought to be careful! "
-               "They'll be quite the target once revealed!")
+               "They'll be quite the target once revealed!"),
+    "MILLER" : ("The MILLER is pretty sus but they are actually on the side of Town... "
+                "If the cop investigates them, they show up as MAFIA...")
     }
 
 # ROLE GENERATION
@@ -75,19 +77,20 @@ ROLE_EXPLAIN= {
 BASE_SCORE = -7
 
 ROLE_SCORES = {
-    "MAFIA"    : -3,
+    "MAFIA"     : -3,
     "GODFATHER" : -3,
-    "DOCTOR" :    4,
-    "COP"        :    3,
-    "TOWN"     :    2,
-    "IDIOT"    : -1,
-    "CELEB"    :    2,
+    "DOCTOR"    :  4,
+    "COP"       :  3,
+    "TOWN"      :  2,
+    "IDIOT"     : -1,
+    "CELEB"     :  2,
+    "MILLER"    :  0,
 }
 
 # Probability of town roles being chosen
 TOWN_WEIGHTS = [
-    ["TOWN", "DOCTOR", "COP", "CELEB"],
-    [ 80,    10,       15,    10]
+    ["TOWN", "DOCTOR", "COP", "CELEB", "MILLER"],
+    [ 80,     10,       15,    10,      5]
 ]
 
 # Probability of anti-town roles being chosen
@@ -97,8 +100,8 @@ MAFIA_WEIGHTS = [
 ]
 
 ROLE_WEIGHTS =[
-    ["TOWN", "DOCTOR", "COP", "CELEB"],
-    [ 100,    10,       10,    10],
+    ["TOWN", "DOCTOR", "COP", "CELEB", "MILLER"],
+    [ 100,    10,       10,    10,      5],
     ["MAFIA", "IDIOT", "GODFATHER"],
     [ 90,      5,       5],
 ]
