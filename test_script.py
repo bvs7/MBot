@@ -5,6 +5,8 @@ from MController import MController
 from MComm import MComm
 from ManualServer import TestServer
 
+import time
+
 DEBUG = 1
 
 LIST_OF_TESTS = ["investigate"]
@@ -26,6 +28,7 @@ for test in LIST_OF_TESTS:
             print(line)
         if line == "":
             break
+        time.sleep(0.001)
         t.run_msg(line)
 
     rec_f = open(DET_RECORDS_FILE_PATH, 'r')
