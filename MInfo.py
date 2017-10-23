@@ -35,8 +35,12 @@ RECORDS_FILE_PATH = "data/records"
 RULES_FILE_PATH = "data/rules"
 DET_RECORDS_FILE_PATH = "data/det_records"
 
-MAFIA_ROLES = [ "MAFIA" , "GODFATHER"]
+MAFIA_ROLES = [ "MAFIA" , "GODFATHER", "STRIPPER"]
 TOWN_ROLES    = [ "TOWN", "COP", "DOCTOR", "CELEB", "MILLER"]
+ROGUE_ROLES = ["IDIOT"]
+
+# Roles that target at night
+TARGET_ROLES = ["DOCTOR","COP","STRIPPER"]
 
 ROLE_EXPLAIN= {
     "MAFIA" : ("The MAFIA is part of the mafia chat to talk "
@@ -69,7 +73,12 @@ ROLE_EXPLAIN= {
                " are Town. But they ought to be careful! "
                "They'll be quite the target once revealed!"),
     "MILLER" : ("The MILLER is pretty sus but they are actually on the side of Town... "
-                "If the cop investigates them, they show up as MAFIA...")
+                "If the cop investigates them, they show up as MAFIA..."),
+    "STRIPPER" : ("The STRIPPER is a member of the Mafia with a special ability. "
+                  "During the night, they can distract one person. This person can't"
+                  " do their job that night (and possibly the following day). "
+                  "A distracted COP learns nothing, a distracted DOCTOR can't save,"
+                  " and a distracted CELEB can't reveal for a full day!")
     }
 
 # ROLE GENERATION
@@ -85,7 +94,13 @@ ROLE_SCORES = {
     "IDIOT"     : -1,
     "CELEB"     :  2,
     "MILLER"    :  0,
+    "STRIPPER"  : -5,
 }
+
+ALL_WEIGHTS = (
+    ("COP", "DOCTOR", "CELEB", "MILLER", "TOWN", "MAFIA", "GODFATHER", "STRIPPER"),
+    ( 10,    10,       10,      10,       80,     30,      5,           5)
+)
 
 # Probability of town roles being chosen
 TOWN_WEIGHTS = [
@@ -338,7 +353,8 @@ RULES_HELP_MSG_STANDARD_ROLES = (
 ODDS_HELP_MSG = (
     "TOWN: 1/2\n"
     "MAFIA: 3/16\n"
-    "COP|DOC|CELEB|MILLER|GODFATHER: 1/16"
+    "COP|DOC|CELEB|MILLER: 1/16\n"
+    "GODFATHER|STRIPPER: 1/32"
 )
 
 ALL_HELP_MSGS = {

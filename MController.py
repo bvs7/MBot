@@ -398,7 +398,7 @@ class MController:
             return True
 
         player = m.getPlayer(sender_id)
-        if not player.role in ["COP","DOCTOR"]:
+        if not player.role in TARGET_ROLES:
             return True
 
         if len(words) >= 2 and words[1].isalpha():
@@ -415,13 +415,15 @@ class MController:
             return True
 
         player = m.getPlayer(sender_id)
-        if not player.role in ["COP","DOCTOR"]:
+        if not player.role in TARGET_ROLES:
             return True
         prompt = ""
         if player.role == "DOCTOR":
-            prompt = "Use /target number (i.e. /target 0) to pick someone to save"
+            prompt = "Use /target letter (i.e. /target D) to pick someone to save"
         elif player.role == "COP":
-            prompt = "Use /target number (i.e. /target 2) to pick someone to investigate"
+            prompt = "Use /target letter (i.e. /target A) to pick someone to investigate"
+        elif player.role == "STRIPPER":
+            prompt = "Use /target letter (i.e. /target C) to pick someone to distract"
         m.send_options(prompt,sender_id)
         return True
 
@@ -432,11 +434,8 @@ class MController:
             return True
 
         player = m.getPlayer(sender_id)
-        if not player.role == "CELEB":
-            m.record("REVEAL " + sender_id)
-            return True
-        m.reveal(sender_id)
-        return True
+        return m.try_reveal(sender_id)
+
 
     def start_timer(self, minutes, callback):
         self.time_left = minutes * 60

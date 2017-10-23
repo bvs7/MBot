@@ -173,7 +173,7 @@ class GroupComm(MComm):
         return True
 
     def getName(self,member_id):
-        if member_id in self.savedNames and random.random() < NAME_REPLACE_RATIO:
+        if member_id in self.savedNames and random.random() > NAME_REPLACE_RATIO:
             return self.savedNames[member_id]
         self.group.refresh()
         members = self.group.members()

@@ -153,6 +153,7 @@ class MState:
         self.savedRoles = {}
 
         self.mafia_target = None    # A player object that the mafia has targeted
+        self.blocked_ids = []       # A list of ids of blocked players
 
         self.idiot_winners = []    # A list of players who won by being an idiot that was voted out
 
@@ -299,6 +300,21 @@ class MState:
         msg += "\n"+c+" No target"
         return self.mainComm.send(msg,player.id)
 
+    def try_reveal(self, p):
+        try:
+            player = self.getPlayer(p)
+        except Exception as e:
+            log("Could not try reveal {}: {}".format(p,e))
+            return False
+        if player.role == "CELEB":
+            if player.id in self.blocked_ids:
+                self.mainComm.send("You were distracted",player.id)
+            else:
+                self.record("REVEAL " + player.id)
+                return self.reveal(player.id)
+
+        return True
+
     def reveal(self,p):
         """ Reveal a player's role to the Main Chat """
         log("MState reveal",3)
@@ -351,7 +367,7 @@ class MState:
             random.shuffle(nextPlayerIDs)
 
         if not self.determined:
-            roles = self.__genRoles(num_players)
+            roles = self.genRolesRandom(num_players)
         else:
             roles = DETERMINED_ROLES[num_players]
 
@@ -382,21 +398,8 @@ class MState:
             rec += "\n" + player.id + " " + player.role
         self.record(rec)
 
-        score = BASE_SCORE
-        for role in roles:
-            score += ROLE_SCORES[role]
-
         msg = ("Dawn. Of the game and of this new day. You have learned that scum "
                      "reside in this town... A scum you must purge. Kill Someone!")
-
-        if score > 0:
-            ds = "GOOD FOR TOWN"
-        elif score < 0:
-            ds = "GOOD FOR MAFIA"
-        else:
-            ds = "EQUAL"
-
-        msg += "\nDifficulty Score: " + ds
 
         msg += "\nPlayers:"
         for p in self.players:
@@ -531,7 +534,7 @@ class MState:
         log("MState __checkToDay",4)
         cop_doc_done = True
         for p in self.players:
-            if p.role in ["COP","DOCTOR"] and p.target == None:
+            if p.role in TARGET_ROLES and p.target == None:
                 cop_doc_done = False
 
         if (self.mafia_target == None or not cop_doc_done):
@@ -547,18 +550,27 @@ class MState:
         self.time = "Day"
         self.day = self.day + 1
         self.mainComm.cast("Uncertainty dawns, as does this day")
+
+        # First, check stripper blocks
+        self.blocked_ids = []
+        for stripper in [p for p in self.players if p.role == "STRIPPER"]:
+            if not stripper.target.id in self.blocked_ids:
+                self.blocked_ids.append(stripper.target.id)
+
         # If mafia has a target
         if not self.mafia_target in [None, self.null]:
             # Doctor is alive and saved the target
             target_saved = False
             for p in self.players:
-                if (p.role == "DOCTOR" and not p.target == None and
-                        p.target.id == self.mafia_target.id):
-                    target_saved = True
-                    if "DOC" in self.pref.book["know_if_saved"]:
-                        self.mainComm.send("Your save was successful!",p.id)
-                    if "SELF" in self.pref.book["know_if_saved"]:
-                        self.mainComm.send("You were saved!", p.target.id)
+                if (p.role == "DOCTOR") and (not p.target == None) and (p.target.id == self.mafia_target.id):
+                    if p.id in self.blocked_ids:
+                        self.mainComm.send("You were distracted",p.id)
+                    else:
+                        target_saved = True
+                        if "DOC" in self.pref.book["know_if_saved"]:
+                            self.mainComm.send("Your save was successful!",p.id)
+                        if "SELF" in self.pref.book["know_if_saved"]:
+                            self.mainComm.send("You were saved!", p.target.id)
             if target_saved:
                 if self.pref.book["know_if_saved"] == "ON":
                     msg = ("Tragedy has struck! {} is ... wait! They've been saved by "
@@ -587,14 +599,17 @@ class MState:
         # If cop is still alive and has chosen a target
         for p in self.players:
             if p.role == "COP" and (not p.target in [None, self.null]):
-                name = self.mainComm.getName(p.target.id)
-                if (p.target.role in MAFIA_ROLES and p.target.role == "GODFATHER") or p.target.role == "MILLER":
-                    team = "MAFIA"
+                if p.id in self.blocked_ids:
+                    self.mainComm.send("You were distracted", p.id)
                 else:
-                    team = "NOT MAFIA"
-                msg = "{} is {}".format(name, team)
-                self.mainComm.send(msg,p.id)
-                self.record(' '.join(["INVESTIGATE",p.id,p.role,str(p.target)]))
+                    name = self.mainComm.getName(p.target.id)
+                    if (p.target.role in MAFIA_ROLES and p.target.role == "GODFATHER") or p.target.role == "MILLER":
+                        team = "MAFIA"
+                    else:
+                        team = "NOT MAFIA"
+                    msg = "{} is {}".format(name, team)
+                    self.mainComm.send(msg,p.id)
+                    self.record(' '.join(["INVESTIGATE",p.id,p.role,str(p.target)]))
 
         self.record("DAY " + str(self.day))
         self.__clearTargets()
@@ -735,6 +750,45 @@ class MState:
             if weights[0][i] == role:
                 break
         return result
+
+    def genRolesRandom(num_players):
+        """ Create a list of roles of length num_players. Totally randomized but follows a few rules """
+
+        assert(num_players >= 3)
+
+        while(True):
+
+            n = 0
+            roles = []
+            num_maf = 0
+            num_town = 0
+            num_rogue = 0
+
+            odds_sum = sum(ALL_WEIGHTS[1])
+            while(n < num_players):
+                acc = 0
+                r = random.randint(1,odds_sum)
+                for i in range(len(ALL_WEIGHTS[0])):
+                    acc += ALL_WEIGHTS[1][i]
+                    if r <= acc:
+                        role = ALL_WEIGHTS[0][i]
+                        roles.append(role)
+                        n += 1
+                        if role in TOWN_ROLES:
+                            num_town += 1
+                        elif role in MAFIA_ROLES:
+                            num_maf += 1
+                        elif role in ROGUE_ROLES:
+                            num_rogue += 1
+                        break
+
+            if not (num_town > num_maf+2):
+                continue
+            if not (num_maf > 0):
+                continue
+
+            break
+        return roles
 
     def __genRoles(self, num_players):
         """ Create a list of roles of length num_players. Uses random but semi-fair assignment """
