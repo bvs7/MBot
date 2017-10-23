@@ -5,8 +5,10 @@
 
 # An new GroupComm object is created for each group used to communicate with
 
-
+import random
 from MInfo import *
+
+NAME_REPLACE_RATIO = 0.2
 
 try:
     import groupy
@@ -171,7 +173,7 @@ class GroupComm(MComm):
         return True
 
     def getName(self,member_id):
-        if member_id in self.savedNames:
+        if member_id in self.savedNames and random.random() < NAME_REPLACE_RATIO:
             return self.savedNames[member_id]
         self.group.refresh()
         members = self.group.members()

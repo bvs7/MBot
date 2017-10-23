@@ -45,7 +45,7 @@ class Preferences:
         # Show a player's role on their death
         # reveal_on_death ON | TEAM | OFF
         #   ON: Show role on death
-        #   TEAM: Show MILKY or RED_BAND on death
+        #   TEAM: Show MAFIA or TOWN on death
         #   OFF: Don't show role on death
         self.book["reveal_on_death"] = reveal_on_death
         # Kick a player from the game when they die
@@ -123,7 +123,7 @@ class MState:
 
         # The GroupComm objects used to respond to stimuli
         self.mainComm.setTitle("MAIN CHAT #"+str(self.game_num))
-        self.mafiaComm.setTitle("MILKY CHAT #"+str(self.game_num))
+        self.mafiaComm.setTitle("MAFIA CHAT #"+str(self.game_num))
 
         # Preferences for the current game
         if preferences == None:
@@ -318,9 +318,9 @@ class MState:
         except Exception as e:
             log("Could not reveal team {}: {}".format(p,e))
             return False
-        if player.role in MILKY_ROLES:
+        if player.role in MAFIA_ROLES:
             team = "Mafia"
-        elif player.role in RED_BAND_ROLES:
+        elif player.role in TOWN_ROLES:
             team = "Town"
         self.mainComm.cast(self.mainComm.getName(player.id) + " is on team " + team)
         return True
@@ -361,7 +361,7 @@ class MState:
             log("Adding player: {},{}".format(player.id,self.mainComm.getName(player.id)))
             self.savedRoles[player.id] = player.role
 
-            if player.role in MILKY_ROLES:
+            if player.role in MAFIA_ROLES:
                 self.num_mafia += 1
 
         if not self.determined:
@@ -370,7 +370,7 @@ class MState:
         for player in self.players:
             self.mainComm.add(player.id)
             self.mainComm.send("You are {}\n".format(player.role)+ ROLE_EXPLAIN[player.role],player.id)
-            if player.role in MILKY_ROLES:
+            if player.role in MAFIA_ROLES:
                 self.mafiaComm.add(player.id)
 
         # Get roleString for later
@@ -390,9 +390,9 @@ class MState:
                      "reside in this town... A scum you must purge. Kill Someone!")
 
         if score > 0:
-            ds = "GOOD FOR RED_BAND"
+            ds = "GOOD FOR TOWN"
         elif score < 0:
-            ds = "GOOD FOR MILKY"
+            ds = "GOOD FOR MAFIA"
         else:
             ds = "EQUAL"
 
@@ -410,7 +410,7 @@ class MState:
 
         msg = "Heyo this is maf chat get it done chaos yeah\nYour friends are:"
         for p in self.players:
-            if p.role in MILKY_ROLES:
+            if p.role in MAFIA_ROLES:
                 msg += "\n" + self.mafiaComm.getName(p.id)
         self.mafiaComm.cast(msg)
 
@@ -466,7 +466,7 @@ class MState:
 
         # Remove player from game
         try:
-            if player.role in MILKY_ROLES:
+            if player.role in MAFIA_ROLES:
                 self.num_mafia = self.num_mafia - 1
             self.players.remove(player)
         except Exception as e:
@@ -589,8 +589,8 @@ class MState:
             if p.role == "COP" and (not p.target in [None, self.null]):
                 msg = "{} is {}".format(
                     self.mainComm.getName(p.target.id),
-                    "MILKY" if (p.target.role in MILKY_ROLES and
-                    not p.target.role == "GODFATHER") else "NOT MILKY")
+                    "MAFIA" if (p.target.role in MAFIA_ROLES and
+                    not p.target.role == "GODFATHER") else "NOT MAFIA")
                 self.mainComm.send(msg,p.id)
                 self.record(' '.join(["INVESTIGATE",p.id,p.role,str(p.target)]))
 
@@ -635,16 +635,16 @@ class MState:
         log("MState __checkWinCond",4)
         # Check win conditions
         if self.num_mafia == 0:
-            self.mainComm.cast("RED_BAND WINS")
-            self.lobbyComm.cast("RED_BAND_WINS")
-            self.record("RED_BAND WINS")
-            self.__endGame("RED_BAND")
+            self.mainComm.cast("TOWN WINS")
+            self.lobbyComm.cast("TOWN_WINS")
+            self.record("TOWN WINS")
+            self.__endGame("TOWN")
             return True
         elif self.num_mafia >= len(self.players)/2:
-            self.mainComm.cast("MILKY WINS")
-            self.lobbyComm.cast("MILKY WINS")
-            self.record("MILKY WINS")
-            self.__endGame("MILKY")
+            self.mainComm.cast("MAFIA WINS")
+            self.lobbyComm.cast("MAFIA WINS")
+            self.record("MAFIA WINS")
+            self.__endGame("MAFIA")
             return True
         return False
 
@@ -709,9 +709,9 @@ class MState:
 
         teamDict = {"Mafia":0, "Town":0}
         for role in roles:
-            if role in MILKY_ROLES:
+            if role in MAFIA_ROLES:
                 teamDict["Mafia"] += 1
-            elif role in RED_BAND_ROLES:
+            elif role in TOWN_ROLES:
                 teamDict["Town"] += 1
             elif role == "IDIOT":
                 if not "Unaligned" in teamDict:
@@ -745,9 +745,9 @@ class MState:
             num_mafia = 0
             num_town = 0
             num_idiot = 0
-            town_sum = sum(RED_BAND_WEIGHTS[1])
-            mafia_sum = sum(MILKY_WEIGHTS[1])
-            role = "RED_BAND"
+            town_sum = sum(TOWN_WEIGHTS[1])
+            mafia_sum = sum(MAFIA_WEIGHTS[1])
+            role = "TOWN"
 
             # if self.pref.book["standard_roles"] == "COP_DOC":
             #     roles = ["COP","DOCTOR"]
@@ -756,24 +756,24 @@ class MState:
             #     score += ROLE_SCORES["COP"] + ROLE_SCORES["DOCTOR"]
 
             if num_players == 4:
-                return ["RED_BAND", "DOCTOR", "COP", "MILKY"]
+                return ["TOWN", "DOCTOR", "COP", "MAFIA"]
             elif num_players == 3:
-                return ["DOCTOR", "MILKY", "COP"]
+                return ["DOCTOR", "MAFIA", "COP"]
             while(n < num_players):
                 if score < 0:
                     # Add Town
                     t = random.randint(0,town_sum)
-                    for i in range(len(RED_BAND_WEIGHTS[0])):
-                        if t < sum(RED_BAND_WEIGHTS[1][0:(i+1)]):
-                            role = RED_BAND_WEIGHTS[0][i]
+                    for i in range(len(TOWN_WEIGHTS[0])):
+                        if t < sum(TOWN_WEIGHTS[1][0:(i+1)]):
+                            role = TOWN_WEIGHTS[0][i]
                             break
                     num_town += 1
                 else:
                     # Add Mafia
                     m = random.randint(0,mafia_sum)
-                    for i in range(len(MILKY_WEIGHTS[0])):
-                        if m < sum(MILKY_WEIGHTS[1][0:(i+1)]):
-                            role = MILKY_WEIGHTS[0][i]
+                    for i in range(len(MAFIA_WEIGHTS[0])):
+                        if m < sum(MAFIA_WEIGHTS[1][0:(i+1)]):
+                            role = MAFIA_WEIGHTS[0][i]
                             break
                     if not role == "IDIOT":
                         num_mafia += 1
