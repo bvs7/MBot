@@ -3,4 +3,4 @@ standard_roles|OFF
 kick_on_death|OFF
 reveal_on_death|ON
 know_if_saved|ON
-known_roles|TEAM
+known_roles|ON
