@@ -196,7 +196,7 @@ class MState:
             votee_role = votee.role
         else:
             votee_role = "_"
-        self.record(' '.join(["VOTE",voter.id,voter.role,votee_id,votee_role]))
+        self.record(' '.join(["VOTE",voter.id,voter.role,str(votee_id),votee_role]))
         self.__checkVotes(votee)
         return True
 
@@ -630,11 +630,13 @@ class MState:
         # Check win conditions
         if self.num_mafia == 0:
             self.mainComm.cast("RED_BAND WINS")
+            self.lobbyComm.cast("RED_BAND_WINS")
             self.record("RED_BAND WINS")
             self.__endGame("RED_BAND")
             return True
         elif self.num_mafia >= len(self.players)/2:
             self.mainComm.cast("MILKY WINS")
+            self.lobbyComm.cast("MILKY WINS")
             self.record("MILKY WINS")
             self.__endGame("MILKY")
             return True
