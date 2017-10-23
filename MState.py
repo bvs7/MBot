@@ -367,7 +367,7 @@ class MState:
             random.shuffle(nextPlayerIDs)
 
         if not self.determined:
-            roles = self.genRolesRandom(num_players)
+            roles = MState.genRolesRandom(num_players)
         else:
             roles = DETERMINED_ROLES[num_players]
 
