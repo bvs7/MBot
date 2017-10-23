@@ -1,0 +1,10 @@
+1 : start 1 2 3 4
+DM 3 : target A
+DM 2 : target B
+1 1m : target B
+1 1 : vote 2
+3 1 : vote 2
+4 1 : vote 2
+1 1m : target B
+DM 3 : target B
+DM 2 : target A

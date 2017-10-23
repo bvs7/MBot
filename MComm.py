@@ -42,26 +42,27 @@ class MComm:
 
         self.title = str(group_id)
 
+        self.acks = []
+
     def cast(self, msg):
         """ Send msg to this group """
 
-        print("CAST "+self.title+": "+msg)
+        log("CAST "+self.title+": "+msg)
         return True
 
     def ack(self, message_id):
         """ Acknowledge the message given by message_id """
-        print("ACK  "+self.title+": "+message_id)
+        log("ACK  "+self.title+": "+str(message_id))
         return True
 
     def getAcks(self, message_id):
         """ Get the number of acknowledgements for a message """
-        print("getACK not impl")
-        return False
+        return self.acks
 
     def send(self, msg, player_id):
         """ Send a DM to the player with player_id """
 
-        print("SEND "+self.title+", "+player_id+": "+msg)
+        log("SEND "+self.title+", "+player_id+": "+msg)
         return True
 
     def setTitle(self, new_title):
@@ -72,7 +73,7 @@ class MComm:
         self.title = new_title
         msg += self.title
 
-        print(msg)
+        log(msg)
         return True
 
     def getName(self,member_id):
@@ -81,17 +82,17 @@ class MComm:
 
     def add(self, player_id):
         """ Add player with player_id to this group """
-        print("ADD  {}: {}".format(self.title,player_id))
+        log("ADD  {}: {}".format(self.title,player_id))
         return True
 
     def remove(self, player_id):
         """ Remove player with player_id from this group """
-        print("RM   {}: {}".format(self.title,player_id))
+        log("RM   {}: {}".format(self.title,player_id))
         return True
 
     def clear(self, saveList=[]):
         """ Remove all but those in saveList from group """
-        print("CLEAR {}".format(self.title))
+        log("CLEAR {}".format(self.title))
         return True
 
     def __str__(self):

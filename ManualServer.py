@@ -1,6 +1,15 @@
 # Test Server
 
 from MInfo import *
+from MController import MController
+from MComm import MComm
+
+class PlayerIDWrapper:
+    def __init__(self, id_):
+        self.user_id = id_
+
+    def __str__(self):
+        return "(" + str(self.user_id) + ")"
 
 class TestServer:
 
@@ -29,7 +38,7 @@ class TestServer:
 
             self.run_msg(msg,msg_id)
 
-    def run_msg(self, msg, msg_id):
+    def run_msg(self, msg, msg_id=0):
 
         raw_words = msg.split()
 
@@ -63,6 +72,13 @@ class TestServer:
         if len(words) < 1:
             return
 
+        if words[0] == START_KW:
+            for user_id in words[1:]:
+                self.ctrl.lobbyComm.acks.append(PlayerIDWrapper(user_id))
+            self.ctrl.minplayers = 3
+            self.ctrl.start_game()
+            return
+
         if words[0] == VOTE_KW:
             if len(words) >= 2:
                 sender_id = (sender_id, words[1])
@@ -84,3 +100,15 @@ class TestServer:
             self.ctrl.MAFIA_OPS[words[0]](mstate,sender_id,words,msg_id)
         elif words[0] in self.ctrl.MAIN_OPS and not mstate == None:
             self.ctrl.MAIN_OPS[words[0]](mstate,sender_id,words,msg_id)
+
+
+if __name__ == "__main__":
+
+    lobby = MComm("lobby")
+
+    ctrl = MController(lobby,['1','2'],determined=True)
+
+    t = TestServer(ctrl)
+
+    f = open(DET_RECORDS_FILE_PATH, 'w')
+    f.close()
