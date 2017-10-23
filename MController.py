@@ -52,6 +52,7 @@ class MController:
                          OUT_KW    : self.LOBBY_out   ,
                          WATCH_KW  : self.LOBBY_watch ,
                          RULE_KW   : self.LOBBY_rule  ,
+                         RULES_KW  : self.LOBBY_rule  ,
                          }
         # Main OPS
         self.MAIN_OPS ={ VOTE_KW   : self.MAIN_vote  ,
@@ -311,8 +312,8 @@ class MController:
     def MAFIA_help(self,mstate,player_id=None,words=[], message_id=None):
         mstate.mafiaComm.ack(message_id)
         if len(words) > 1:
-            if words[1] in MILKY_HELP_MSGS:
-                mstate.mafiaComm.cast(MILKY_HELP_MSGS[words[1]])
+            if words[1] in MAFIA_HELP_MSGS:
+                mstate.mafiaComm.cast(MAFIA_HELP_MSGS[words[1]])
                 return True
             elif words[1] in ALL_HELP_MSGS:
                 mstate.mafiaComm.cast(ALL_HELP_MSGS[words[1]])
@@ -321,14 +322,14 @@ class MController:
                 mstate.mafiaComm.cast("No help for '"+words[1]+"'")
                 return True
         else:
-            mstate.mafiaComm.cast(MILKY_HELP_MSGS[""])
+            mstate.mafiaComm.cast(MAFIA_HELP_MSGS[""])
         return True
 
     def MAFIA_target(self,mstate,player_id=None,words=[], message_id=None):
         mstate.mafiaComm.ack(message_id)
 
         for player in mstate.players:
-            if player.id == player_id and player.role in MILKY_ROLES:
+            if player.id == player_id and player.role in MAFIA_ROLES:
 
                 try:
                     return mstate.mafiaTarget(words[1][0])

@@ -35,25 +35,25 @@ RECORDS_FILE_PATH = "data/records"
 RULES_FILE_PATH = "data/rules"
 DET_RECORDS_FILE_PATH = "data/det_records"
 
-MILKY_ROLES = [ "MILKY" , "GODFATHER"]
-RED_BAND_ROLES    = [ "RED_BAND", "COP", "DOCTOR", "CELEB" ]
+MAFIA_ROLES = [ "MAFIA" , "GODFATHER"]
+TOWN_ROLES    = [ "TOWN", "COP", "DOCTOR", "CELEB", "MILLER"]
 
 ROLE_EXPLAIN= {
-    "MILKY" : ("The MILKY is part of the mafia chat to talk "
+    "MAFIA" : ("The MAFIA is part of the mafia chat to talk "
                "privately with their co-conspirators. During the day, they try not "
                "to get killed. During the Night, they choose somebody to kill!"),
     "GODFATHER" : ( "The GODFATHER is a leader of the mafia, up "
                "to no good! They use the mafia chat to conspire. If a cop "
-               "investigates them, they'll see the GODFATHER as NOT MILKY!"),
-    "RED_BAND"  : ("The RED_BAND is a normal player in this game, the last "
+               "investigates them, they'll see the GODFATHER as NOT MAFIA!"),
+    "TOWN"  : ("The TOWN is a normal player in this game, the last "
                "line of defense against the mafia scum. They sniff out who the "
                "mafia are and convince their fellow town members to kill them "
                "during the day!"),
     "COP"   : ("The COP is the one of the most offensive members of "
                "the townspeople. During the night, they send a direct message to MODERATOR "
                "with the letter of the person they want to investigate, and "
-               "upon morning, MODERATOR will tell them whether that person is MILKY or "
-               "NOT MILKY."),
+               "upon morning, MODERATOR will tell them whether that person is MAFIA or "
+               "NOT MAFIA."),
     "DOCTOR": ("The DOCTOR's job is to save the townspeople from "
                "the mafia scum. During the night, they send a direct message to MODERATOR"
                " with the letter of the person they want to save. If the mafia"
@@ -67,7 +67,9 @@ ROLE_EXPLAIN= {
                "doesn't recognize them right now. CELEB can reveal themselves during Day "
                "by sending MODERATOR '/reveal' and then everyone will know they"
                " are Town. But they ought to be careful! "
-               "They'll be quite the target once revealed!")
+               "They'll be quite the target once revealed!"),
+    "MILLER" : ("The MILLER is pretty sus but they are actually on the side of Town... "
+                "If the cop investigates them, they show up as MAFIA...")
     }
 
 # ROLE GENERATION
@@ -75,31 +77,32 @@ ROLE_EXPLAIN= {
 BASE_SCORE = -7
 
 ROLE_SCORES = {
-    "MILKY"    : -3,
+    "MAFIA"     : -3,
     "GODFATHER" : -3,
-    "DOCTOR" :    4,
-    "COP"        :    3,
-    "RED_BAND"     :    2,
-    "IDIOT"    : -1,
-    "CELEB"    :    2,
+    "DOCTOR"    :  4,
+    "COP"       :  3,
+    "TOWN"      :  2,
+    "IDIOT"     : -1,
+    "CELEB"     :  2,
+    "MILLER"    :  0,
 }
 
 # Probability of town roles being chosen
-RED_BAND_WEIGHTS = [
-    ["RED_BAND", "DOCTOR", "COP", "CELEB"],
-    [ 80,    10,       15,    10]
+TOWN_WEIGHTS = [
+    ["TOWN", "DOCTOR", "COP", "CELEB", "MILLER"],
+    [ 80,     10,       15,    10,      5]
 ]
 
 # Probability of anti-town roles being chosen
-MILKY_WEIGHTS = [
-    ["MILKY", "IDIOT", "GODFATHER"],
+MAFIA_WEIGHTS = [
+    ["MAFIA", "IDIOT", "GODFATHER"],
     [ 90,      5,       5],
 ]
 
 ROLE_WEIGHTS =[
-    ["RED_BAND", "DOCTOR", "COP", "CELEB"],
-    [ 100,    10,       10,    10],
-    ["MILKY", "IDIOT", "GODFATHER"],
+    ["TOWN", "DOCTOR", "COP", "CELEB", "MILLER"],
+    [ 100,    10,       10,    10,      5],
+    ["MAFIA", "IDIOT", "GODFATHER"],
     [ 90,      5,       5],
 ]
 
@@ -122,6 +125,7 @@ IN_KW       = 'in'
 OUT_KW      = 'out'
 WATCH_KW    = 'watch'
 RULE_KW     = 'rule'
+RULES_KW    = 'rules'
 
 VOTE_KW     = 'vote'
 STATUS_KW   = 'status'
@@ -217,19 +221,19 @@ MAIN_HELP_MSG_TIMER = (
     "Start a 5 minute timer, at the end of which is nokill. A little broken rn."
 )
 
-MILKY_HELP_MSG = (
+MAFIA_HELP_MSG = (
     "Hey you naughty people/person, use this chat to communicate with other Mafia"
     " or just with me. Try '/options', or '/help commands'"
 )
 
-MILKY_HELP_MSG_COMMANDS = (
+MAFIA_HELP_MSG_COMMANDS = (
     "Mafia Chat Commands (try '/help target'):\n"
     "/target [letter]\n"
     "/options\n"
     "help [subject]"
 )
 
-MILKY_HELP_MSG_TARGET = (
+MAFIA_HELP_MSG_TARGET = (
     "/target [letter]\n"
     "During the night, use this to assign your kill to someone. You should get"
     " a confirmation message 'It is done' in response. If you change your mind,"
@@ -237,7 +241,7 @@ MILKY_HELP_MSG_TARGET = (
     "Night ends a random amount of time after all choices have been made."
 )
 
-MILKY_HELP_MSG_OPTIONS = (
+MAFIA_HELP_MSG_OPTIONS = (
     "/options\n"
     "Display the list of options on who to target again. This changes at the "
     "beginning of every night. For example: Brian C. If you want to target Brian,"
@@ -263,13 +267,13 @@ DM_HELP_MSG_RULE = "In Lobby Chat:\n"+LOBBY_HELP_MSG_RULE
 DM_HELP_MSG_VOTE = "In Main Chat:\n"+MAIN_HELP_MSG_VOTE
 DM_HELP_MSG_TIMER = "In Main Chat:\n"+MAIN_HELP_MSG_TIMER
 DM_HELP_MSG_TARGET = (
-    "In Mafia Chat:\n"+MILKY_HELP_MSG_TARGET +
+    "In Mafia Chat:\n"+MAFIA_HELP_MSG_TARGET +
     "\nIf you are COP or DOCTOR, use /target [letter] to investigate/save someone here.\n"
-    " As COP, upon morning you will learn if that player is MILKY or NOT MILKY\n"
+    " As COP, upon morning you will learn if that player is MAFIA or NOT MAFIA\n"
     " As DOCTOR, if the mafia tries to save that person, they will live,"
     " try '/help know_if_saved' to learn more about saving rules"
 )
-DM_HELP_MSG_OPTIONS = MILKY_HELP_MSG_OPTIONS
+DM_HELP_MSG_OPTIONS = MAFIA_HELP_MSG_OPTIONS
 DM_HELP_MSG_REVEAL = (
     "If you are a CELEB (try '/help CELEB'), use this to reveal your role. "
     "Moderator will send [your name] is CELEB to the main chat."
@@ -296,7 +300,7 @@ RULES_HELP_MSG_KNOWN_ROLES = (
 
 RULES_HELP_MSG_REVEAL_ON_DEATH = (
     "reveal_on_death : ON | TEAM | OFF\n"
-    "ON: A player's role (RED_BAND, COP, MILKY, etc) is revealed when they die\n"
+    "ON: A player's role (TOWN, COP, MAFIA, etc) is revealed when they die\n"
     "TEAM: A player's team (Maifa, Town) is revealed on death\n"
     "OFF: Don't reveal on death"
 )
@@ -360,11 +364,11 @@ MAIN_HELP_MSGS={
     "timer":    MAIN_HELP_MSG_TIMER,
 }
 
-MILKY_HELP_MSGS={
-    "":         MILKY_HELP_MSG,
-    "commands": MILKY_HELP_MSG_COMMANDS,
-    "target":   MILKY_HELP_MSG_TARGET,
-    "options":  MILKY_HELP_MSG_OPTIONS,
+MAFIA_HELP_MSGS={
+    "":         MAFIA_HELP_MSG,
+    "commands": MAFIA_HELP_MSG_COMMANDS,
+    "target":   MAFIA_HELP_MSG_TARGET,
+    "options":  MAFIA_HELP_MSG_OPTIONS,
 }
 
 DM_HELP_MSGS = {
@@ -372,7 +376,7 @@ DM_HELP_MSGS = {
     "commands": DM_HELP_MSG_COMMANDS,
     "lobby":    LOBBY_HELP_MSG_COMMANDS,
     "main":     MAIN_HELP_MSG_COMMANDS,
-    "mafia":    MILKY_HELP_MSG_COMMANDS,
+    "mafia":    MAFIA_HELP_MSG_COMMANDS,
     "start":    DM_HELP_MSG_START,
     "status":   DM_HELP_MSG_STATUS,
     "watch":    DM_HELP_MSG_WATCH,
@@ -390,12 +394,12 @@ for role in ROLE_EXPLAIN:
 
 DETERMINED_ROLES = [
     [], #0 (Shouldn't happen)
-    ["MILKY"], #1 (Shouldn't happen)
-    ["MILKY", "DOCTOR"], #2 (Shouldn't happen)
-    ["MILKY","DOCTOR","COP"], #3
-    ["MILKY","DOCTOR","COP","RED_BAND"], #4
-    ["MILKY","DOCTOR","COP","RED_BAND","CELEB"], #5
-    ["MILKY","DOCTOR","COP","RED_BAND","CELEB","GODFATHER"], #6
-    ["MILKY","DOCTOR","COP","RED_BAND","CELEB","GODFATHER","RED_BAND"], #7
-    ["MILKY","DOCTOR","COP","RED_BAND","CELEB","GODFATHER","RED_BAND","IDIOT"], #8
+    ["MAFIA"], #1 (Shouldn't happen)
+    ["MAFIA", "DOCTOR"], #2 (Shouldn't happen)
+    ["MAFIA","DOCTOR","COP"], #3
+    ["MAFIA","DOCTOR","COP","TOWN"], #4
+    ["MAFIA","DOCTOR","COP","TOWN","CELEB"], #5
+    ["MAFIA","DOCTOR","COP","TOWN","CELEB","GODFATHER"], #6
+    ["MAFIA","DOCTOR","COP","TOWN","CELEB","GODFATHER","TOWN"], #7
+    ["MAFIA","DOCTOR","COP","TOWN","CELEB","GODFATHER","TOWN","IDIOT"], #8
 ]
