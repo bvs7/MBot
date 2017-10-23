@@ -52,6 +52,7 @@ class MController:
                          OUT_KW    : self.LOBBY_out   ,
                          WATCH_KW  : self.LOBBY_watch ,
                          RULE_KW   : self.LOBBY_rule  ,
+                         RULES_KW  : self.LOBBY_rule  ,
                          }
         # Main OPS
         self.MAIN_OPS ={ VOTE_KW   : self.MAIN_vote  ,
