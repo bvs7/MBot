@@ -69,6 +69,7 @@ class MController:
 
         self.DM_OPS =  { HELP_KW   : self.DM_help  ,
                          STATUS_KW : self.DM_status,
+                         OPTS_KW   : self.DM_options,
                          TARGET_KW : self.DM_target  ,
                          REVEAL_KW : self.DM_reveal,
                          }

@@ -603,7 +603,7 @@ class MState:
                     self.mainComm.send("You were distracted", p.id)
                 else:
                     name = self.mainComm.getName(p.target.id)
-                    if (p.target.role in MAFIA_ROLES and p.target.role == "GODFATHER") or p.target.role == "MILLER":
+                    if (p.target.role in MAFIA_ROLES and not p.target.role == "GODFATHER") or p.target.role == "MILLER":
                         team = "MAFIA"
                     else:
                         team = "NOT MAFIA"
@@ -637,7 +637,9 @@ class MState:
             elif p.role == "DOCTOR":
                 self.send_options("Use /target letter (i.e. /target D) "
                                   "to pick someone to save",p.id)
-        #self.setTimer()
+            elif p.role == "STRIPPER":
+                self.send_options("Use /target letter (i.e. /target A) "
+                                  "to pick someone to distract",p.id)
         return True
 
     def __clearTargets(self):
