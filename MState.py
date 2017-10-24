@@ -2,6 +2,7 @@
 
 from MInfo import *
 from MComm import MComm
+import MRoleGen
 
 import random
 import threading
@@ -31,9 +32,9 @@ class Preferences:
     def __init__(self,
                  known_roles="ON",
                  reveal_on_death="ON",
-                 kick_on_death="ON",
+                 kick_on_death="OFF",
                  know_if_saved="ON",
-                 start_night="OFF",
+                 start_night="EVEN",
                  standard_roles="OFF"):
         self.book = {}
         # Show the roles at the beginning of the game
@@ -306,6 +307,9 @@ class MState:
         except Exception as e:
             log("Could not try reveal {}: {}".format(p,e))
             return False
+        if not self.time == "Day":
+            self.mainComm.send("Must reveal during Day",player.id)
+            return True
         if player.role == "CELEB":
             if player.id in self.blocked_ids:
                 self.mainComm.send("You were distracted",player.id)
@@ -367,7 +371,7 @@ class MState:
             random.shuffle(nextPlayerIDs)
 
         if not self.determined:
-            roles = MState.genRolesRandom(num_players)
+            roles = MRoleGen.genRolesMatrix(num_players, pref=self.pref)
         else:
             roles = DETERMINED_ROLES[num_players]
 

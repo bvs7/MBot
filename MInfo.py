@@ -97,22 +97,76 @@ ROLE_SCORES = {
     "STRIPPER"  : -5,
 }
 
+SCORE_ROLES = ("known_roles","reveal_on_death","")
+
+SCORE_MATRIX ={
+    "BASE" : -80,
+    "TOWN"      : {"BASE":20, "TOWN":0, "COP":0, "DOCTOR":0, "CELEB":0, "MILLER":0,
+                   "MAFIA":0, "GODFATHER":0, "STRIPPER":0, "IDIOT":0,
+                   "known_roles"    :{"ON":0,"TEAM":0,"OFF":0},
+                   "reveal_on_death":{"ON":0,"TEAM":0,"OFF":0},
+                   "standard_roles" :{"COP_DOC":0,"OFF":0},},
+    "COP"       : {"BASE":30, "TOWN":0, "COP":0, "DOCTOR":5, "CELEB":0, "MILLER":-5,
+                   "MAFIA":0, "GODFATHER":-5, "STRIPPER":-5, "IDIOT":0,
+                   "known_roles"    :{"ON":0,"TEAM":0,"OFF":0},
+                   "reveal_on_death":{"ON":0,"TEAM":0,"OFF":-20},
+                   "standard_roles" :{"COP_DOC":0,"OFF":0},},
+    "DOCTOR"    : {"BASE":40, "TOWN":0, "COP":0, "DOCTOR":5, "CELEB":0, "MILLER":0,
+                   "MAFIA":0, "GODFATHER":0, "STRIPPER":-10, "IDIOT":0,
+                   "known_roles"    :{"ON":0,"TEAM":0,"OFF":0},
+                   "reveal_on_death":{"ON":0,"TEAM":0,"OFF":0},
+                   "standard_roles" :{"COP_DOC":0,"OFF":0},},
+    "CELEB"     : {"BASE":25, "TOWN":0, "COP":0, "DOCTOR":5, "CELEB":10, "MILLER":0,
+                   "MAFIA":0, "GODFATHER":0, "STRIPPER":-5, "IDIOT":0,
+                   "known_roles"    :{"ON":0,"TEAM":0,"OFF":0},
+                   "reveal_on_death":{"ON":0,"TEAM":0,"OFF":0},
+                   "standard_roles" :{"COP_DOC":0,"OFF":0},},
+    "MILLER"    : {"BASE":0, "TOWN":0, "COP":0, "DOCTOR":0, "CELEB":0, "MILLER":0,
+                   "MAFIA":0, "GODFATHER":0, "STRIPPER":0, "IDIOT":0,
+                   "known_roles"    :{"ON":10,"TEAM":0,"OFF":-5},
+                   "reveal_on_death":{"ON":5,"TEAM":5,"OFF":0},
+                   "standard_roles" :{"COP_DOC":0,"OFF":0},},
+    "MAFIA"     : {"BASE":-30,"TOWN":0, "COP":0, "DOCTOR":0, "CELEB":0, "MILLER":0,
+                   "MAFIA":0, "GODFATHER":0, "STRIPPER":0, "IDIOT":0,
+                   "known_roles"    :{"ON":0,"TEAM":0,"OFF":0},
+                   "reveal_on_death":{"ON":0,"TEAM":0,"OFF":0},
+                   "standard_roles" :{"COP_DOC":0,"OFF":0},},
+    "GODFATHER" : {"BASE":-40,"TOWN":0, "COP":0, "DOCTOR":0, "CELEB":0, "MILLER":0,
+                   "MAFIA":0, "GODFATHER":0, "STRIPPER":0, "IDIOT":0,
+                   "known_roles"    :{"ON":0,"TEAM":0,"OFF":0},
+                   "reveal_on_death":{"ON":0,"TEAM":0,"OFF":0},
+                   "standard_roles" :{"COP_DOC":0,"OFF":0},},
+    "STRIPPER"  : {"BASE":-30,"TOWN":0, "COP":-10, "DOCTOR":-10, "CELEB":-5, "MILLER":0,
+                   "MAFIA":0, "GODFATHER":0, "STRIPPER":0, "IDIOT":0,
+                   "known_roles"    :{"ON":0,"TEAM":-10,"OFF":-10},
+                   "reveal_on_death":{"ON":5,"TEAM":0,"OFF":0},
+                   "standard_roles" :{"COP_DOC":0,"OFF":0},},
+    "IDIOT"     : {"BASE":-10,"TOWN":0, "COP":0, "DOCTOR":0, "CELEB":0, "MILLER":0,
+                   "MAFIA":0, "GODFATHER":0, "STRIPPER":0, "IDIOT":0,
+                   "known_roles"    :{"ON":10,"TEAM":10,"OFF":0},
+                   "reveal_on_death":{"ON":0,"TEAM":0,"OFF":0},
+                   "standard_roles" :{"COP_DOC":0,"OFF":0},},
+    "known_roles" :{"ON":20,"TEAM":0,"OFF":-20},
+    "reveal_on_death":{"ON":0,"TEAM":0,"OFF":-20},
+    "standard_roles" :{"COP_DOC":0,"OFF":0},
+}
+
 ALL_WEIGHTS = (
     ("COP", "DOCTOR", "CELEB", "MILLER", "TOWN", "MAFIA", "GODFATHER", "STRIPPER"),
     ( 10,    10,       10,      10,       80,     30,      5,           5)
 )
 
 # Probability of town roles being chosen
-TOWN_WEIGHTS = [
-    ["TOWN", "DOCTOR", "COP", "CELEB", "MILLER"],
-    [ 80,     10,       15,    10,      5]
-]
+TOWN_WEIGHTS = (
+    ("TOWN", "DOCTOR", "COP", "CELEB", "MILLER"),
+    ( 80,     10,       15,    10,      5)
+)
 
 # Probability of anti-town roles being chosen
-MAFIA_WEIGHTS = [
-    ["MAFIA", "IDIOT", "GODFATHER"],
-    [ 90,      5,       5],
-]
+MAFIA_WEIGHTS = (
+    ("MAFIA", "IDIOT", "GODFATHER", "STRIPPER"),
+    ( 75,      5,       10,          10),
+)
 
 ROLE_WEIGHTS =[
     ["TOWN", "DOCTOR", "COP", "CELEB", "MILLER"],
