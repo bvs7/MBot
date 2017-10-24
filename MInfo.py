@@ -5,7 +5,7 @@
 import pickle    # For loading vars
 import os
 
-DEBUG = 0
+DEBUG = 4
 SILENT = False
 
 info_fname = "info"
@@ -404,13 +404,6 @@ RULES_HELP_MSG_STANDARD_ROLES = (
     "OFF: No guarantees for roles"
 )
 
-ODDS_HELP_MSG = (
-    "TOWN: 1/2\n"
-    "MAFIA: 3/16\n"
-    "COP|DOC|CELEB|MILLER: 1/16\n"
-    "GODFATHER|STRIPPER: 1/32"
-)
-
 ALL_HELP_MSGS = {
     "rules":    RULES_HELP_MSG,
     "known_roles":      RULES_HELP_MSG_KNOWN_ROLES,
@@ -419,7 +412,6 @@ ALL_HELP_MSGS = {
     "know_if_saved":    RULES_HELP_MSG_KNOW_IF_SAVED,
     "start_night":      RULES_HELP_MSG_START_NIGHT,
     "standard_roles":   RULES_HELP_MSG_STANDARD_ROLES,
-    "odds":             ODDS_HELP_MSG,
 }
 
 LOBBY_HELP_MSGS={

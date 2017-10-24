@@ -148,6 +148,9 @@ def genRolesMatrix(num_players, matrix=SCORE_MATRIX, pref=None):
     assert(num_players >= 3)
     if pref == None:
         pref = MState.Preferences()
+
+    if num_players < 7:
+        return genRolesRandom(num_players)
     while(True):
         roles = []
         n = 0

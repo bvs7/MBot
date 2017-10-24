@@ -51,6 +51,7 @@ class MServer:
 
                         # CHECK FOR A VOTE
                         if words[0] == VOTE_KW:
+                            votee = None
                             if len(words) < 2: # shouldn't happen?
                                 votee = None
                             else:
