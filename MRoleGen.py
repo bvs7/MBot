@@ -37,7 +37,7 @@ def genRolesRandom(num_players):
                     elif role in ROGUE_ROLES:
                         num_rogue += 1
                     break
-        if (not num_town > num_maf+2) or (not num_maf > num_players/6):
+        if (not num_town > num_maf+2) or (not num_maf > 0):
             continue
         break
     return roles
@@ -92,7 +92,7 @@ def genRolesScores(num_players, scores=ROLE_SCORES, weights=ALL_WEIGHTS):
                 continue # Try generating again. Until we have a game with COP and DOC...
 
         # Done making roles, ensure this isn't a bad game
-        if (not num_town > num_maf+2) or (not num_maf > num_players/6):
+        if (not num_town >= num_maf+2) or (not num_maf > num_players/6):
             continue
 
     # Roles contains a valid game
@@ -207,7 +207,7 @@ def genRolesMatrix(num_players, matrix=SCORE_MATRIX, pref=None):
                     roles.remove("COP")
                     roles.append("TOWN")
                 except:
-                    break
+
 
         if not "COP" in roles:
             while True:
@@ -234,7 +234,7 @@ def genRolesMatrix(num_players, matrix=SCORE_MATRIX, pref=None):
         diff = num_town - num_maf
         ratio = num_maf/num_players
         score = genScoreMatrix(roles,matrix)
-        if diff <= 2 or ratio <= .2 or ratio >= .4 or score < -25 or score > 25 :
+        if diff <= 2 or ratio < 0 or ratio >= .4 or score < -25 or score > 25 :
             continue
         else:
             break
