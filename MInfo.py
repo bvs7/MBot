@@ -141,7 +141,7 @@ SCORE_MATRIX ={
                    "known_roles"    :{"ON":0,"TEAM":-10,"OFF":-10},
                    "reveal_on_death":{"ON":5,"TEAM":0,"OFF":0},
                    "standard_roles" :{"COP_DOC":0,"OFF":0},},
-    "IDIOT"     : {"BASE":-10,"TOWN":0, "COP":0, "DOCTOR":0, "CELEB":0, "MILLER":0,
+    "IDIOT"     : {"BASE":-20,"TOWN":0, "COP":0, "DOCTOR":0, "CELEB":0, "MILLER":0,
                    "MAFIA":0, "GODFATHER":0, "STRIPPER":0, "IDIOT":0,
                    "known_roles"    :{"ON":10,"TEAM":10,"OFF":0},
                    "reveal_on_death":{"ON":0,"TEAM":0,"OFF":0},
