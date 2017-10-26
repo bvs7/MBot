@@ -404,6 +404,12 @@ RULES_HELP_MSG_STANDARD_ROLES = (
     "OFF: No guarantees for roles"
 )
 
+ROLES_HELP_MSG = (
+    "Roles:"
+)
+for role in (TOWN_ROLES + MAFIA_ROLES + ROGUE_ROLES):
+    ROLES_HELP_MSG += role + "\n"
+
 ALL_HELP_MSGS = {
     "rules":    RULES_HELP_MSG,
     "known_roles":      RULES_HELP_MSG_KNOWN_ROLES,
@@ -412,6 +418,7 @@ ALL_HELP_MSGS = {
     "know_if_saved":    RULES_HELP_MSG_KNOW_IF_SAVED,
     "start_night":      RULES_HELP_MSG_START_NIGHT,
     "standard_roles":   RULES_HELP_MSG_STANDARD_ROLES,
+    "roles":            ROLES_HELP_MSG,
 }
 
 LOBBY_HELP_MSGS={
