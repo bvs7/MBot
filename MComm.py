@@ -185,8 +185,12 @@ class GroupComm(MComm):
         return "__"
 
     def add(self, player_id):
-        self.group.add({'user_id':player_id})
-        log("ADD  {}: {}".format(self.title,player_id))
+        try:
+            self.group.add({'user_id':player_id})
+            log("ADD  {}: {}".format(self.title,player_id))
+        except Exception as e:
+            print("ERROR ADDING PLAYER:{}".format(e))
+            self.add(player_id)
         return True
 
     def remove(self, player_id):
