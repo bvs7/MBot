@@ -51,7 +51,6 @@ class MServer:
 
                         # CHECK FOR A VOTE
                         if words[0] == VOTE_KW:
-                            votee = None
                             if len(words) < 2: # shouldn't happen?
                                 votee = None
                             else:
@@ -65,7 +64,10 @@ class MServer:
                                     mentions = [a for a in post['attachments'] if a['type'] == 'mentions']
                                     if len(mentions) > 0 and 'user_ids' in mentions[0] and len(mentions[0]['user_ids']) >= 1:
                                         votee = mentions[0]['user_ids'][0]
-                            player_id = (player_id, votee)
+                            try:
+                                player_id = (player_id, votee)
+                            except:
+                                return False
 
                         return self.ctrl.MAIN_OPS[words[0]](mstate,player_id,words,message_id)
                 elif group_id == mstate.mafiaComm.group_id:

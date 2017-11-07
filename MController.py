@@ -12,6 +12,7 @@ import threading
 from MInfo import *
 from MState import MState, Preferences
 from MComm import MComm
+import MRecords
 
 class MController:
 
@@ -53,6 +54,7 @@ class MController:
                          WATCH_KW  : self.LOBBY_watch ,
                          RULE_KW   : self.LOBBY_rule  ,
                          RULES_KW  : self.LOBBY_rule  ,
+                         STATS_KW  : self.LOBBY_stats ,
                          }
         # Main OPS
         self.MAIN_OPS ={ VOTE_KW   : self.MAIN_vote  ,
@@ -266,6 +268,24 @@ class MController:
             line = f.readline()
         f.close()
         return pref
+
+    def LOBBY_stats(self, player_id, words, message_id):
+        self.lobbyComm.ack(message_id)
+
+        if len(words) > 1:
+            if words[1] == "winrate":
+                counted_roles = TOWN_ROLES + MAFIA_ROLES
+                if len(words) > 2 and words[2] == "Town":
+                    counted_roles = TOWN_ROLES
+                if len(words) > 2 and words[2] == "Mafia":
+                    counted_roles = MAFIA_ROLES
+                if len(words) > 2 and words[2] in TOWN_ROLES + MAFIA_ROLES + ROGUE_ROLES:
+                    counted_roles = words[2]
+                wr = MRecords.getWinRatio(player_id,counted_roles)
+
+                msg = "{} Win Rate: {}%".format(self.lobbyComm.getName(player_id),wr*100)
+                self.lobbyComm.cast(msg)
+        return True
 
 
     # MAIN ACTIONS
