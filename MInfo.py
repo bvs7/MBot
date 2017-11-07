@@ -197,6 +197,7 @@ OUT_KW      = 'out'
 WATCH_KW    = 'watch'
 RULE_KW     = 'rule'
 RULES_KW    = 'rules'
+STATS_KW    = 'stats'
 
 VOTE_KW     = 'vote'
 STATUS_KW   = 'status'

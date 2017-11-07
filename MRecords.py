@@ -291,6 +291,24 @@ def record_event(event):
     elif event.e_type == 'REVEAL':
         pass
 
+#### Records reading ####
+""" We want to have ways to look up statistics. Let's start with some easy ones:
+    win ratio | as town | as maf | as role
+        For these, have a list. Combine the win ratios for these roles.
+    voting accuracy
+        When you've voted to kill someone, how likely are they maf? """
+
+def getWinRatio(p_id,counted_roles):
+    roles = readRoles(p_id)
+    acc = (0,0)
+
+    os.chdir('data/player_records')
+
+    for role in roles:
+        if role in counted_roles:
+            acc = (acc[0]+roles[role][0], acc[1]+roles[role][1])
+    os.chdir('../..')
+    return int(100*acc[1]/acc[0])/100
 
 def getNextGame(f):
     line = f.readline().strip()
@@ -301,18 +319,18 @@ def getNextGame(f):
     return lines
 
 ###
-if __name__ == "__main__":
-    os.chdir('data')
-    f = open('records','r')
-    lines = getNextGame(f)
-    g = GameRec(lines)
-    os.chdir('player_records')
-    for event in g.events:
-        record_event(event)
-
-    while len(lines) > 2:
-        lines = getNextGame(f)
-        g = GameRec(lines)
-        for event in g.events:
-            record_event(event)
-    f.close()
+# if __name__ == "__main__":
+#     os.chdir('data')
+#     f = open('records','r')
+#     lines = getNextGame(f)
+#     g = GameRec(lines)
+#     os.chdir('player_records')
+#     for event in g.events:
+#         record_event(event)
+#
+#     while len(lines) > 2:
+#         lines = getNextGame(f)
+#         g = GameRec(lines)
+#         for event in g.events:
+#             record_event(event)
+#     f.close()
