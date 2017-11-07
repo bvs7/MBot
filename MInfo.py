@@ -380,7 +380,7 @@ RULES_HELP_MSG_REVEAL_ON_DEATH = (
 RULES_HELP_MSG_KICK_ON_DEATH = (
     "kick_on_death : ON | OFF\n"
     "ON: When a player dies they are kicked from the chat\n"
-    "OFF: Not that ¯\\_(ツ)_/¯"
+    "OFF: Not that"
 )
 
 RULES_HELP_MSG_KNOW_IF_SAVED = (

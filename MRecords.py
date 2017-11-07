@@ -299,10 +299,10 @@ def record_event(event):
         When you've voted to kill someone, how likely are they maf? """
 
 def getWinRatio(p_id,counted_roles):
+    os.chdir('data/player_records')
     roles = readRoles(p_id)
     acc = (0,0)
 
-    os.chdir('data/player_records')
 
     for role in roles:
         if role in counted_roles:
@@ -319,18 +319,18 @@ def getNextGame(f):
     return lines
 
 ###
-# if __name__ == "__main__":
-#     os.chdir('data')
-#     f = open('records','r')
-#     lines = getNextGame(f)
-#     g = GameRec(lines)
-#     os.chdir('player_records')
-#     for event in g.events:
-#         record_event(event)
-#
-#     while len(lines) > 2:
-#         lines = getNextGame(f)
-#         g = GameRec(lines)
-#         for event in g.events:
-#             record_event(event)
-#     f.close()
+if __name__ == "__main__":
+    os.chdir('data')
+    f = open('records','r')
+    lines = getNextGame(f)
+    g = GameRec(lines)
+    os.chdir('player_records')
+    for event in g.events:
+        record_event(event)
+
+    while len(lines) > 2:
+        lines = getNextGame(f)
+        g = GameRec(lines)
+        for event in g.events:
+            record_event(event)
+    f.close()
