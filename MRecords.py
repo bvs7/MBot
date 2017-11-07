@@ -308,7 +308,7 @@ def getWinRatio(p_id,counted_roles):
         if role in counted_roles:
             acc = (acc[0]+roles[role][0], acc[1]+roles[role][1])
     os.chdir('../..')
-    return int(100*acc[1]/acc[0])/100
+    return (acc[1],acc[0])
 
 def getNextGame(f):
     line = f.readline().strip()

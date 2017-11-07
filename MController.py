@@ -273,7 +273,7 @@ class MController:
         self.lobbyComm.ack(message_id)
 
         if len(words) > 1:
-            if words[1] == "winrate":
+            if words[1] == "winrate" or words[1] == "record":
                 counted_roles = TOWN_ROLES + MAFIA_ROLES
                 if len(words) > 2 and words[2] == "Town":
                     counted_roles = TOWN_ROLES
@@ -281,10 +281,13 @@ class MController:
                     counted_roles = MAFIA_ROLES
                 if len(words) > 2 and words[2] in TOWN_ROLES + MAFIA_ROLES + ROGUE_ROLES:
                     counted_roles = words[2]
-                wr = MRecords.getWinRatio(player_id,counted_roles)
-
-                msg = "{} Win Rate: {}%".format(self.lobbyComm.getName(player_id),wr*100)
+                (won,tot) = MRecords.getWinRatio(player_id,counted_roles)
+                if words[1] == "winrate":
+                    msg = "{} Win Rate: {}%".format(self.lobbyComm.getName(player_id),int(won/tot*100))
+                elif words[1] == "record":
+                    msg = "{} Record: {} Games, {} Won, {} Lost".format(self.lobbyComm,getName(player_id),tot,won,tot-won)
                 self.lobbyComm.cast(msg)
+
         return True
 
 
