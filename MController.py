@@ -283,9 +283,11 @@ class MController:
                     counted_roles = words[2]
                 (won,tot) = MRecords.getWinRatio(player_id,counted_roles)
                 if words[1] == "winrate":
+                    if tot == 0:
+                        tot = 1
                     msg = "{} Win Rate: {}%".format(self.lobbyComm.getName(player_id),int(won/tot*100))
                 elif words[1] == "record":
-                    msg = "{} Record: {} Games, {} Won, {} Lost".format(self.lobbyComm,getName(player_id),tot,won,tot-won)
+                    msg = "{} Record: {} Games, {} Won, {} Lost".format(self.lobbyComm.getName(player_id),tot,won,tot-won)
                 self.lobbyComm.cast(msg)
 
         return True
