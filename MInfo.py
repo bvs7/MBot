@@ -35,6 +35,8 @@ RECORDS_FILE_PATH = "data/records"
 RULES_FILE_PATH = "data/rules"
 DET_RECORDS_FILE_PATH = "data/det_records"
 
+RECORDS_WORKING_DIRECTORY = "data/player_records"
+
 MAFIA_ROLES = [ "MAFIA" , "GODFATHER", "STRIPPER"]
 TOWN_ROLES    = [ "TOWN", "COP", "DOCTOR", "CELEB", "MILLER"]
 ROGUE_ROLES = ["IDIOT"]
