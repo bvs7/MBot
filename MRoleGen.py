@@ -207,7 +207,7 @@ def genRolesMatrix(num_players, matrix=SCORE_MATRIX, pref=None):
                     roles.remove("COP")
                     roles.append("TOWN")
                 except:
-
+                    break
 
         if not "COP" in roles:
             while True:
