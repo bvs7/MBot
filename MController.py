@@ -74,6 +74,7 @@ class MController:
                          OPTS_KW   : self.DM_options,
                          TARGET_KW : self.DM_target  ,
                          REVEAL_KW : self.DM_reveal,
+                         STATS_KW  : self.DM_stats,
                          }
 
     # LOBBY ACTIONS
