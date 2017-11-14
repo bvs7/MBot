@@ -86,7 +86,11 @@ class MServer:
             sender_id = DM['sender_id']
 
             if len(words) > 0:
-                return self.ctrl.DM_OPS[words[0]](sender_id,words)
+                try:
+                    result = self.ctrl.DM_OPS[words[0]](sender_id,words)
+                except KeyError as e:
+                    log("Invalid DM keyword: {}".format(words[0]))
+                return result
 
 if __name__ == "__main__":
     mserver = MServer(GroupComm)

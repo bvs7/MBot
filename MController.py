@@ -60,7 +60,7 @@ class MController:
         self.MAIN_OPS ={ VOTE_KW   : self.MAIN_vote  ,
                          STATUS_KW : self.MAIN_status,
                          HELP_KW   : self.MAIN_help  ,
-                         TIMER_KW  : self.MAIN_timer ,
+#                         TIMER_KW  : self.MAIN_timer ,
                          }
 
         # Mafia OPS
@@ -152,11 +152,11 @@ class MController:
         self.lobbyComm.ack(message_id)
 
         minutes = 1
-        minplayers = 3
+        minplayers = 25
         if len(words) > 2:
             try:
                 minutes = int(words[1])
-                minplayers = int(words[2])
+                #minplayers = int(words[2])
                 if minutes < 1:
                     minutes = 1
             except ValueError:
@@ -200,7 +200,7 @@ class MController:
                 self.lobbyComm.cast("Too many games")
         else:
             self.lobbyComm.cast("Not enough players to start a game")
-            self.nextIds.clear()
+ #           self.nextIds.clear()
         return True
 
     def mstate_final(self,mstate):

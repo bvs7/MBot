@@ -342,6 +342,8 @@ class MState:
             team = "Mafia"
         elif player.role in TOWN_ROLES:
             team = "Town"
+	elif player.role in ROGUE_ROLES:
+            team = "Rogue"
         self.mainComm.cast(self.mainComm.getName(player.id) + " is on team " + team)
         return True
 
