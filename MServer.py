@@ -90,6 +90,7 @@ class MServer:
                     result = self.ctrl.DM_OPS[words[0]](sender_id,words)
                 except KeyError as e:
                     log("Invalid DM keyword: {}".format(words[0]))
+                    return False
                 return result
 
 if __name__ == "__main__":
