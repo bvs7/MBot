@@ -209,7 +209,7 @@ class MState:
             log("Mafia couldn't target {}: Not Night".format(target_option))
             return False
         try:
-            target_number = ord(target_option.upper())-ord('A')
+            target_number = ord(target_option)-ord('A')
             if target_number == len(self.players):
                 target = self.null
             elif target_number == None:
@@ -220,7 +220,7 @@ class MState:
             log("Mafia failed to target {}: {}".format(target_option, e))
             return False
         self.mafia_target = target
-        self.mafiaComm.cast("It is done")
+        self.mafiaComm.cast("It is done, targeted {}".format(target_option))
 
         if type(target) == Player:
             target_id = target.id
@@ -260,7 +260,7 @@ class MState:
             log("Couldn't find target from {}: {}".format(p,e))
             return False
         try:
-            target_number = ord(target_option.upper())-ord('A')
+            target_number = ord(target_option)-ord('A')
             if target_number == len(self.players):
                 target = self.null
             elif target_number == None:
@@ -272,7 +272,7 @@ class MState:
             log("{} failed to target {}: {}".format(player.id, target_option, e))
             return False
 
-        self.mainComm.send("It is done",player.id)
+        self.mainComm.send("It is done, targeted {}".format(target_option),player.id)
 
         if type(target) == Player:
             target_id = target.id
@@ -342,7 +342,7 @@ class MState:
             team = "Mafia"
         elif player.role in TOWN_ROLES:
             team = "Town"
-	elif player.role in ROGUE_ROLES:
+        elif player.role in ROGUE_ROLES:
             team = "Rogue"
         self.mainComm.cast(self.mainComm.getName(player.id) + " is on team " + team)
         return True

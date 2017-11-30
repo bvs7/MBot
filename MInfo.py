@@ -108,10 +108,10 @@ SCORE_MATRIX ={
                    "known_roles"    :{"ON":0,"TEAM":0,"OFF":0},
                    "reveal_on_death":{"ON":0,"TEAM":0,"OFF":0},
                    "standard_roles" :{"COP_DOC":0,"OFF":0},},
-    "COP"       : {"BASE":30, "TOWN":0, "COP":0, "DOCTOR":5, "CELEB":0, "MILLER":-5,
+    "COP"       : {"BASE":30, "TOWN":0, "COP":5, "DOCTOR":5, "CELEB":0, "MILLER":-5,
                    "MAFIA":0, "GODFATHER":-5, "STRIPPER":-5, "IDIOT":0,
                    "known_roles"    :{"ON":0,"TEAM":0,"OFF":0},
-                   "reveal_on_death":{"ON":0,"TEAM":0,"OFF":-20},
+                   "reveal_on_death":{"ON":0,"TEAM":0,"OFF":-10},
                    "standard_roles" :{"COP_DOC":0,"OFF":0},},
     "DOCTOR"    : {"BASE":40, "TOWN":0, "COP":0, "DOCTOR":5, "CELEB":0, "MILLER":0,
                    "MAFIA":0, "GODFATHER":0, "STRIPPER":-10, "IDIOT":0,
@@ -128,7 +128,7 @@ SCORE_MATRIX ={
                    "known_roles"    :{"ON":10,"TEAM":0,"OFF":-5},
                    "reveal_on_death":{"ON":5,"TEAM":5,"OFF":0},
                    "standard_roles" :{"COP_DOC":0,"OFF":0},},
-    "MAFIA"     : {"BASE":-30,"TOWN":0, "COP":0, "DOCTOR":0, "CELEB":0, "MILLER":0,
+    "MAFIA"     : {"BASE":-35,"TOWN":0, "COP":0, "DOCTOR":0, "CELEB":0, "MILLER":0,
                    "MAFIA":0, "GODFATHER":0, "STRIPPER":0, "IDIOT":0,
                    "known_roles"    :{"ON":0,"TEAM":0,"OFF":0},
                    "reveal_on_death":{"ON":0,"TEAM":0,"OFF":0},
@@ -161,7 +161,7 @@ ALL_WEIGHTS = (
 # Probability of town roles being chosen
 TOWN_WEIGHTS = (
     ("TOWN", "DOCTOR", "COP", "CELEB", "MILLER"),
-    ( 80,     10,       15,    10,      5)
+    ( 65,     10,       10,    15,      5)
 )
 
 # Probability of anti-town roles being chosen
@@ -203,6 +203,7 @@ VOTE_KW     = 'vote'
 STATUS_KW   = 'status'
 HELP_KW     = 'help'
 TIMER_KW    = 'timer'
+LEAVE_KW    = 'leave'
 
 TARGET_KW   = 'target'
 OPTS_KW     = 'options'

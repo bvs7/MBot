@@ -60,6 +60,7 @@ class MController:
         self.MAIN_OPS ={ VOTE_KW   : self.MAIN_vote  ,
                          STATUS_KW : self.MAIN_status,
                          HELP_KW   : self.MAIN_help  ,
+                         LEAVE_KW  : self.MAIN_leave ,
 #                         TIMER_KW  : self.MAIN_timer ,
                          }
 
@@ -326,6 +327,15 @@ class MController:
         votee = player_ids[1]
 
         return mstate.vote(voter,votee)
+
+    def MAIN_leave(self, mstate, player_id, words=[], message_id=None):
+        mstate.mainComm.ack(message_id)
+
+        if player_id in [player.id for player in mstate.players]:
+            mstate.mainComm.cast("You can't leave, aren't you playing?")
+        else:
+            mstate.mainComm.remove(player_id)
+        return True
 
     def MAIN_timer(self,mstate,player_id=None,words=[], message_id=None):
         mstate.mainComm.ack(message_id)

@@ -181,10 +181,10 @@ def genRolesMatrix(num_players, matrix=SCORE_MATRIX, pref=None):
 
             if extra_cop and role == "COP":
                 extra_cop = False
-                role = "TOWN"
+                continue
             if extra_doc and role == "DOCTOR":
                 extra_cop = False
-                role = "TOWN"
+                continue
 
             roles.append(role)
 
@@ -234,7 +234,7 @@ def genRolesMatrix(num_players, matrix=SCORE_MATRIX, pref=None):
         diff = num_town - num_maf
         ratio = num_maf/num_players
         score = genScoreMatrix(roles,matrix)
-        if diff <= 2 or ratio < 0 or ratio >= .4 or score < -25 or score > 25 :
+        if diff <= 2 or ratio < 0 or ratio >= .4 or score < -50 or score > 50 :
             continue
         else:
             break
