@@ -25,6 +25,7 @@ class MServer:
     def do_POST(self,post):
         """Process a POST request from bots watching the chats"""
         log("MServer do_POST",3)
+        print(post)
 
         # Check that this is a command
         if post['text'][0:len(ACCESS_KW)] == ACCESS_KW:

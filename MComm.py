@@ -8,6 +8,8 @@
 import random
 from MInfo import *
 
+import time
+
 NAME_REPLACE_RATIO = 0.2
 
 try:
@@ -145,7 +147,10 @@ class GroupComm(MComm):
         return True
 
     def getAcks(self, message_id):
-        self.group.refresh()
+        try:
+            self.group.refresh()
+        except:
+            return self.getAcks(message_id)
         msg_id = str(int(message_id)-1) # Subtract 1 so that our message shows up
         for msg in self.group.messages(after=msg_id):
             if msg.id == message_id:
@@ -153,11 +158,12 @@ class GroupComm(MComm):
         return []
 
     def send(self, msg, player_id):
-        try:
-            groupyEP.DirectMessages.create(player_id, msg)
-        except groupy.api.errors.GroupMeError:
-            log("Failed to SEND")
-            return False
+   #     try:
+        groupy.api.
+        groupyEP.DirectMessages.create(player_id, msg)
+        #except groupy.api.errors.GroupMeError as e:
+            #log("Failed to SEND" + str(e) + str(dir(e)))
+            #return False
         log("SEND "+self.title+", "+player_id+": "+msg)
         return True
 
@@ -175,7 +181,10 @@ class GroupComm(MComm):
     def getName(self,member_id):
         if member_id in self.savedNames and random.random() > NAME_REPLACE_RATIO:
             return self.savedNames[member_id]
-        self.group.refresh()
+        try:
+            self.group.refresh()
+        except:
+            self.getName(member_id)
         members = self.group.members()
         for m in members:
             if m.user_id == member_id:
@@ -194,7 +203,10 @@ class GroupComm(MComm):
         return True
 
     def remove(self, player_id):
-        self.group.refresh()
+        try:
+            self.group.refresh()
+        except:
+            self.remove(player_id)
         for mem in self.group.members():
             if mem.user_id == player_id:
                 self.group.remove(mem)
@@ -202,7 +214,10 @@ class GroupComm(MComm):
         return True
 
     def clear(self, saveList=[]):
-        self.group.refresh()
+        try:
+            self.group.refresh()
+        except:
+            self.clear(saveList)
         for mem in self.group.members():
             if not (mem.user_id in saveList or mem.user_id == MODERATOR):
                 self.group.remove(mem)
