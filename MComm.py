@@ -137,7 +137,7 @@ class GroupComm(MComm):
     def genChats(self, client_):
         chat_list = list(client.chats.list_all())
         for chat in chat_list:
-            self.chats[chat.id] = chat
+            self.chats[chat.other_user['id']] = chat
         self.hasChats = True
 
     def cast(self, msg):
