@@ -113,7 +113,7 @@ class MComm:
 
 class GroupComm(MComm):
 
-    def __init__(self, group_id, gen_chats=true):
+    def __init__(self, group_id, gen_chats=True):
 
         self.group = client.groups.get(group_id)
         self.savedNames = {}
