@@ -14,7 +14,14 @@ NAME_REPLACE_RATIO = 0.2
 
 try:
     import groupy
-    import groupy.api.endpoint as groupyEP
+
+    # Load token
+    tokenfile = open("../.groupy.key")
+    token = tokenfile.read()
+    tokenfile.close()
+
+    client = groupy.Client.from_token(token)
+
 except ImportError:
     log("FAILED TO LOAD GROUPY")
 
@@ -104,88 +111,94 @@ class MComm:
 
         return "[{}, {}]".format(self.title,self.group_id)
 
-
 class GroupComm(MComm):
 
-    def __init__(self, group_id):
+    def __init__(self, group_id, gen_chats=true):
 
-        self.group_id = group_id
-
-        self.group = self.getGroup(group_id)
-
-        self.title = self.group.name
-
+        self.group = client.groups.get(group_id)
         self.savedNames = {}
+        self.hasChats = False
+        self.chats = {} # player_id -> chat
 
-    def getGroup(self, group_id):
-        try:
-            groups = [g for g in groupy.Group.list() if g.group_id == group_id]
-        except groupy.api.errors.GroupMeError:
-            log("FAILED TO GET GROUP")
-            return False
-        if len(groups) >= 1:
-            return groups[0]
-        else:
-            log("Could not find group with id " + group_id)
+        if gen_chats:
+            self.chats = self.genChats(client)
+
+    # def getGroup(self, group_id):
+    #     try:
+    #         groups = [g for g in groupy.Group.list() if g.group_id == group_id]
+    #     except groupy.api.errors.GroupMeError:
+    #         log("FAILED TO GET GROUP")
+    #         return False
+    #     if len(groups) >= 1:
+    #         return groups[0]
+    #     else:
+    #         log("Could not find group with id " + group_id)
+
+    def genChats(self, client_):
+        chat_list = list(client.chats.list_all())
+        for chat in chat_list:
+            self.chats[chat.id] = chat
+        self.hasChats = True
 
     def cast(self, msg):
         try:
-            msg_dict = groupyEP.Messages.create(self.group_id, msg)
-        except groupy.api.errors.GroupMeError:
-            log("Failed to Cast")
+            message = self.group.post(msg)
+        except groupy.exceptions.GroupyError as e:
+            log("Failed to Cast: {}".format(e))
             return False
-        log("CAST "+self.title+": "+msg)
-        return msg_dict["message"]["id"]
+        log("CAST "+self.group.name+": "+msg)
+        return message.id
 
     def ack(self, message_id):
         try:
-            groupyEP.Likes.create(self.group_id, message_id)
-        except groupy.api.errors.GroupMeError:
+            self.group.messages.Likes.like(self.group.id, message_id)
+        except groupy.exceptions.GroupyError:
             log("Failed to Ack")
             return False
-        log("ACK  "+self.title+": "+message_id)
+        log("ACK  "+self.group.name+": "+message_id)
         return True
 
     def getAcks(self, message_id):
         try:
-            self.group.refresh()
-        except:
+            self.group.update()
+        except groupy.exceptions.GroupyError as e:
+            log("Failed to get acks: {}".format(e))
             return self.getAcks(message_id)
         msg_id = str(int(message_id)-1) # Subtract 1 so that our message shows up
-        for msg in self.group.messages(after=msg_id):
+        for msg in self.group.messages.list_after(msg_id):
             if msg.id == message_id:
-                return msg.likes()
+                return msg.favorited_by
         return []
 
     def send(self, msg, player_id):
-   #     try:
-        groupy.api.
-        groupyEP.DirectMessages.create(player_id, msg)
-        #except groupy.api.errors.GroupMeError as e:
-            #log("Failed to SEND" + str(e) + str(dir(e)))
-            #return False
-        log("SEND "+self.title+", "+player_id+": "+msg)
-        return True
+        if self.hasChats:
+            try:
+                self.chats[player_id].post(msg)
+            except groupy.exceptions.GroupyError as e:
+                log("Failed to SEND: {}".format(e))
+                return False
+            log("SEND "+self.title+", "+player_id+": "+msg)
+            return True
+        else:
+            return False
 
     def setTitle(self, new_title):
-        msg = "TITLE "+self.title+"->"
-
-        self.title = new_title
-        groupyEP.Groups.update(self.group_id, name=new_title)
-
-        msg += self.title
+        msg = "TITLE "+self.group.name+"->"
+        self.group.update(name=new_title)
+        msg += self.group.name
 
         log(msg)
         return True
 
+    # TODO: just process name change mesages
     def getName(self,member_id):
         if member_id in self.savedNames and random.random() > NAME_REPLACE_RATIO:
             return self.savedNames[member_id]
         try:
-            self.group.refresh()
-        except:
-            self.getName(member_id)
-        members = self.group.members()
+            self.group.update()
+        except groupy.exceptions.GroupyError as e:
+            self.getName(member_id) # TODO: this is dangerous
+        members = self.group.members
         for m in members:
             if m.user_id == member_id:
                 self.savedNames[member_id] = m.nickname
@@ -194,33 +207,54 @@ class GroupComm(MComm):
         return "__"
 
     def add(self, player_id):
-        try:
-            self.group.add({'user_id':player_id})
-            log("ADD  {}: {}".format(self.title,player_id))
-        except Exception as e:
-            print("ERROR ADDING PLAYER:{}".format(e))
-            self.add(player_id)
-        return True
+
+        if type(player_id) == list:
+            users = []
+            for p_id in player_id:
+                nickname = None
+                if self.hasChats:
+                    nickname = self.chats[p_id].other_user.name
+                users.append({'nickname':nickname,'user_id':p_id})
+            try:
+                self.group.memberships.add_multiple(users)
+                for user in users:
+                    self.savedNames[user['user_id']] = user['nickname']
+            except groupy.exceptions.GroupyError as e:
+                log("Failed to add: {}".format(e))
+                return False
+            return True
+        else:
+            nickname = None
+            if self.hasChats:
+                nickname = self.chats[player_id].other_user.name
+            try:
+                self.group.memberships.add(nickname, user_id=player_id)
+                self.savedNames[player_id] = nickname
+                log("ADD  {}: {}".format(self.group.name,player_id))
+            except groupy.exceptions.GroupyError as e:
+                print("ERROR ADDING PLAYER:{}".format(e))
+                return False
+            #self.add(player_id)
+            return True
 
     def remove(self, player_id):
         try:
-            self.group.refresh()
-        except:
-            self.remove(player_id)
-        for mem in self.group.members():
-            if mem.user_id == player_id:
-                self.group.remove(mem)
+            self.group.update()
+            self.group.memberships.remove(player_id)
+        except groupy.exceptions.GroupyError as e:
+            log("Failed to remove player: {}".format(e))
+            return False
         log("RM   {}: {}".format(self.title,player_id))
         return True
 
     def clear(self, saveList=[]):
         try:
-            self.group.refresh()
-        except:
-            self.clear(saveList)
-        for mem in self.group.members():
-            if not (mem.user_id in saveList or mem.user_id == MODERATOR):
-                self.group.remove(mem)
+            self.group.update()
+        except groupy.exceptions.GroupyError as e:
+            log("Failed to clear group: {}".format(e))
+            return False
+        for mem_id in saveList:
+            self.remove(mem_id)
         log("CLEAR {}".format(self.title))
         return True
 
