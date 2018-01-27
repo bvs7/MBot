@@ -183,9 +183,9 @@ class MController:
 
         toAdd = self.lobbyComm.getAcks(self.start_message_id)
 
-        for member in toAdd:
-            if not member.user_id in self.nextIds:
-                self.nextIds.append(member.user_id)
+        for member_id in toAdd:
+            if not member_id in self.nextIds:
+                self.nextIds.append(member_id)
 
         if len(self.nextIds) >= 3 and len(self.nextIds) >= self.minplayers:
             if len(self.availComms) >= 2:

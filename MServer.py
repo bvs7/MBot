@@ -21,6 +21,7 @@ class MServer:
         self.MStateType = MStateType
 
         self.ctrl = MController(self.MCommType(LOBBY_GROUP_ID), GROUP_IDS, GroupComm)
+        log("MServer start", 3)
 
     def do_POST(self,post):
         """Process a POST request from bots watching the chats"""
@@ -43,11 +44,11 @@ class MServer:
                 log("KeyError:" + str(e))
                 return
 
-            if group_id == self.ctrl.lobbyComm.group_id:
+            if group_id == self.ctrl.lobbyComm.group.id:
                 if words[0] in self.ctrl.LOBBY_OPS:
                     return self.ctrl.LOBBY_OPS[words[0]](player_id,words,message_id)
             for mstate in self.ctrl.mstates:
-                if group_id == mstate.mainComm.group_id:
+                if group_id == mstate.mainComm.group.id:
                     if words[0] in self.ctrl.MAIN_OPS:
 
                         # CHECK FOR A VOTE
@@ -71,7 +72,7 @@ class MServer:
                                 return False
 
                         return self.ctrl.MAIN_OPS[words[0]](mstate,player_id,words,message_id)
-                elif group_id == mstate.mafiaComm.group_id:
+                elif group_id == mstate.mafiaComm.group.id:
                     if words[0] in self.ctrl.MAFIA_OPS:
                         return self.ctrl.MAFIA_OPS[words[0]](mstate,player_id,words,message_id)
 
