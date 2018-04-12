@@ -124,7 +124,6 @@ class GroupComm(MComm):
         log("Creating Group", 3)
         self.group = client.groups.get(group_id)
         self.savedNames = {}
-        self.clear()
 
     def genChats(self, client_):
         chats = {}
@@ -235,7 +234,8 @@ class GroupComm(MComm):
             self.group = client.groups.get(self.group.id)
             memberlist = [m for m in self.group.members if m.user_id == player_id]
             for member in memberList:
-                member.remove()
+                if member.user_id != MODERATOR:
+                    member.remove()
         except groupy.exceptions.GroupyError as e:
             log("Failed to remove player: {}".format(e))
             return False
@@ -249,7 +249,8 @@ class GroupComm(MComm):
             log("Failed to clear group: {}".format(e))
             return False
         for member in self.group.members:
-            member.remove()
+            if member.user_id != MODERATOR:
+                member.remove()
         log("CLEAR {}".format(self.group.name))
         return True
 
