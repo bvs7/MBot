@@ -124,26 +124,14 @@ class GroupComm(MComm):
         log("Creating Group", 3)
         self.group = client.groups.get(group_id)
         self.savedNames = {}
-        self.chats = self.genChats()
 
-    # def getGroup(self, group_id):
-    #     try:
-    #         groups = [g for g in groupy.Group.list() if g.group_id == group_id]
-    #     except groupy.api.errors.GroupMeError:
-    #         log("FAILED TO GET GROUP")
-    #         return False
-    #     if len(groups) >= 1:
-    #         return groups[0]
-    #     else:
-    #         log("Could not find group with id " + group_id)
-
-    def genChats(self):
+    def genChats(self, client_):
         chats = {}
         chat_list = list(client.chats.list_all())
         for chat in chat_list:
             chats[chat.other_user['id']] = chat
         return chats
-       
+
 
     def cast(self, msg):
         try:
@@ -189,7 +177,7 @@ class GroupComm(MComm):
             return False
         log("SEND "+self.group.name+", "+player_id+": "+msg)
         return True
-        
+
     def setTitle(self, new_title):
         msg = "TITLE "+self.group.name+"->"
         self.group.update(name=new_title)
@@ -219,7 +207,7 @@ class GroupComm(MComm):
         if type(player_id) == list:
             users = []
             for p_id in player_id:
-                nickname = self.chats[p_id].other_user.name
+                nickname = self.chats[p_id].other_user["name"]
                 users.append({'nickname':nickname,'user_id':p_id})
             try:
                 self.group.memberships.add_multiple(users)
@@ -231,7 +219,7 @@ class GroupComm(MComm):
             return True
         else:
             nickname = None
-            nickname = self.chats[player_id].other_user.name
+            nickname = self.chats[player_id].other_user["name"]
             try:
                 self.group.memberships.add(nickname, user_id=player_id)
                 self.savedNames[player_id] = nickname
