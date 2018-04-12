@@ -202,24 +202,15 @@ class GroupComm(MComm):
         log("Failed to get Name")
         return "__"
 
-    def add(self, player_id):
+    def add(self, player_id, nickname):
 
         if type(player_id) == list:
             users = []
             for p_id in player_id:
-                nickname = chats[p_id].other_user["name"]
-                users.append({'nickname':nickname,'user_id':p_id})
-            try:
-                self.group.memberships.add_multiple(users)
-                for user in users:
-                    self.savedNames[user['user_id']] = user['nickname']
-            except groupy.exceptions.GroupyError as e:
-                log("Failed to add: {}".format(e))
-                return False
+                self.group.memberships.add(nickname, user_id=p_id);
+                self.savedNames[p_id] = nickname
             return True
         else:
-            nickname = None
-            nickname = chats[player_id].other_user["name"]
             try:
                 self.group.memberships.add(nickname, user_id=player_id)
                 self.savedNames[player_id] = nickname
