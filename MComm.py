@@ -124,6 +124,7 @@ class GroupComm(MComm):
         log("Creating Group", 3)
         self.group = client.groups.get(group_id)
         self.savedNames = {}
+        self.chats = self.genChats()
 
     # def getGroup(self, group_id):
     #     try:
@@ -136,7 +137,7 @@ class GroupComm(MComm):
     #     else:
     #         log("Could not find group with id " + group_id)
 
-    def genChats(self, client_):
+    def genChats(self):
         chats = {}
         chat_list = list(client.chats.list_all())
         for chat in chat_list:
