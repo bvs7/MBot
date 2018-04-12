@@ -124,6 +124,7 @@ class GroupComm(MComm):
         log("Creating Group", 3)
         self.group = client.groups.get(group_id)
         self.savedNames = {}
+        self.clear()
 
     def genChats(self, client_):
         chats = {}
