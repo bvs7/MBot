@@ -207,7 +207,7 @@ class GroupComm(MComm):
         if type(player_id) == list:
             users = []
             for p_id in player_id:
-                nickname = self.chats[p_id].other_user["name"]
+                nickname = chats[p_id].other_user["name"]
                 users.append({'nickname':nickname,'user_id':p_id})
             try:
                 self.group.memberships.add_multiple(users)
@@ -219,7 +219,7 @@ class GroupComm(MComm):
             return True
         else:
             nickname = None
-            nickname = self.chats[player_id].other_user["name"]
+            nickname = chats[player_id].other_user["name"]
             try:
                 self.group.memberships.add(nickname, user_id=player_id)
                 self.savedNames[player_id] = nickname
