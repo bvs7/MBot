@@ -232,7 +232,9 @@ class GroupComm(MComm):
     def remove(self, player_id):
         try:
             self.group = client.groups.get(self.group.id)
-            self.group.memberships.remove(player_id)
+            memberlist = [m for m in self.group.members if m.user_id == player_id]
+            for member in memberList:
+                member.remove()
         except groupy.exceptions.GroupyError as e:
             log("Failed to remove player: {}".format(e))
             return False
@@ -245,8 +247,8 @@ class GroupComm(MComm):
         except groupy.exceptions.GroupyError as e:
             log("Failed to clear group: {}".format(e))
             return False
-        for mem_id in saveList:
-            self.remove(mem_id)
+        for member in self.group.members:
+            member.remove()
         log("CLEAR {}".format(self.group.name))
         return True
 
