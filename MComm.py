@@ -247,7 +247,7 @@ class GroupComm(MComm):
         except groupy.exceptions.GroupyError as e:
             log("Failed to remove player: {}".format(e))
             return False
-        log("RM   {}: {}".format(self.title,player_id))
+        log("RM   {}: {}".format(self.group.name,player_id))
         return True
 
     def clear(self, saveList=[]):
@@ -258,8 +258,8 @@ class GroupComm(MComm):
             return False
         for mem_id in saveList:
             self.remove(mem_id)
-        log("CLEAR {}".format(self.title))
+        log("CLEAR {}".format(self.group.name))
         return True
 
     def __str__(self):
-        return "[{}, {}]".format(self.title,self.group_id)
+        return "[{}, {}]".format(self.group.name,self.group.id)
