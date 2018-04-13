@@ -134,6 +134,7 @@ class GroupComm(MComm):
 
 
     def cast(self, msg):
+	time.sleep(1)
         try:
             message = self.group.post(msg)
         except groupy.exceptions.GroupyError as e:
@@ -169,6 +170,7 @@ class GroupComm(MComm):
         return []
 
     def send(self, msg, player_id):
+	time.sleep(1)
         try:
             log("SENDING",3)
             chats[player_id].post(text=msg)
@@ -232,7 +234,7 @@ class GroupComm(MComm):
     def remove(self, player_id):
         try:
             self.group = client.groups.get(self.group.id)
-            memberlist = [m for m in self.group.members if m.user_id == player_id]
+            memberList = [m for m in self.group.members if m.user_id == player_id]
             for member in memberList:
                 if member.user_id != MODERATOR:
                     member.remove()

@@ -889,14 +889,14 @@ class MState:
                     elif self.timer_value == 0:
                         if currTime == "Day":
                             self.mainComm.cast("You are out of time")
-                            self.__toNight()
                             self.timerOn = False
                             self.timer_value = 0
+                            self.__toNight()
                         elif currTime == "Night":
                             self.mainComm.cast("Some people slept through the night")
-                            self.__toDay()
                             self.timerOn = False
                             self.timer_value = 0
+                            self.__toDay()
 
                 lastTime = currTime
                 lastDay    = currDay

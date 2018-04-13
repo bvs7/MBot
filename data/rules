@@ -1,6 +1,6 @@
+standard_roles|OFF
+start_night|EVEN
+know_if_saved|ON
 known_roles|ON
 reveal_on_death|ON
-know_if_saved|OFF
 kick_on_death|OFF
-start_night|EVEN
-standard_roles|OFF
