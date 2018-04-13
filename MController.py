@@ -217,10 +217,10 @@ class MController:
             self.lobbyComm.cast("No game to watch")
             return True
         if len(self.mstates) == 1:
-            return self.mstates[0].mainComm.add(player_id)
+            return self.mstates[0].mainComm.add(player_id, self.lobbyComm.getName(player_id))
 
         if words[1].isnumeric() and int(words[1]) < len(self.mstates):
-            return self.mstates[int(words[1])].mainComm.add(player_id)
+            return self.mstates[int(words[1])].mainComm.add(player_id, self.lobbyComm.getName(player_id))
         else:
             msg = "Watch which game? (use /watch [#]):\n"
             for m in self.mstates:
