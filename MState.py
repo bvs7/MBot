@@ -390,10 +390,10 @@ class MState:
             random.shuffle(self.players)
 
         for player in self.players:
-            self.mainComm.add(player.id, self.lobbyComm.getName(player_id))
+            self.mainComm.add(player.id, self.lobbyComm.getName(player.id))
             self.mainComm.send("You are {}\n".format(player.role)+ ROLE_EXPLAIN[player.role],player.id)
             if player.role in MAFIA_ROLES:
-                self.mafiaComm.add(player.id, self.lobbyComm.getName(player_id))
+                self.mafiaComm.add(player.id, self.lobbyComm.getName(player.id))
 
         # Get roleString for later
         self.roleString = self.__revealRoles()

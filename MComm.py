@@ -134,7 +134,7 @@ class GroupComm(MComm):
 
 
     def cast(self, msg):
-	time.sleep(1)
+        time.sleep(1)
         try:
             message = self.group.post(msg)
         except groupy.exceptions.GroupyError as e:
@@ -170,7 +170,7 @@ class GroupComm(MComm):
         return []
 
     def send(self, msg, player_id):
-	time.sleep(1)
+        time.sleep(1)
         try:
             log("SENDING",3)
             chats[player_id].post(text=msg)
