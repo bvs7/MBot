@@ -177,6 +177,9 @@ class GroupComm(MComm):
         except groupy.exceptions.GroupyError as e:
             log("Failed to SEND: {}".format(e))
             return False
+        except KeyError as e:
+            self.genChats()
+            chats[player_id].post(test=msg)
         log("SEND "+self.group.name+", "+player_id+": "+msg)
         return True
 
