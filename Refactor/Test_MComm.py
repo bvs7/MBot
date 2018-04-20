@@ -1,3 +1,4 @@
+#!/usr/bin/python3
 
 import MComm
 
@@ -9,8 +10,21 @@ if not MComm.groupy_imported:
 
 debug_group = MComm.GroupComm(DEBUG_GROUP_ID)
 
-m_id = debug_group.cast("TestCast")
+#for i in range(20):
+#  m_id = debug_group.cast("TestCast {}".format(i))
+#  debug_group.ack(m_id)
 
-debug_group.ack(m_id)
+#for i in range(20):
+#  print(debug_group.send("TestSend {}".format(i), BRIAN_USER_ID))
 
-debug_group.send("TestSend", BRIAN_USER_ID)
+print(debug_group.getName(BRIAN_USER_ID))
+
+#print(debug_group.getAcks(m_id))
+
+debug_group.add(BRIAN_USER_ID, "Brian_TEST")
+
+debug_group.clear([BRIAN_USER_ID])
+
+debug_group.clear()
+
+debug_group.add(BRIAN_USER_ID, "Brian Scaramella")
