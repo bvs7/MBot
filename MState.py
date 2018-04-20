@@ -682,7 +682,7 @@ class MState:
         self.players.clear()
 
         for winner in self.idiot_winners:
-            self.mainComm.cast(self.maiComm.getName(winner.id)+" WON!")
+            self.mainComm.cast(self.mainComm.getName(winner.id)+" WON!")
         self.idiot_winners.clear()
 
         rfp = DET_RECORDS_FILE_PATH if self.determined else RECORDS_FILE_PATH
@@ -758,51 +758,6 @@ class MState:
             if weights[0][i] == role:
                 break
         return result
-
-    def genRolesRandom(num_players):
-        """ Create a list of roles of length num_players. Totally randomized but follows a few rules """
-
-        assert(num_players >= 3)
-
-
-        if num_players == 3:
-            return ["COP","DOCTOR","MAFIA"]
-        elif num_players == 4:
-            return ["COP","DOCTOR","STRIPPER","CELEB"]
-
-        while(True):
-
-            n = 0
-            roles = []
-            num_maf = 0
-            num_town = 0
-            num_rogue = 0
-
-            odds_sum = sum(ALL_WEIGHTS[1])
-            while(n < num_players):
-                acc = 0
-                r = random.randint(1,odds_sum)
-                for i in range(len(ALL_WEIGHTS[0])):
-                    acc += ALL_WEIGHTS[1][i]
-                    if r <= acc:
-                        role = ALL_WEIGHTS[0][i]
-                        roles.append(role)
-                        n += 1
-                        if role in TOWN_ROLES:
-                            num_town += 1
-                        elif role in MAFIA_ROLES:
-                            num_maf += 1
-                        elif role in ROGUE_ROLES:
-                            num_rogue += 1
-                        break
-
-            if not (num_town > num_maf+2):
-                continue
-            if not (num_maf > 0):
-                continue
-
-            break
-        return roles
 
     def __genRoles(self, num_players):
         """ Create a list of roles of length num_players. Uses random but semi-fair assignment """
@@ -916,8 +871,6 @@ class MState:
         log("MState __str__",5)
         if self.day == 0:
             m = "Ready to start a new game.\n"
-            for p in self.nextPlayerIDs:
-                m += "{}\n".format(self.mainComm.getName(p))
         else:
             m = "GAME #{}: {} {}: ".format(self.game_num,self.time,self.day)
             if self.timerOn:
@@ -945,3 +898,48 @@ class MState:
                 m += "\nOriginal Teams:" + self.__showTeams([self.savedRoles.values()])
 
         return m
+
+def genRolesRandom(num_players):
+    """ Create a list of roles of length num_players. Totally randomized but follows a few rules """
+
+    assert(num_players >= 3)
+
+
+    if num_players == 3:
+        return ["COP","DOCTOR","MAFIA"]
+    elif num_players == 4:
+        return ["COP","DOCTOR","STRIPPER","CELEB"]
+
+    while(True):
+
+        n = 0
+        roles = []
+        num_maf = 0
+        num_town = 0
+        num_rogue = 0
+
+        odds_sum = sum(ALL_WEIGHTS[1])
+        while(n < num_players):
+            acc = 0
+            r = random.randint(1,odds_sum)
+            for i in range(len(ALL_WEIGHTS[0])):
+                acc += ALL_WEIGHTS[1][i]
+                if r <= acc:
+                    role = ALL_WEIGHTS[0][i]
+                    roles.append(role)
+                    n += 1
+                    if role in TOWN_ROLES:
+                        num_town += 1
+                    elif role in MAFIA_ROLES:
+                        num_maf += 1
+                    elif role in ROGUE_ROLES:
+                        num_rogue += 1
+                    break
+
+        if not (num_town > num_maf+2):
+            continue
+        if not (num_maf > 0):
+            continue
+
+        break
+    return roles
