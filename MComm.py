@@ -6,142 +6,79 @@
 # An new GroupComm object is created for each group used to communicate with
 
 import random
-from MInfo import *
-
 import time
 
-NAME_REPLACE_RATIO = 0.2
+from MInfo import *
+
+groupy_imported = False
 
 try:
     import groupy
-
-    # Load token
-    tokenfile = open("../.groupy.key")
+    groupy_imported = True
+    # Success. Load token
+    tokenfile = open("../../.groupy.key")
     token = tokenfile.read()
     tokenfile.close()
 
     client = groupy.Client.from_token(token)
 
-    log("Creating chats dict",3)
-    chat_list = client.chats.list_all()
+    # Create static chats
     chats = {}
-    for chat in chat_list:
+    for chat in client.chats.list_all():
         chats[chat.other_user['id']] = chat
 
+except Exception as e:
+    print("Failed to load groupy: {}".format(e))
 
-except ImportError:
-    log("FAILED TO LOAD GROUPY")
+
+RETRY_TIMES = 6
+RETRY_DELAY = 10
+NAME_REPLACE_RATIO = 0.2
 
 
-""" MComm Class Description
-
-Variables:
-    group_id
-
-Methods:
-    cast(msg)
-    ack(msg_id)
-    getAcks(msg_id)
-    send(msg, player_id)
-    setTitle(new_title)
-    getName(member_id)
-    add(player_id)
-    remove(player_id)
-    clear()
-"""
-
+""" A test class that performs the basic functionality for an MComm
+    Other MComms are subclasses of this """
 class MComm:
 
     def __init__(self,group_id):
-        """ Initialize group with given group_id """
-
-        # Unique Identifier for this group
-        self.group_id = group_id
-
-        self.title = str(group_id)
-
-        self.acks = []
+        raise NotImplementedError("MComm init")
 
     def cast(self, msg):
-        """ Send msg to this group """
-
-        log("CAST "+self.title+": "+msg)
-        return True
-
+        raise NotImplementedError("MComm cast")
     def ack(self, message_id):
-        """ Acknowledge the message given by message_id """
-        log("ACK  "+self.title+": "+str(message_id))
-        return True
-
+        raise NotImplementedError("MComm ack")
     def getAcks(self, message_id):
-        """ Get the number of acknowledgements for a message """
-        return self.acks
-
+        raise NotImplementedError("MComm getAcks")
     def send(self, msg, player_id):
-        """ Send a DM to the player with player_id """
-
-        log("SEND "+self.title+", "+player_id+": "+msg)
-        return True
-
+        raise NotImplementedError("MComm send")
     def setTitle(self, new_title):
-        """ Rename this group, publicly """
-        assert isinstance(new_title, str), "renaming not to a string"
-
-        msg = "TITLE "+self.title+"->"
-        self.title = new_title
-        msg += self.title
-
-        log(msg)
-        return True
-
+        raise NotImplementedError("MComm setTitle")
     def getName(self,member_id):
-        """ Return the name of the member with member_id """
-        return "Name of {}".format(member_id)
-
+        raise NotImplementedError("MComm getName")
     def add(self, player_id):
-        """ Add player with player_id to this group """
-        log("ADD  {}: {}".format(self.title,player_id))
-        return True
-
+        raise NotImplementedError("MComm add")
     def remove(self, player_id):
-        """ Remove player with player_id from this group """
-        log("RM   {}: {}".format(self.title,player_id))
-        return True
-
+        raise NotImplementedError("MComm remove")
     def clear(self, saveList=[]):
-        """ Remove all but those in saveList from group """
-        log("CLEAR {}".format(self.title))
-        return True
-
+        raise NotImplementedError("MComm clear")
     def __str__(self):
-        """ Return a string representing this group """
-
-        return "[{}, {}]".format(self.title,self.group_id)
+        raise NotImplementedError("MComm str")
 
 class GroupComm(MComm):
 
     def __init__(self, group_id):
-        log("Creating Group", 3)
+
         self.group = client.groups.get(group_id)
         self.savedNames = {}
 
-    def genChats(self, client_):
-        chats = {}
-        chat_list = list(client.chats.list_all())
-        for chat in chat_list:
-            chats[chat.other_user['id']] = chat
-        return chats
-
-
     def cast(self, msg):
-        time.sleep(1)
-        try:
-            message = self.group.post(msg)
-        except groupy.exceptions.GroupyError as e:
-            log("Failed to Cast: {}".format(e))
-            return False
-        log("CAST "+self.group.name+": "+msg)
-        return message.id
+        for i in range(RETRY_TIMES):
+            try:
+                m_id = self.group.post(msg).id
+                return m_id
+            except groupy.exceptions.GroupyError as e:
+                print("Failed to cast, try {}: {}".format(i,e))
+                time.sleep(RETRY_DELAY)
 
     def ack(self, message_id):
         try:
@@ -158,11 +95,7 @@ class GroupComm(MComm):
         return True
 
     def getAcks(self, message_id):
-        try:
-            self.group = client.groups.get(self.group.id)
-        except groupy.exceptions.GroupyError as e:
-            log("Failed to get acks: {}".format(e))
-            return self.getAcks(message_id)
+        self.group.refresh_from_server()
         msg_id = str(int(message_id)-1) # Subtract 1 so that our message shows up
         for msg in self.group.messages.list_after(msg_id):
             if msg.id == message_id:
@@ -170,18 +103,15 @@ class GroupComm(MComm):
         return []
 
     def send(self, msg, player_id):
-        time.sleep(1)
-        try:
-            log("SENDING",3)
-            chats[player_id].post(text=msg)
-        except groupy.exceptions.GroupyError as e:
-            log("Failed to SEND: {}".format(e))
-            return False
-        except KeyError as e:
-            self.genChats()
-            chats[player_id].post(test=msg)
-        log("SEND "+self.group.name+", "+player_id+": "+msg)
-        return True
+        for i in range(RETRY_TIMES):
+            try:
+                if not player_id in chats:
+                    chats[player_id] = groupy.api.chats.Chat(client.chats, other_user=player_id)
+                m_id = chats[player_id].post(text=msg).id
+                return m_id
+            except groupy.exceptions.GroupyError as e:
+                print("Failed to send, try {}: {}".format(i,e))
+                time.sleep(RETRY_DELAY)
 
     def setTitle(self, new_title):
         msg = "TITLE "+self.group.name+"->"
@@ -193,37 +123,29 @@ class GroupComm(MComm):
 
     # TODO: just process name change mesages
     def getName(self,member_id):
-        if member_id in self.savedNames and random.random() > NAME_REPLACE_RATIO:
+        if member_id in self.savedNames:
             return self.savedNames[member_id]
-        try:
-            self.group = client.groups.get(self.group.id)
-        except groupy.exceptions.GroupyError as e:
-            self.getName(member_id) # TODO: this is dangerous
-        members = self.group.members
-        for m in members:
+        # Update group
+        self.group.refresh_from_server()
+        for m in self.group.members:
             if m.user_id == member_id:
                 self.savedNames[member_id] = m.nickname
                 return m.nickname
-        log("Failed to get Name")
+        print("Failed to get Name")
         return "__"
 
-    def add(self, player_id, nickname):
+    def add(self, player_id, nickname=None):
 
-        if type(player_id) == list:
-            users = []
-            for p_id in player_id:
-                self.group.memberships.add(nickname, user_id=p_id);
+        if type(player_id) == str:
+            player_id = [player_id]
+
+        users = []
+        for p_id in player_id:
+            self.group.memberships.add(nickname, user_id=p_id);
+            if nickname != None:
                 self.savedNames[p_id] = nickname
-            return True
-        else:
-            try:
-                self.group.memberships.add(nickname, user_id=player_id)
-                self.savedNames[player_id] = nickname
-                log("ADD  {}: {}".format(self.group.name,player_id))
-            except groupy.exceptions.GroupyError as e:
-                print("ERROR ADDING PLAYER:{}".format(e))
-                return False
-            return True
+            else:
+                self.getName(p_id)
 
     def remove(self, player_id):
         try:
