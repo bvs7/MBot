@@ -16,7 +16,7 @@ try:
     import groupy
     groupy_imported = True
     # Success. Load token
-    tokenfile = open("../../.groupy.key")
+    tokenfile = open("../.groupy.key")
     token = tokenfile.read()
     tokenfile.close()
 
