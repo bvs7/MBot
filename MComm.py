@@ -135,17 +135,22 @@ class GroupComm(MComm):
         return "__"
 
     def add(self, player_id, nickname=None):
+        for i in range(RETRY_TIMES):
+            try:
 
-        if type(player_id) == str:
-            player_id = [player_id]
+                if type(player_id) == str:
+                    player_id = [player_id]
 
-        users = []
-        for p_id in player_id:
-            self.group.memberships.add(nickname, user_id=p_id);
-            if nickname != None:
-                self.savedNames[p_id] = nickname
-            else:
-                self.getName(p_id)
+                users = []
+                for p_id in player_id:
+                    self.group.memberships.add(nickname, user_id=p_id);
+                    if nickname != None:
+                        self.savedNames[p_id] = nickname
+                    else:
+                        self.getName(p_id)
+            except groupy.exceptions.GroupyError as e:
+                print("Failed to add, try {}: {}".format(i,e))
+                time.sleep(RETRY_DELAY)
 
     def remove(self, player_id):
         try:
