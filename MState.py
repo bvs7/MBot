@@ -453,7 +453,7 @@ class MState:
             if not player.timerOn:
                 player.timerOn = True
                 self.timer_value = self.timer_value - SET_TIMER_VALUE
-                if selt.timer_value <= 0:
+                if self.timer_value <= 0:
                     self.timer_value = 1
                 self.mainComm.cast("Timer reduced: {}".format(time.strftime("%H:%M:%S",time.gmtime(self.timer_value))))
             else:
