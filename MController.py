@@ -343,7 +343,7 @@ class MController:
         result = False
         for player in mstate.players:
             if player.id == player_id:
-                result = mstate.setTimer()
+                result = mstate.setTimer(player_id)
         return result
     
     def MAIN_untimer(self,mstate,player_id,words=[], message_id=None):

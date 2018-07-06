@@ -468,7 +468,7 @@ class MState:
     def unSetTimer(self, player_id):
         """ Stop a timer if player_id was the only one to have started it, add 5 min ow"""
         
-        player = self.getPlayer(player_id))
+        player = self.getPlayer(player_id)
         if self.timerOn:
             if not player.timerOn:
                 self.mainComm.cast("You haven't timered")
