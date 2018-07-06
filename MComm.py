@@ -106,7 +106,12 @@ class GroupComm(MComm):
         for i in range(RETRY_TIMES):
             try:
                 if not player_id in chats:
-                    chats[player_id] = groupy.api.chats.Chat(client.chats, other_user=player_id)
+                    dm = groupy.api.messages.DirectMessages(client.session, player_id)
+                    dm.create(HELP_MSG)
+                    global chats
+                    chats = {}
+                    for chat in client.chats.list_all():
+                        chats[chat.other_user['id']] = chat
                 m_id = chats[player_id].post(text=msg).id
                 return m_id
             except groupy.exceptions.GroupyError as e:
@@ -141,6 +146,11 @@ class GroupComm(MComm):
                 if type(player_id) == str:
                     player_id = [player_id]
 
+                if nickname == None:
+                    if len(player_id) == 1:
+                        nickname = chats[player_id[0]].other_user["name"]
+                nickname = None
+
                 users = []
                 for p_id in player_id:
                     self.group.memberships.add(nickname, user_id=p_id);
@@ -148,6 +158,7 @@ class GroupComm(MComm):
                         self.savedNames[p_id] = nickname
                     else:
                         self.getName(p_id)
+                return
             except groupy.exceptions.GroupyError as e:
                 print("Failed to add, try {}: {}".format(i,e))
                 time.sleep(RETRY_DELAY)

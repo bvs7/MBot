@@ -1,7 +1,7 @@
 # Represents A game of Mafia
 
 from MInfo import *
-from MComm import MComm
+from MComm import MComm, chats
 import MRoleGen
 
 import random
@@ -157,7 +157,6 @@ class MState:
         self.blocked_ids = []       # A list of ids of blocked players
 
         self.idiot_winners = []    # A list of players who won by being an idiot that was voted out
-
 
         self.timer_value = 0    # The amount of time left when timer is on
         self.timerOn = False    # if Timer is on
@@ -390,10 +389,10 @@ class MState:
             random.shuffle(self.players)
 
         for player in self.players:
-            self.mainComm.add(player.id, self.lobbyComm.getName(player.id))
             self.mainComm.send("You are {}\n".format(player.role)+ ROLE_EXPLAIN[player.role],player.id)
+            self.mainComm.add(player.id, None)
             if player.role in MAFIA_ROLES:
-                self.mafiaComm.add(player.id, self.lobbyComm.getName(player.id))
+                self.mafiaComm.add(player.id, None)
 
         # Get roleString for later
         self.roleString = self.__revealRoles()

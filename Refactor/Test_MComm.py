@@ -21,7 +21,7 @@ print(debug_group.getName(BRIAN_USER_ID))
 
 #print(debug_group.getAcks(m_id))
 
-debug_group.add(BRIAN_USER_ID, "Brian_TEST")
+debug_group.add(BRIAN_USER_ID)
 
 debug_group.clear([BRIAN_USER_ID])
 
