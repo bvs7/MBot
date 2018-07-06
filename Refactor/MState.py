@@ -1,7 +1,7 @@
 # Represents A game of Mafia
 
 from MInfo import *
-from MComm import MComm, chats
+from MComm import MComm
 import MRoleGen
 
 import random
@@ -21,7 +21,6 @@ class Player:
         self.role = role
         self.vote = vote
         self.target = target
-        self.timerOn = False
 
     def __str__(self):
         return "{} {}".format(self.id,self.role)
@@ -159,6 +158,7 @@ class MState:
 
         self.idiot_winners = []    # A list of players who won by being an idiot that was voted out
 
+
         self.timer_value = 0    # The amount of time left when timer is on
         self.timerOn = False    # if Timer is on
 
@@ -176,7 +176,6 @@ class MState:
 
     def vote(self,voter_id,votee_id):
         """ Makes voter change vote to votee, then checks for lynch. """
-        log("MState vote",3)
         if not self.time == "Day":
             log("{} couldn't vote for {}: Not Day".format(voter_id,votee_id))
             self.mainComm.cast("Can't vote at Night")
@@ -390,10 +389,10 @@ class MState:
             random.shuffle(self.players)
 
         for player in self.players:
+            self.mainComm.add(player.id, self.lobbyComm.getName(player.id))
             self.mainComm.send("You are {}\n".format(player.role)+ ROLE_EXPLAIN[player.role],player.id)
-            self.mainComm.add(player.id, None)
             if player.role in MAFIA_ROLES:
-                self.mafiaComm.add(player.id, None)
+                self.mafiaComm.add(player.id, self.lobbyComm.getName(player.id))
 
         # Get roleString for later
         self.roleString = self.__revealRoles()
@@ -445,45 +444,16 @@ class MState:
         else:
             raise Exception("Couldn't find player from {}".format(p))
 
-    def setTimer(self, player_id):
-        """ Start an N * 5 minute timer where N is number of players, or reduce timer by 5 minutes """
-        
-        player = self.getPlayer(player_id)
-        if self.timerOn:
-            if not player.timerOn:
-                player.timerOn = True
-                self.timer_value = self.timer_value - SET_TIMER_VALUE
-                if selt.timer_value <= 0:
-                    self.timer_value = 1
-                self.mainComm.cast("Timer reduced: {}".format(time.strftime("%H:%M:%S",time.gmtime(self.timer_value))))
-            else:
-                self.mainComm.cast("You have already timered")
-        else:
+    def setTimer(self):
+        """ Start a 5 minute timer. At the end of which the game will automatically progress. """
+        log("MState setTimer",3)
+        if not (self.timerOn or self.day == 0):
             self.timerOn = True
-            player.timerOn = True
-            self.timer_value = len(self.players) * SET_TIMER_VALUE
-            self.mainComm.cast("Timer started: {}".format(time.strftime("%H:%M:%S",time.gmtime(self.timer_value))))
-        return True
-    
-    def unSetTimer(self, player_id):
-        """ Stop a timer if player_id was the only one to have started it, add 5 min ow"""
-        
-        player = self.getPlayer(player_id))
-        if self.timerOn:
-            if not player.timerOn:
-                self.mainComm.cast("You haven't timered")
-            else:
-                player.timerOn = False
-                timerers = [p for p in players if p.timerOn]
-                if len(timerers) <= 0:
-                    self.timerOn = False
-                    self.mainComm.cast("Timer halted")
-                else:
-                    self.timer_value += SET_TIMER_VALUE
-                    self.mainComm.cast("Timer extended: {}".format(time.strftime("%H:%M:%S",time.gmtime(self.timer_value))))
+            self.timer_value = SET_TIMER_VALUE
+            self.mainComm.cast("Timer Started. Five minutes left")
+            return True
         else:
-            self.mainComm.cast("untimer? I hardly know 'er!")
-        return True
+            return False
 
 
     #### HELPER FN ####
@@ -866,11 +836,7 @@ class MState:
                     if((not currDay == 0) and currTime == lastTime and currDay == lastDay):
                         self.timer_value -= 1
                 if self.timerOn:
-                    if self.timer_value == 10 * 60:
-                        self.mainComm.cast("Ten minutes remaining")
-                    elif self.timer_value == 5 * 60:
-                        self.mainComm.cast("Five minutes remaining (tick tock, bish)")
-                    elif self.timer_value == 60:
+                    if self.timer_value == 60:
                         self.mainComm.cast("One minute remaining, one minute")
                     elif self.timer_value == 20:
                         self.mainComm.cast("Twenty Seconds")
@@ -907,7 +873,7 @@ class MState:
         else:
             m = "GAME #{}: {} {}: ".format(self.game_num,self.time,self.day)
             if self.timerOn:
-                m += time.strftime("%H:%M:%S",time.gmtime(self.timer_value))
+                m += time.strftime("%M:%S",time.gmtime(self.timer_value))
             m += "\n"
             for player in self.players:
                 m += self.mainComm.getName(player.id) + " : "

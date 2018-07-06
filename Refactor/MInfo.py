@@ -126,7 +126,7 @@ SCORE_MATRIX ={
                    "standard_roles" :{"COP_DOC":0,"OFF":0},},
     "MILLER"    : {"BASE":0, "TOWN":0, "COP":0, "DOCTOR":0, "CELEB":0, "MILLER":0,
                    "MAFIA":0, "GODFATHER":0, "STRIPPER":0, "IDIOT":0,
-                   "known_roles"    :{"ON":10,"TEAM":-5,"OFF":-5},
+                   "known_roles"    :{"ON":10,"TEAM":0,"OFF":-5},
                    "reveal_on_death":{"ON":5,"TEAM":5,"OFF":0},
                    "standard_roles" :{"COP_DOC":0,"OFF":0},},
     "MAFIA"     : {"BASE":-35,"TOWN":0, "COP":0, "DOCTOR":0, "CELEB":0, "MILLER":0,
@@ -136,7 +136,7 @@ SCORE_MATRIX ={
                    "standard_roles" :{"COP_DOC":0,"OFF":0},},
     "GODFATHER" : {"BASE":-40,"TOWN":0, "COP":0, "DOCTOR":0, "CELEB":0, "MILLER":0,
                    "MAFIA":0, "GODFATHER":0, "STRIPPER":0, "IDIOT":0,
-                   "known_roles"    :{"ON":0,"TEAM":-20,"OFF":-20},
+                   "known_roles"    :{"ON":0,"TEAM":0,"OFF":0},
                    "reveal_on_death":{"ON":0,"TEAM":0,"OFF":0},
                    "standard_roles" :{"COP_DOC":0,"OFF":0},},
     "STRIPPER"  : {"BASE":-30,"TOWN":0, "COP":-10, "DOCTOR":-10, "CELEB":-5, "MILLER":0,
@@ -204,7 +204,6 @@ VOTE_KW     = 'vote'
 STATUS_KW   = 'status'
 HELP_KW     = 'help'
 TIMER_KW    = 'timer'
-UNTIMER_KW  = 'untimer'
 LEAVE_KW    = 'leave'
 
 TARGET_KW   = 'target'
