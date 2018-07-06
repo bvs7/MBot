@@ -203,6 +203,7 @@ VOTE_KW     = 'vote'
 STATUS_KW   = 'status'
 HELP_KW     = 'help'
 TIMER_KW    = 'timer'
+UNTIMER_KW  = 'untimer'
 LEAVE_KW    = 'leave'
 
 TARGET_KW   = 'target'

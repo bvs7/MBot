@@ -62,6 +62,7 @@ class MController:
                          HELP_KW   : self.MAIN_help  ,
                          LEAVE_KW  : self.MAIN_leave ,
                          TIMER_KW  : self.MAIN_timer ,
+                         UNTIMER_KW: self.MAIN_untimer,
                          }
 
         # Mafia OPS
@@ -337,12 +338,20 @@ class MController:
             mstate.mainComm.remove(player_id)
         return True
 
-    def MAIN_timer(self,mstate,player_id=None,words=[], message_id=None):
+    def MAIN_timer(self,mstate,player_id,words=[], message_id=None):
         mstate.mainComm.ack(message_id)
         result = False
         for player in mstate.players:
             if player.id == player_id:
                 result = mstate.setTimer()
+        return result
+    
+    def MAIN_untimer(self,mstate,player_id,words=[], message_id=None):
+        mstate.mainComm.ack(message_id)
+        result = False
+        for player in mstate.players: #Ensure that only players can timer
+            if player.id == player_id:
+                result = mstate.unSetTimer(player_id)
         return result
 
     # MAFIA ACTIONS
