@@ -474,7 +474,7 @@ class MState:
                 self.mainComm.cast("You haven't timered")
             else:
                 player.timerOn = False
-                timerers = [p for p in players if p.timerOn]
+                timerers = [p for p in self.players if p.timerOn]
                 if len(timerers) <= 0:
                     self.timerOn = False
                     self.mainComm.cast("Timer halted")
@@ -581,7 +581,11 @@ class MState:
     def __toDay(self):
         """ Change state to day, realizing the mafia's target and all other targets. """
         log("MState __toDay",4)
-
+        
+        self.timerOn = False
+        for player in self.players:
+            player.timerOn = False
+        
         self.time = "Day"
         self.day = self.day + 1
         self.mainComm.cast("Uncertainty dawns, as does this day")
@@ -648,7 +652,6 @@ class MState:
 
         self.record("DAY " + str(self.day))
         self.__clearTargets()
-        self.timerOn = False
         return True
 
     def __toNight(self):
@@ -657,6 +660,8 @@ class MState:
         self.record("NIGHT " + str(self.day))
 
         self.timerOn = False
+        for player in self.players:
+            player.timerOn = False
 
         self.time = "Night"
         for p in self.players:
