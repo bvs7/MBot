@@ -62,6 +62,7 @@ class MController:
                          HELP_KW   : self.MAIN_help  ,
                          LEAVE_KW  : self.MAIN_leave ,
                          TIMER_KW  : self.MAIN_timer ,
+                         UNTIMER_KW: self.MAIN_untimer,
                          }
 
         # Mafia OPS
