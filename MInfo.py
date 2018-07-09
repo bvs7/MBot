@@ -273,6 +273,7 @@ MAIN_HELP_MSG_COMMANDS = (
     "/vote [votee]\n"
     "/status\n"
     "/timer\n"
+    "/untimer\n"
     "/help [subject]\n"
 )
 
@@ -293,7 +294,15 @@ MAIN_HELP_MSG_STATUS = (
 
 MAIN_HELP_MSG_TIMER = (
     "/timer\n"
-    "Start a 5 minute timer, at the end of which is nokill. A little broken rn."
+    "Start a n*5 minute timer where n is the number of living players. "
+    "If the timer is already started, reduce its time by 5 minutes. "
+    "When the timer runs out, the day or night forcibly progresses."
+)
+
+MAIN_HELP_MSG_UNTIMER = (
+    "/untimer\n"
+    "If you have already /timered, then extend the timer by 5 minutes. "
+    "If everyone /untimers, then the timer is halted."
 )
 
 MAFIA_HELP_MSG = (
@@ -341,6 +350,7 @@ DM_HELP_MSG_WATCH = "In Lobby Chat:\n"+LOBBY_HELP_MSG_WATCH
 DM_HELP_MSG_RULE = "In Lobby Chat:\n"+LOBBY_HELP_MSG_RULE
 DM_HELP_MSG_VOTE = "In Main Chat:\n"+MAIN_HELP_MSG_VOTE
 DM_HELP_MSG_TIMER = "In Main Chat:\n"+MAIN_HELP_MSG_TIMER
+DM_HELP_MSG_UNTIMER= "In Main Chat:\n"+MAIN_HELP_MSG_UNTIMER
 DM_HELP_MSG_TARGET = (
     "In Mafia Chat:\n"+MAFIA_HELP_MSG_TARGET +
     "\nIf you are COP or DOCTOR, use /target [letter] to investigate/save someone here.\n"
@@ -444,6 +454,7 @@ MAIN_HELP_MSGS={
     "vote":     MAIN_HELP_MSG_VOTE,
     "status":   MAIN_HELP_MSG_STATUS,
     "timer":    MAIN_HELP_MSG_TIMER,
+    "untimer":  MAIN_HELP_MSG_UNTIMER,
 }
 
 MAFIA_HELP_MSGS={
@@ -465,6 +476,7 @@ DM_HELP_MSGS = {
     "rule":     DM_HELP_MSG_RULE,
     "vote":     DM_HELP_MSG_VOTE,
     "timer":    DM_HELP_MSG_TIMER,
+    "untimer":  DM_HELP_MSG_UNTIMER,
     "target":   DM_HELP_MSG_TARGET,
     "options":  DM_HELP_MSG_OPTIONS,
     "reveal":   DM_HELP_MSG_REVEAL,
