@@ -272,7 +272,11 @@ class MState:
             log("{} failed to target {}: {}".format(player.id, target_option, e))
             return False
 
-        self.mainComm.send("It is done, targeted {}".format(target_option),player.id)
+		if player.role == "MILKY" and player.target == player:
+		    self.mainComm.send("Ewwww please don't milk yourself in front of me", player.id)
+			return True
+			
+		self.mainComm.send("It is done, targeted {}".format(target_option),player.id)
 
         if type(target) == Player:
             target_id = target.id
@@ -484,7 +488,11 @@ class MState:
         else:
             self.mainComm.cast("untimer? I hardly know 'er!")
         return True
+		
+	def giveNewMilk(self, sender, reciever):
+	    """ Give milk from milky sender to the reciever """
 
+		self.mainComm.cast("{} recieved milk in the night!".format(reciever.name))
 
     #### HELPER FN ####
 
@@ -634,6 +642,14 @@ class MState:
         else:
             msg = ("A peculiar feeling drifts about... everyone is still alive...")
             self.mainComm.cast(msg)
+			
+		# If milky is still alive and has given milk
+		for p in self.players:
+		    if p.role == "MILKY" and (not p.target in [None, self.null]) and p.target in self.players:
+			    if p.id in self.blocked_ids:
+				    self.mainComm.send("You were distracted", p.id)
+				else:
+				    self.giveNewMilk(p, p.target)
 
         # If cop is still alive and has chosen a target
         for p in self.players:
@@ -666,6 +682,7 @@ class MState:
         self.time = "Night"
         for p in self.players:
             p.vote = None
+		    
         self.mainComm.cast("Night falls and everyone sleeps")
         self.mafiaComm.cast("As the sky darkens, so too do your intentions. "
                             "Pick someone to kill")
@@ -680,6 +697,16 @@ class MState:
             elif p.role == "STRIPPER":
                 self.send_options("Use /target letter (i.e. /target A) "
                                   "to pick someone to distract",p.id)
+			elif p.role == "MILKY":
+			    self.send_options("Use /target letter (i.e. /target B) "
+				                  "to pick someone to recieve milk",p.id)
+
+		if self.pref.book["auto_timer"] in ["NIGHT"]:
+		    self.timerOn = True
+			for player in self.players:
+				player.timerOn = True
+			self.timer_value = SET_TIMER_VALUE
+			
         return True
 
     def __clearTargets(self):
@@ -743,9 +770,14 @@ class MState:
         """ Make a string of the original roles that the game started with. """
         log("MState __revealRoles",4)
         r = "GG, here were the roles:"
-        for player_id,role in self.savedRoles.items():
+		
+		savedRolesSortedKeys = sorted(self.savedRoles, key=(lambda x: ALL_ROLES.index(self.savedRoles[x])))
+		
+        for player_id in self.savedRolesSortedKeys:
+		    role = self.savedRoles[player_id]
             r += "\n" + self.mainComm.getName(player_id) + ": " + role
         return r
+		
 
     def __showRoles(self,roles):
         """ Make a string which describes the number of players with each role. """
@@ -758,7 +790,8 @@ class MState:
             else:
                 roleDict[role] = 1
         msg = ""
-        for role in roleDict:
+        for role in ALL_ROLES:
+		    if roleDict[role] > 0:
                 msg += "\n" + role + ": " + str(roleDict[role])
         return msg
 
@@ -772,14 +805,15 @@ class MState:
                 teamDict["Mafia"] += 1
             elif role in TOWN_ROLES:
                 teamDict["Town"] += 1
-            elif role == "IDIOT":
-                if not "Unaligned" in teamDict:
-                    teamDict["Unaligned"] = 0
-                teamDict["Unaligned"] += 1
+            elif role == ROGUE_ROLES:
+                if not "Rogue" in teamDict:
+                    teamDict["Rogue"] = 0
+                teamDict["Rogue"] += 1
 
         msg = ""
-        for key in teamDict:
-            msg += "\n" + key + ": " + str(teamDict[key])
+        for key in TEAMS:
+		    if key in teamDict:
+                msg += "\n" + key + ": " + str(teamDict[key])
         return msg
 
 
@@ -914,7 +948,9 @@ class MState:
             if self.timerOn:
                 m += time.strftime("%H:%M:%S",time.gmtime(self.timer_value))
             m += "\n"
-            for player in self.players:
+            for player in sorted(self.players, key=lambda p: p.name):
+			    if player.timerOn:
+				    m += "[t!] "
                 m += self.mainComm.getName(player.id) + " : "
                 count = 0
                 for voter in [v for v in self.players if v.vote == player]:
