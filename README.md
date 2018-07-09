@@ -85,18 +85,21 @@ Now the game is in the "Day" phase. During this time, everybody votes for somebo
 
 ## TODO
 
-- [ ] Deescalation - If a group goes `/in` for the next game, but _x_ time passes without anything happening, drop them all. This will prevent people from joining a game accidentally while they are busy.
-	- [ ] Lock - A player can lock themself in to avoid getting dropped.
 - [x] Known Roles - Make an option for the roles (but not the players who have them) to be shared at the beginning of the game.
 - [x] Reveal on Death - Make an option for a person's role to be revealed when they die.
-  - [ ] Preferences - Decide on a way to choose how preferences are done at the beginning of each game
-- [ ] Masons - A new role. Masons share a chat and know each other are confirmed town.
-- [ ] NPC - MODERATOR will play and be a very basic player, voting almost randomly and saying funny things.
-- [ ] Rule Voting - A system by which players in the lobby can vote on implementations of new rules.
+- [ ] Nickname Updates - Make nicknames stored in MState update when someone changes their nickname
 - [ ] Records - The results of each game are saved to help adjust for fairness and find problems.
-- [ ] Single Game MStates - Have an MState object be created with the start of a game and end with it finishing.
-- [ ] New Game Chats and Bots - Instead of reusing the same chats all the time, make a new chat for each game, deleting it after.
-  - [ ] Multi-Game - Allow multiple games to occur at once in different chats.
-    - [ ] Instance GroupyComms - Have GroupyComms be independent, having their own Main groups, mafia groups, etc, and be able to cast to them all without knowing ids
-  - [ ] Game Timeout - If a game takes longer than 24 hours, end it early. To prevent forgotten games.
-- [ ] Update Help text
+  - [ ] Auto Records - Update the record system after each game finishes
+  - [ ] Record Types - Decide what should be kept track of during games and how to keep track of it
+  - [ ] Record Viewer - Design and Create an intuitive way to view records that avoids spam
+- [x] Better Timer - Make a timer that is flexible and less disastrous than a five minute permanent timer.
+  - [x] Untimer - Implement the untimer command so that a timer can be stopped
+  - [ ] Timers status - Add the status of who has started a timer to status
+  - [ ] Auto night timer option - Create a new rule that can make timer on at night by default
+- [ ] MILKY - Create a new role that gives milk to someone each night (possibly a role modifier?)
+  - [ ] Implement permenant statistics (like milk)
+- [ ] Make new options for IDIOT kills
+  - [ ] Game ends when IDIOT is killed :(
+  - [ ] IDIOT gets to revenge kill someone who voted for them when they are killed
+  - [ ] IDIOT gets to revenge kill a non-MAFIA aligned player that voted for them
+- [ ] GUARD - Create a new Rogue role whos goal is to help someone else survive to the end of the game.
