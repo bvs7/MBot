@@ -84,6 +84,12 @@ ROLE_EXPLAIN= {
                   " and a distracted CELEB can't reveal for a full day!")
     }
 
+# GAME MESSAGES
+START_GAME_MESSAGE_MAIN = ("Dawn. Of the game and of this new day. You have learned that scum "
+                      "reside in this town... A scum you must purge. Kill Someone!")
+                      
+START_GAME_MESSAGE_MAFIA = "Heyo this is maf chat get it done chaos yeah"
+
 # ROLE GENERATION
 
 BASE_SCORE = -7
