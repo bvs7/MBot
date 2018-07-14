@@ -84,7 +84,9 @@ ROLE_EXPLAIN= {
                   "During the night, they can distract one person. This person can't"
                   " do their job that night (and possibly the following day). "
                   "A distracted COP learns nothing, a distracted DOCTOR can't save,"
-                  " and a distracted CELEB can't reveal for a full day!")
+                  " and a distracted CELEB can't reveal for a full day!"),
+    "MILKY"  : ("The MILKY gives out some milk to someone every night. Other than "
+                "that they are a normal townsperson. Don't milk yourself!"),
     }
 
 # ROLE GENERATION
@@ -101,6 +103,7 @@ ROLE_SCORES = {
     "CELEB"     :  2,
     "MILLER"    :  0,
     "STRIPPER"  : -5,
+    "MILKY"     :  2,
 }
 
 SCORE_ROLES = ("known_roles","reveal_on_death","")
@@ -152,7 +155,7 @@ SCORE_MATRIX ={
                    "known_roles"    :{"ON":10,"TEAM":10,"OFF":0},
                    "reveal_on_death":{"ON":0,"TEAM":0,"OFF":0},
                    "standard_roles" :{"COP_DOC":0,"OFF":0},},
-	"MILKY"     : {"BASE":25, "TOWN":0, "COP":0, "DOCTOR":0, "CELEB":0, "MILLER":0,
+    "MILKY"     : {"BASE":25, "TOWN":0, "COP":0, "DOCTOR":0, "CELEB":0, "MILLER":0,
                    "MAFIA":0, "GODFATHER":0, "STRIPPER":0, "IDIOT":0, "MILKY":0,
                    "known_roles"    :{"ON":0,"TEAM":0,"OFF":0},
                    "reveal_on_death":{"ON":0,"TEAM":0,"OFF":0},
@@ -169,8 +172,8 @@ ALL_WEIGHTS = (
 
 # Probability of town roles being chosen
 TOWN_WEIGHTS = (
-    ("TOWN", "DOCTOR", "COP", "CELEB", "MILLER"),
-    ( 65,     10,       10,    15,      5)
+    ("TOWN", "DOCTOR", "COP", "CELEB", "MILLER", "MILKY"),
+    ( 65,     10,       10,    15,      5,        5)
 )
 
 # Probability of anti-town roles being chosen
@@ -181,7 +184,7 @@ MAFIA_WEIGHTS = (
 
 ROLE_WEIGHTS =[
     ["TOWN", "DOCTOR", "COP", "CELEB", "MILLER", "MILKY"],
-    [ 100,    10,       10,    10,      5,        20],
+    [ 100,    10,       10,    10,      5,        5],
     ["MAFIA", "IDIOT", "GODFATHER", "STRIPPER"],
     [ 90,      5,       5,           10],
 ]
@@ -194,7 +197,7 @@ RULE_BOOK = {
     "know_if_saved": ("ON", "DOC", "SELF", "DOC_SELF", "OFF"),
     "start_night": ("ON", "EVEN", "OFF"),
     "standard_roles": ("COP_DOC","OFF"),
-	"auto_timer": ("NIGHT", "OFF"),
+    "auto_timer": ("NIGHT", "OFF"),
 }
 
 
@@ -302,7 +305,15 @@ MAIN_HELP_MSG_STATUS = (
 
 MAIN_HELP_MSG_TIMER = (
     "/timer\n"
-    "Start a 5 minute timer, at the end of which is nokill. A little broken rn."
+    "Start a n*5 minute timer where n is the number of living players. "
+    "If the timer is already started, reduce its time by 5 minutes. "
+    "When the timer runs out, the day or night forcibly progresses."
+)
+
+MAIN_HELP_MSG_UNTIMER = (
+    "/untimer\n"
+    "If you have already /timer'd, then extend the timer by 5 minutes. "
+    "If nobody has timer active, the timer is halted and reset."
 )
 
 MAFIA_HELP_MSG = (
@@ -350,6 +361,7 @@ DM_HELP_MSG_WATCH = "In Lobby Chat:\n"+LOBBY_HELP_MSG_WATCH
 DM_HELP_MSG_RULE = "In Lobby Chat:\n"+LOBBY_HELP_MSG_RULE
 DM_HELP_MSG_VOTE = "In Main Chat:\n"+MAIN_HELP_MSG_VOTE
 DM_HELP_MSG_TIMER = "In Main Chat:\n"+MAIN_HELP_MSG_TIMER
+DM_HELP_MSG_UNTIMER = "In Main Chat:\n"+MAIN_HELP_MSG_UNTIMER
 DM_HELP_MSG_TARGET = (
     "In Mafia Chat:\n"+MAFIA_HELP_MSG_TARGET +
     "\nIf you are COP or DOCTOR, use /target [letter] to investigate/save someone here.\n"
@@ -480,7 +492,7 @@ DM_HELP_MSGS = {
     "rule":     DM_HELP_MSG_RULE,
     "vote":     DM_HELP_MSG_VOTE,
     "timer":    DM_HELP_MSG_TIMER,
-	"untimer":  DM_HELP_MSG_UNTIMER,
+    "untimer":  DM_HELP_MSG_UNTIMER,
     "target":   DM_HELP_MSG_TARGET,
     "options":  DM_HELP_MSG_OPTIONS,
     "reveal":   DM_HELP_MSG_REVEAL,

@@ -15,10 +15,10 @@ def genRolesRandom(num_players):
         return ["COP","DOCTOR","STRIPPER","CELEB"]
 
     while(True):
-        n = 0
-        roles = []
+        n = 1
+        roles = ["MILKY"]
         num_maf = 0
-        num_town = 0
+        num_town = 1
         num_rogue = 0
         odds_sum = sum(ALL_WEIGHTS[1])
         while(n < num_players):
@@ -152,10 +152,10 @@ def genRolesMatrix(num_players, matrix=SCORE_MATRIX, pref=None):
     if num_players < 7:
         return genRolesRandom(num_players)
     while(True):
-        roles = []
-        n = 0
+        roles = ["MILKY"]
+        n = 1
         num_maf = 0
-        num_town = 0
+        num_town = 1
         num_rogue = 0
         pro_town = TOWN_WEIGHTS
         anti_town = MAFIA_WEIGHTS

@@ -272,11 +272,12 @@ class MState:
             log("{} failed to target {}: {}".format(player.id, target_option, e))
             return False
 
-		if player.role == "MILKY" and player.target == player:
-		    self.mainComm.send("Ewwww please don't milk yourself in front of me", player.id)
-			return True
+        if player.role == "MILKY" and player.target == player:
+            self.mainComm.send("Ewwww please don't milk yourself in front of me", player.id)
+            player.target = None
+            return True
 			
-		self.mainComm.send("It is done, targeted {}".format(target_option),player.id)
+        self.mainComm.send("It is done, targeted {}".format(target_option),player.id)
 
         if type(target) == Player:
             target_id = target.id
@@ -489,10 +490,10 @@ class MState:
             self.mainComm.cast("untimer? I hardly know 'er!")
         return True
 		
-	def giveNewMilk(self, sender, reciever):
-	    """ Give milk from milky sender to the reciever """
+    def giveNewMilk(self, sender, reciever):
+        """ Give milk from milky sender to the reciever """
 
-		self.mainComm.cast("{} recieved milk in the night!".format(reciever.name))
+        self.mainComm.cast("{} recieved milk in the night!".format(self.mainComm.getName(reciever.id)))
 
     #### HELPER FN ####
 
@@ -643,13 +644,13 @@ class MState:
             msg = ("A peculiar feeling drifts about... everyone is still alive...")
             self.mainComm.cast(msg)
 			
-		# If milky is still alive and has given milk
-		for p in self.players:
-		    if p.role == "MILKY" and (not p.target in [None, self.null]) and p.target in self.players:
-			    if p.id in self.blocked_ids:
-				    self.mainComm.send("You were distracted", p.id)
-				else:
-				    self.giveNewMilk(p, p.target)
+        # If milky is still alive and has given milk
+        for p in self.players:
+            if p.role == "MILKY" and (not p.target in [None, self.null]) and p.target in self.players:
+                if p.id in self.blocked_ids:
+                    self.mainComm.send("You were distracted", p.id)
+                else:
+                    self.giveNewMilk(p, p.target)
 
         # If cop is still alive and has chosen a target
         for p in self.players:
@@ -697,15 +698,15 @@ class MState:
             elif p.role == "STRIPPER":
                 self.send_options("Use /target letter (i.e. /target A) "
                                   "to pick someone to distract",p.id)
-			elif p.role == "MILKY":
-			    self.send_options("Use /target letter (i.e. /target B) "
-				                  "to pick someone to recieve milk",p.id)
+            elif p.role == "MILKY":
+                self.send_options("Use /target letter (i.e. /target B) "
+                                  "to pick someone to milk",p.id)
 
-		if self.pref.book["auto_timer"] in ["NIGHT"]:
-		    self.timerOn = True
-			for player in self.players:
-				player.timerOn = True
-			self.timer_value = SET_TIMER_VALUE
+        if self.pref.book["auto_timer"] in ["NIGHT"]:
+            self.timerOn = True
+            for player in self.players:
+                player.timerOn = True
+            self.timer_value = SET_TIMER_VALUE
 			
         return True
 
@@ -770,11 +771,11 @@ class MState:
         """ Make a string of the original roles that the game started with. """
         log("MState __revealRoles",4)
         r = "GG, here were the roles:"
+
+        savedRolesSortedKeys = sorted(self.savedRoles, key=(lambda x: ALL_ROLES.index(self.savedRoles[x])))
 		
-		savedRolesSortedKeys = sorted(self.savedRoles, key=(lambda x: ALL_ROLES.index(self.savedRoles[x])))
-		
-        for player_id in self.savedRolesSortedKeys:
-		    role = self.savedRoles[player_id]
+        for player_id in savedRolesSortedKeys:
+            role = self.savedRoles[player_id]
             r += "\n" + self.mainComm.getName(player_id) + ": " + role
         return r
 		
@@ -791,7 +792,7 @@ class MState:
                 roleDict[role] = 1
         msg = ""
         for role in ALL_ROLES:
-		    if roleDict[role] > 0:
+            if roleDict[role] > 0:
                 msg += "\n" + role + ": " + str(roleDict[role])
         return msg
 
@@ -812,7 +813,7 @@ class MState:
 
         msg = ""
         for key in TEAMS:
-		    if key in teamDict:
+            if key in teamDict:
                 msg += "\n" + key + ": " + str(teamDict[key])
         return msg
 
@@ -948,9 +949,9 @@ class MState:
             if self.timerOn:
                 m += time.strftime("%H:%M:%S",time.gmtime(self.timer_value))
             m += "\n"
-            for player in sorted(self.players, key=lambda p: p.name):
-			    if player.timerOn:
-				    m += "[t!] "
+            for player in self.players:
+                if player.timerOn:
+                    m += "[t!] "
                 m += self.mainComm.getName(player.id) + " : "
                 count = 0
                 for voter in [v for v in self.players if v.vote == player]:
