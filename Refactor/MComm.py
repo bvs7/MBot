@@ -174,3 +174,41 @@ class GroupComm(MComm):
 
     def __str__(self):
         return "[{}, {}]".format(self.group.name,self.group.id)
+
+
+class TestMComm(MComm):
+    def __init__(self,group_id):
+        self.group_id = group_id
+        self.idToName = {}
+
+    def cast(self, msg):
+        print("CAST {}:{}".format(self.group_id,msg)) 
+
+    def ack(self, message_id):
+        pass
+
+    def getAcks(self, message_id):
+        pass
+
+    def send(self, msg, player_id):
+        print("SEND {}:{}".format(player_id,msg))        
+
+    def setTitle(self, new_title):
+        pass        
+
+    def getName(self,member_id):
+        return member_id
+
+    def add(self, player_id, player_name):
+        self.idToName[player_id] = player_name
+
+    def remove(self, player_id):
+        _ = self.idToName.pop(player_id, "___")
+
+    def clear(self, saveList=[]):
+        self.idToName = {}
+        for id in saveList:
+            self.idToName[id] = id
+
+    def __str__(self):
+        return "Comm({})".format(self.group_id)

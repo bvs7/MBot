@@ -1,0 +1,4 @@
+Beginning 1 test
+Game ended successfully
+Beginning 2 test
+Game ended successfully

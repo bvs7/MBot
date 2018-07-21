@@ -4,12 +4,12 @@ import threading
 class MTimer:
     """Used to create a timer object and bind functions to specific times for it"""
     
-    def __init__(self, limit, callbacks={}, id=None):
-        """ limit is the starting time limit in seconds
-        callbacks is a dict mapping a second value to a list of callback functions
+    def __init__(self, value, alarms={}, id=None):
+        """ value is the starting time value in seconds
+        alarms is a dict mapping a second value to a list of alarm functions
         id is to help with debugging """
-        self.limit = limit
-        self.callbacks = callbacks
+        self.value = value
+        self.alarms = alarms
         self.active = True
         
         self.lock = threading.Lock()
@@ -21,48 +21,48 @@ class MTimer:
         while self.active:
             
             self.lock.acquire()
-            for limit,actions in self.callbacks.items():
-                if self.limit == limit:
+            for value,actions in self.alarms.items():
+                if self.value == value:
                     self.lock.release()
                     for action in actions:
                         action()
                     self.lock.acquire()
-            if self.limit == 0:
+            if self.value == 0:
                 self.lock.release()
                 self.active = False
                 return
-            self.limit -= 1
+            self.value -= 1
             self.lock.release()
             time.sleep(1)
             
-    def addCallbacks(self, callbacks):
+    def addAlarms(self, alarms):
         with self.lock:
-            for limit,actions in callbacks:
-                if not limit in self.callbacks:
-                    self.callbacks[limit] = []
+            for value,actions in alarms:
+                if not value in self.alarms:
+                    self.alarms[value] = []
                 for action in actions:
-                    self.callbacks[limit].append(action)
+                    self.alarms[value].append(action)
             
     def getTime(self):
         with self.lock:
             if not self.active:
                 return None
-            return self.limit
+            return self.value
             
     def addTime(self, seconds):
         with self.lock:
             if not self.active:
                 return None
-            self.limit += seconds
-            if self.limit < 0:
-                self.limit = 0
+            self.value += seconds
+            if self.value < 0:
+                self.value = 0
                 
     def halt(self):
         with self.lock:
             self.active = False
-            self.callbacks = {}
-            self.limit = 0
+            self.alarms = {}
+            self.value = 0
             
     
     def __str__(self):
-        return time.strftime("%H:%M:%S",time.gmtime(self.limit))
+        return time.strftime("%H:%M:%S",time.gmtime(self.value))
