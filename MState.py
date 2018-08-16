@@ -493,7 +493,7 @@ class MState:
     def giveNewMilk(self, sender, reciever):
         """ Give milk from milky sender to the reciever """
 
-        self.mainComm.cast("{} recieved milk in the night!".format(self.mainComm.getName(reciever.id)))
+        self.mainComm.cast("{} received milk in the night!".format(self.mainComm.getName(reciever.id)))
 
     #### HELPER FN ####
 
@@ -792,7 +792,7 @@ class MState:
                 roleDict[role] = 1
         msg = ""
         for role in ALL_ROLES:
-            if roleDict[role] > 0:
+            if role in roleDict and roleDict[role] > 0:
                 msg += "\n" + role + ": " + str(roleDict[role])
         return msg
 

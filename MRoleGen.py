@@ -15,10 +15,10 @@ def genRolesRandom(num_players):
         return ["COP","DOCTOR","STRIPPER","CELEB"]
 
     while(True):
-        n = 1
-        roles = ["MILKY"]
+        n = 0
+        roles = []
         num_maf = 0
-        num_town = 1
+        num_town = 0
         num_rogue = 0
         odds_sum = sum(ALL_WEIGHTS[1])
         while(n < num_players):
