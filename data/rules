@@ -1,7 +1,7 @@
-know_if_saved|DOC_SELF
-kick_on_death|OFF
-start_night|EVEN
-reveal_on_death|TEAM
-auto_timer|NIGHT
+reveal_on_death|OFF
 known_roles|TEAM
+start_night|EVEN
+know_if_saved|ON
+auto_timer|NIGHT
+kick_on_death|OFF
 standard_roles|OFF
