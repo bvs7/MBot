@@ -120,8 +120,11 @@ class GroupComm(MComm):
 
     def setTitle(self, new_title):
         msg = "TITLE "+self.group.name+"->"
-        self.group.update(name=new_title)
-        msg += self.group.name
+        try:
+            self.group.update(name=new_title)
+            msg += self.group.name
+        except Exception as e:
+            print(e)
 
         log(msg)
         return True
