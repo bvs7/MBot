@@ -11,7 +11,8 @@ def loadFile(filename):
 
   return pattern
 
-TESTS = ["1","2"]
+TESTS = ["4"]
+test_folder = "test_MState/"
 output_log = "results.txt"
 
 mainComm = TestMComm("main")
@@ -22,17 +23,23 @@ for i in range(15):
 
 with open(output_log, 'w') as outf:
   for test in TESTS:
-    commands = loadFile(test+".input")
-    patterns = loadFile(test+".output")
+    commands = loadFile(test_folder + test+".input")
+    patterns = loadFile(test_folder + test+".output")
 
     rec = TestMRecord(patterns)
-    outf.write("Beginning {} test\n".format(test))
+    begin_msg = "Beginning {} test\n".format(test)
+    outf.write(begin_msg)
+    print(begin_msg)
     try:
+      command_line = 0
       for command in commands:
-        print(command)
-        exec(command)
+        command_line += 1
+        if not command == "":
+          print(command)
+          exec(command)
     except AssertionError as ae:
       traceback.print_exc(file=outf)
+      outf.write("command line: {}".format(command_line))
     except GameOverException as e:
       if rec.pattern:
         outf.write("Extra lines in rec: {}".format(rec.pattern))

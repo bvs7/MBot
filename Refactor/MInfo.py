@@ -43,6 +43,8 @@ TOWN_ROLES    = [ "TOWN", "COP", "DOCTOR", "CELEB", "MILLER"]
 ROGUE_ROLES = ["IDIOT"]
 ALL_ROLES = TOWN_ROLES + MAFIA_ROLES + ROGUE_ROLES
 
+TEAMS = ["Town", "Mafia", "Rogue"]
+
 # Roles that target at night
 TARGET_ROLES = ["DOCTOR","COP","STRIPPER"]
 

@@ -3,7 +3,8 @@
 # This class provides an interface for the program to communicate with a group
 #   whether it be GroupMe or any other means to be added.
 
-# An new GroupComm object is created for each group used to communicate with
+# A new GroupComm object is created for each group used to communicate with
+# Notably, all GroupComm objects have a self.group_id, usable by outside classes
 
 import random
 import time
@@ -69,6 +70,7 @@ class GroupComm(MComm):
     def __init__(self, group_id):
 
         self.group = client.groups.get(group_id)
+        self.id = group_id
         self.savedNames = {}
 
     def cast(self, msg):
@@ -123,25 +125,33 @@ class GroupComm(MComm):
 
     # TODO: just process name change mesages
     def getName(self,member_id):
-        if member_id in self.savedNames:
+        replace = random.random() < NAME_REPLACE_RATIO
+        if member_id in self.savedNames and not replace:
             return self.savedNames[member_id]
         # Update group
         self.group.refresh_from_server()
-        for m in self.group.members:
-            if m.user_id == member_id:
-                self.savedNames[member_id] = m.nickname
-                return m.nickname
+        self.__refreshNames(member_id)
+        if member_id in self.savedNames:
+            return self.savedNames[member_id]
         print("Failed to get Name")
         return "__"
+
+    def __refreshNames(self, member_id=None):
+        self.group.refresh_from_server()
+        if type(member_id) == str:
+            member_id = [member_id]
+        if not member_id == None:
+            for m in self.group.members:
+                if m.user_id in member_id:
+                    self.savedNames[member_id] = m.nickname
 
     def add(self, player_id, nickname=None):
 
         if type(player_id) == str:
             player_id = [player_id]
 
-        users = []
         for p_id in player_id:
-            self.group.memberships.add(nickname, user_id=p_id);
+            self.group.memberships.add(nickname, user_id=p_id)
             if nickname != None:
                 self.savedNames[p_id] = nickname
             else:
@@ -177,12 +187,14 @@ class GroupComm(MComm):
 
 
 class TestMComm(MComm):
-    def __init__(self,group_id):
+    def __init__(self,group_id,silent=False):
         self.group_id = group_id
         self.idToName = {}
+        self.silent = silent
 
     def cast(self, msg):
-        print("CAST {}:{}".format(self.group_id,msg)) 
+        if not self.silent:
+            print("CAST {}:{}".format(self.group_id,msg)) 
 
     def ack(self, message_id):
         pass
@@ -191,7 +203,8 @@ class TestMComm(MComm):
         pass
 
     def send(self, msg, player_id):
-        print("SEND {}:{}".format(player_id,msg))        
+        if not self.silent:
+            print("SEND {}:{}".format(player_id,msg))        
 
     def setTitle(self, new_title):
         pass        

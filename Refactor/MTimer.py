@@ -4,13 +4,14 @@ import threading
 class MTimer:
     """Used to create a timer object and bind functions to specific times for it"""
     
-    def __init__(self, value, alarms={}, id=None):
+    def __init__(self, value, alarms, low_set_lim=0):
         """ value is the starting time value in seconds
         alarms is a dict mapping a second value to a list of alarm functions
         id is to help with debugging """
         self.value = value
         self.alarms = alarms
         self.active = True
+        self.low_set_lim = low_set_lim
         
         self.lock = threading.Lock()
         
@@ -18,6 +19,7 @@ class MTimer:
         self.timerThread.start()
         
     def tick(self):
+        last_time = time.clock()
         while self.active:
             
             self.lock.acquire()
@@ -32,8 +34,11 @@ class MTimer:
                 self.active = False
                 return
             self.value -= 1
+            current_time = time.clock()
+            time_elapsed = current_time - last_time
+            last_time = current_time
             self.lock.release()
-            time.sleep(1)
+            time.sleep(1 - time_elapsed)
             
     def addAlarms(self, alarms):
         with self.lock:
@@ -54,8 +59,8 @@ class MTimer:
             if not self.active:
                 return None
             self.value += seconds
-            if self.value < 0:
-                self.value = 0
+            if self.value < self.low_set_lim:
+                self.value = self.low_set_lim
                 
     def halt(self):
         with self.lock:

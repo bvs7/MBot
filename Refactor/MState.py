@@ -1,4 +1,5 @@
 from MInfo import *
+from MTimer import MTimer
 
 
 class GameOverException(Exception):
@@ -24,7 +25,7 @@ class MState:
   def __init__(self, id, mainComm, mafiaComm, lobbyComm, rules, roles, rec):
     """Create a mafia game.
     
-    id -- The unique string for this game
+    id -- The unique number
     mainComm, 
     mafiaComm, 
     lobbyComm -- The MComm objects for specific chats
@@ -88,14 +89,15 @@ class MState:
     if "known_roles" in self.rules:
       if self.__testRules("known_roles") == "ON":
         msg += "\nThe Roles:" + self.__showRoles()
-      elif self.testRules("known_roles") == "TEAM":
+      elif self.__testRules("known_roles") == "TEAM":
         msg += "\nThe Teams:" + self.__showTeams()
         
     self.mainComm.cast(msg)
     
     msg = START_GAME_MESSAGE_MAFIA + "\nYour Team:\n"
     mafList = [p for p in self.players if p.role in MAFIA_ROLES] #.sort(key=(lambda x:x.name))
-    msg += "\n".join([p.name + ": " + p.role for p in mafList])
+    strList = ["{}:{}".format(p.name,p.role) for p in mafList]
+    msg += "\n".join(strList)
     
     self.mafiaComm.cast(msg)
     
@@ -222,7 +224,7 @@ class MState:
       return
 
     if player.role == "CELEB":
-      if not self.time == "Day":
+      if not self.phase == "Day":
         self.mainComm.send("Must reveal during Day",player.id)
         return
       if not player.id in self.blocked_ids:
@@ -262,7 +264,7 @@ class MState:
   def getPlayer(self, p):
     """ p can be player or id, either way returns the player object associated. """  
     if type(p) == MPlayer:
-      return p_id
+      return p.id
     elif type(p) == str:
       players = [player for player in self.players if player.id == p]
       if len(players) >= 1:
@@ -275,7 +277,7 @@ class MState:
   def setTimer(self, player_id):
     """ Start an N * 5 minute timer where N is number of players, or reduce timer by 5 minutes """
     try:
-      player = self.getPlayer(p)
+      player = self.getPlayer(player_id)
     except Exception as e:
       # Error logging
       return
@@ -285,17 +287,17 @@ class MState:
       return
 			
     if self.timer == None:
-      player.timered = true
+      player.timered = True
       self.timer = self.__standard_timer()
       self.mainComm.cast("Timer started: {}".format(self.timer))
     else:
-      player.timered = true
+      player.timered = True
       self.timer.addTime(-SET_TIMER_VALUE)
       self.mainComm.cast("Timer reduced: {}".format(self.timer))
 
   def unSetTimer(self, player_id):
     try:
-      player = self.getPlayer(p)
+      player = self.getPlayer(player_id)
     except Exception as e:
       # Error logging
       return
@@ -304,7 +306,7 @@ class MState:
       self.mainComm.cast("You haven't timered.")
       return
     
-    player.timered = false
+    player.timered = False
     if len([p for p in self.players if p.timered]) == 0:
       self.timer.halt()
       self.timer = None
@@ -390,7 +392,7 @@ class MState:
 
     self.__checkWinCond()
 
-    self.mainComm.send(self.roleString, player.id)
+    self.mainComm.send("You died... here were the roles:" + self.__revealRoles(), player.id)
 
     if self.__testRules("reveal_on_death") == "ON":
       self.reveal(player)
@@ -403,7 +405,6 @@ class MState:
         return 
     # All target roles are done
     if self.mafiaTarget == None:
-      print("Nah2")
       return
     # Mafia also done
     self.__toDay()
@@ -472,6 +473,8 @@ class MState:
             team = "NOT Mafia"
           self.mainComm.send("{} is {}".format(cop.target.name, team), cop.id)
           self.rec.investigate(cop, cop.target)
+        else: # Cop was blocked
+          self.mainComm.send("You were distracted", cop.id)
 
   def __clearTargets(self):
     for player in self.players:
@@ -508,6 +511,7 @@ class MState:
       self.timer = self.__standard_timer(5)
       for player in self.players:
         player.timered = True
+      self.mainComm.cast("Timer started: {}".format(self.timer))
 
   def __testRules(self, rule):
     return self.rules.get(rule, "OFF")
@@ -517,7 +521,7 @@ class MState:
       self.timer.halt()
     self.timer = None
     for player in self.players:
-      player.timered = True
+      player.timered = False
 
   def __checkWinCond(self):
     if self.num_mafia == 0:
@@ -537,14 +541,14 @@ class MState:
 
     self.rec.archive()
 
-    self.lobbyComm.cast(self.__revealRoles())
+    self.lobbyComm.cast("GG, here were the roles:" + self.__revealRoles())
 
     raise GameOverException(self.id)
 
   def __revealRoles(self):
     """ Make a string of the original roles that the game started with. """
     log("MState __revealRoles",4)
-    r = "GG, here were the roles:"
+    r = ""
 
     savedRolesSortedIDs = sorted(self.savedRoles, key=(lambda x: ALL_ROLES.index(self.savedRoles[x])))
   
@@ -553,7 +557,15 @@ class MState:
       r += "\n" + self.lobbyComm.getName(player_id) + ": " + role
     return r
 
-  def __showRoles(self,roles):
+  def __getCurrentRoles(self):
+    roles = []
+    for player in self.players:
+      roles.append(player.role)
+    return roles
+
+  def __showRoles(self,roles=None):
+    if roles == None:
+      roles = self.__getCurrentRoles()
     roleDict = {}
     for role in roles:
       if role in roleDict:
@@ -562,11 +574,13 @@ class MState:
         roleDict[role] = 1
     msg = ""
     for role in ALL_ROLES:
-      if roleDict[role] > 0:
+      if role in roleDict and roleDict[role] > 0:
         msg += "\n" + role + ": " + str(roleDict[role])
     return msg
 
-  def __showTeams(self,roles):
+  def __showTeams(self,roles=None):
+    if roles == None:
+      roles = self.__getCurrentRoles()
     teamDict = {"Mafia":0, "Town":0}
     for role in roles:
       if role in MAFIA_ROLES:
@@ -585,7 +599,7 @@ class MState:
     return msg 	
 
   def __str__(self):
-    m = "GAME #{}: {} {}: ".format(self.game_num,self.time,self.day)
+    m = "GAME #{}: {} {}: ".format(self.id,self.phase,self.day)
     if not self.timer == None:
       m += str(self.timer)
     m += "\n"
