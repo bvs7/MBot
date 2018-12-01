@@ -31,9 +31,10 @@ except Exception as e:
     print("Failed to load groupy: {}".format(e))
 
 
-RETRY_TIMES = 6
+RETRY_TIMES = 10
 RETRY_DELAY = 10
 NAME_REPLACE_RATIO = 0.2
+ACTION_DELAY = 1
 
 
 """ A test class that performs the basic functionality for an MComm
@@ -75,6 +76,7 @@ class GroupComm(MComm):
         for i in range(RETRY_TIMES):
             try:
                 m_id = self.group.post(msg).id
+                time.sleep(ACTION_DELAY)
                 return m_id
             except groupy.exceptions.GroupyError as e:
                 print("Failed to cast, try {}: {}".format(i,e))
@@ -113,6 +115,7 @@ class GroupComm(MComm):
                     for chat in client.chats.list_all():
                         chats[chat.other_user['id']] = chat
                 m_id = chats[player_id].post(text=msg).id
+                time.sleep(ACTION_DELAY)
                 return m_id
             except groupy.exceptions.GroupyError as e:
                 print("Failed to send, try {}: {}".format(i,e))
@@ -131,14 +134,18 @@ class GroupComm(MComm):
 
     # TODO: just process name change mesages
     def getName(self,member_id):
-        if member_id in self.savedNames:
-            return self.savedNames[member_id]
-        # Update group
-        self.group.refresh_from_server()
-        for m in self.group.members:
-            if m.user_id == member_id:
-                self.savedNames[member_id] = m.nickname
-                return m.nickname
+        try:
+            r = random.random()
+            if member_id in self.savedNames and r > NAME_REPLACE_RATIO:
+                return self.savedNames[member_id]
+            # Update group
+            self.group.refresh_from_server()
+            for m in self.group.members:
+                if m.user_id == member_id:
+                    self.savedNames[member_id] = m.nickname
+                    return m.nickname
+        except Exception:
+            pass
         print("Failed to get Name")
         return "__"
 
@@ -161,6 +168,7 @@ class GroupComm(MComm):
                         self.savedNames[p_id] = nickname
                     else:
                         self.getName(p_id)
+                time.sleep(ACTION_DELAY)
                 return
             except groupy.exceptions.GroupyError as e:
                 print("Failed to add, try {}: {}".format(i,e))
