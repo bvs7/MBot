@@ -275,23 +275,27 @@ class MController:
     def LOBBY_stats(self, player_id, words, message_id):
         self.lobbyComm.ack(message_id)
 
-        if len(words) > 1:
-            if words[1] == "winrate" or words[1] == "record":
-                counted_roles = TOWN_ROLES + MAFIA_ROLES
-                if len(words) > 2 and words[2] == "Town":
-                    counted_roles = TOWN_ROLES
-                if len(words) > 2 and words[2] == "Mafia":
-                    counted_roles = MAFIA_ROLES
-                if len(words) > 2 and words[2] in TOWN_ROLES + MAFIA_ROLES + ROGUE_ROLES:
-                    counted_roles = words[2]
-                (won,tot) = MRecords.getWinRatio(player_id,counted_roles)
-                if words[1] == "winrate":
-                    if tot == 0:
-                        tot = 1
-                    msg = "{} Win Rate: {}%".format(self.lobbyComm.getName(player_id),int(won/tot*100))
-                elif words[1] == "record":
-                    msg = "{} Record: {} Games, {} Won, {} Lost".format(self.lobbyComm.getName(player_id),tot,won,tot-won)
-                self.lobbyComm.cast(msg)
+        msg = CALLBACK_URL + ":" + STATS_PORT
+
+        self.lobbyComm.cast(msg)
+
+#        if len(words) > 1:
+#            if words[1] == "winrate" or words[1] == "record":
+#                counted_roles = TOWN_ROLES + MAFIA_ROLES
+#                if len(words) > 2 and words[2] == "Town":
+#                    counted_roles = TOWN_ROLES
+#                if len(words) > 2 and words[2] == "Mafia":
+#                    counted_roles = MAFIA_ROLES
+#                if len(words) > 2 and words[2] in TOWN_ROLES + MAFIA_ROLES + ROGUE_ROLES:
+#                    counted_roles = words[2]
+#                (won,tot) = MRecords.getWinRatio(player_id,counted_roles)
+#                if words[1] == "winrate":
+#                    if tot == 0:
+#                        tot = 1
+#                    msg = "{} Win Rate: {}%".format(self.lobbyComm.getName(player_id),int(won/tot*100))
+#                elif words[1] == "record":
+#                    msg = "{} Record: {} Games, {} Won, {} Lost".format(self.lobbyComm.getName(player_id),tot,won,tot-won)
+#                self.lobbyComm.cast(msg)
 
         return True
 

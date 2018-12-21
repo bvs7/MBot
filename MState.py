@@ -1,7 +1,7 @@
 # Represents A game of Mafia
 
 from MInfo import *
-from MComm import MComm, chats
+from MComm import MComm
 import MRoleGen
 
 import random
@@ -602,7 +602,7 @@ class MState:
         # First, check stripper blocks
         self.blocked_ids = []
         for stripper in [p for p in self.players if p.role == "STRIPPER"]:
-            if not stripper.target.id in self.blocked_ids:
+            if not stripper.target == None and not stripper.target.id in self.blocked_ids:
                 self.blocked_ids.append(stripper.target.id)
 
         # If mafia has a target
@@ -806,7 +806,7 @@ class MState:
                 teamDict["Mafia"] += 1
             elif role in TOWN_ROLES:
                 teamDict["Town"] += 1
-            elif role == ROGUE_ROLES:
+            elif role in ROGUE_ROLES:
                 if not "Rogue" in teamDict:
                     teamDict["Rogue"] = 0
                 teamDict["Rogue"] += 1

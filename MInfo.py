@@ -23,7 +23,8 @@ GROUP_IDS = ['29746651','29746647','29746639',
 MODERATOR = '43040067'
 ADDRESS = '0.0.0.0'
 PORT = '1121'
-CALLBACK_URL = 'http://24.59.62.95'
+CALLBACK_URL = 'http://70.171.207.164'
+STATS_PORT = '1120'
 
 def log(msg, debug=2):
     if DEBUG >= debug:
