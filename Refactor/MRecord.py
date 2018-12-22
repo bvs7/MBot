@@ -1,5 +1,4 @@
 
-
 class MRecord:
   
   def create(self, id, players):
@@ -9,6 +8,7 @@ class MRecord:
     raise NotImplementedError()
 
   def vote(self, voter, votee):
+    """Voter and votee are player objects"""
     raise NotImplementedError()
 
   def mafia_target(self, target):
@@ -46,6 +46,7 @@ class MRecord:
 
   def archive(self):
     raise NotImplementedError()
+
 
 class FileMRecord(MRecord):
   """Saves recorded info to a file"""
