@@ -66,8 +66,8 @@ class MState:
         self.num_mafia += 1
         
     self.players.sort(key=(lambda player:player.name))
-    
-    self.rec.create(self.id, self.players) # Log the creation of this game
+    # Log the creation of this game
+    self.rec.create(self.id, self.players, self.__roleDict(roles.values()))
     
   def startGame(self):
     
@@ -136,11 +136,11 @@ class MState:
       return
     voter.vote = votee
     
-    self.rec.vote(voter, votee)
+    self.rec.vote(int(voter.id), int(votee.id), self.day)
     
     self.__checkVotes(votee)
     
-  def mafia_target(self, target_option):
+  def mafia_target(self, p_id, target_option):
     """ Change Mafia's target to players[target_option] """
     if not self.phase == "Night":
       self.mafiaComm.cast("You can only target during the night")
@@ -156,7 +156,7 @@ class MState:
     self.mafiaTarget = target
     self.mafiaComm.cast("It is done, targeted {}".format(target_option))
 
-    self.rec.mafia_target(target)
+    self.rec.mafia_target(int(p_id),int(target.id),self.day)
 
     self.__checkToDay()
     
@@ -196,7 +196,7 @@ class MState:
     player.target = target
     self.mainComm.send("It is done, targeted {}".format(target_option),player.name)
 
-    self.rec.target(player, target)
+    self.rec.target(int(player.id), int(target.id), self.day)
 
     self.__checkToDay()
 	
@@ -228,10 +228,11 @@ class MState:
         self.mainComm.send("Must reveal during Day",player.id)
         return
       if not player.id in self.blocked_ids:
-        self.rec.reveal(player)
+        self.rec.reveal(int(player.id), self.day, False)
         self.reveal(player.id)
       else:
         self.mainComm.send("You were distracted",player.id)
+        self.rec.reveal(int(player.id), self.day, True)
     else:
       self.mainComm.send("Only CELEB can reveal themselves.",player.id)
       return
@@ -353,7 +354,9 @@ class MState:
       self.mainComm.cast("Vote retracted")
       return
     
-    num_voters = len([v for v in self.players if v.vote == player])
+    voters = [v for v in self.players if v.vote == player]
+    voter_ids = [int(v) for v in voters]
+    num_voters = len(voters)
     num_players = len(self.players)
 
     if player == self.null:
@@ -363,12 +366,13 @@ class MState:
         self.mainComm.cast(msg.format(need, " " if need == 1 else "s "))
       else:
         self.mainComm.cast("You have decided not to kill anyone")
-        self.rec.nokill()
+        self.rec.elect(voter_ids, int(player.id), self.day, self.__roleDict())
         self.__toNight()
     elif num_voters > num_players/2:
       self.mainComm.cast(
         "The vote to kill {} has passed".format(player.name))
       self.__kill(player)
+      self.rec.elect(voter_ids, int(player.id), self.day, self.__roleDict())
       self.__toNight()
 
     else:
@@ -378,8 +382,6 @@ class MState:
         player.name))
 
   def __kill(self, player):
-    self.rec.kill(player)
-
     if player.role in MAFIA_ROLES:
       self.num_mafia -= 1
     self.players.remove(player)
@@ -411,8 +413,6 @@ class MState:
 
   def __toDay(self):
     self.__haltTimer()
-    self.phase = "Day"
-    self.day += 1
     self.mainComm.cast("Uncertainty dawns, as does this day.")
 
     self.rec.day()
@@ -421,6 +421,9 @@ class MState:
     self.__resolveMilkyGift()
     self.__resolveCopInvestigation()
     self.__clearTargets()
+    
+    self.phase = "Day"
+    self.day += 1
 
   def __resolveStripperActions(self):
     self.blocked_ids = []
@@ -439,18 +442,21 @@ class MState:
           else:
             self.mainComm.send("You were distracted",doctor.id)
 
+      maf_ids = [int(m.id) for m in self.players if m.role in MAFIA_ROLES]
+
       if saviors:
+        self.rec.murder(maf_ids, int(self.mafiaTarget.id), self.day, False, self.__roleDict())
         if "SELF" in self.__testRules("know_if_saved"):
           self.mainComm.send("You were saved!", self.mafiaTarget.id)
         for savior in saviors:
-          self.rec.save(savior,savior.target)
           if "DOC" in self.__testRules("know_if_saved"):
             self.mainComm.send("Your save was successful!", savior.id)
         return
-      
-      msg = "Tragedy has struck! {} is dead!".format(self.mafiaTarget.name)
-      self.mainComm.cast(msg)
-      self.__kill(self.mafiaTarget)
+      else:
+        msg = "Tragedy has struck! {} is dead!".format(self.mafiaTarget.name)
+        self.mainComm.cast(msg)
+        self.__kill(self.mafiaTarget)
+        self.rec.murder(maf_ids, int(self.mafiaTarget.id), self.day, True, self.__roleDict())
 
   def __resolveMilkyGift(self):
     for milky in self.players:
@@ -472,7 +478,6 @@ class MState:
           else:
             team = "NOT Mafia"
           self.mainComm.send("{} is {}".format(cop.target.name, team), cop.id)
-          self.rec.investigate(cop, cop.target)
         else: # Cop was blocked
           self.mainComm.send("You were distracted", cop.id)
 
@@ -525,14 +530,14 @@ class MState:
 
   def __checkWinCond(self):
     if self.num_mafia == 0:
-      self.mainComm.cast("TOWN WINS")
-      self.lobbyComm.cast("TOWN WINS")
-      self.rec.town_wins()
+      self.mainComm.cast("Town WINS")
+      self.lobbyComm.cast("Town WINS")
+      self.rec.end("Town",self.phase, self.day)
       self.__endGame()
     elif self.num_mafia >= len(self.players)/2:
-      self.mainComm.cast("MAFIA WINS")
-      self.lobbyComm.cast("MAFIA WINS")
-      self.rec.mafia_wins()
+      self.mainComm.cast("Mafia WINS")
+      self.lobbyComm.cast("Mafia WINS")
+      self.rec.end("Mafia",self.phase, self.day)
       self.__endGame()
 
   def __endGame(self):
@@ -563,7 +568,8 @@ class MState:
       roles.append(player.role)
     return roles
 
-  def __showRoles(self,roles=None):
+  def __roleDict(self,roles=None):
+    """Generate roleDict from roles"""
     if roles == None:
       roles = self.__getCurrentRoles()
     roleDict = {}
@@ -572,6 +578,9 @@ class MState:
         roleDict[role] += 1
       else:
         roleDict[role] = 1
+
+  def __showRoles(self,roles=None):
+    roleDict = self.__roleDict(roles)
     msg = ""
     for role in ALL_ROLES:
       if role in roleDict and roleDict[role] > 0:
