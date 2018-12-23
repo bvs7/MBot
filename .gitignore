@@ -3,3 +3,5 @@ outputs/*
 .groupy.key
 tests/*.logout
 data/*
+data/id
+data/records
