@@ -12,7 +12,7 @@ m.vote("4", "0")
 
 m.target("1", "H")
 m.target("2", "E")
-m.mafia_target("E")
+m.mafia_target("6","E")
 m.target("7", "C")
 
 m.try_reveal("3")
@@ -25,7 +25,7 @@ m.vote("4", "0")
 
 m.target("1", "G")
 m.target("2", "I")
-m.mafia_target("I")
+m.mafia_target("6","I")
 m.target("7", "I")
 
 m.try_reveal("3")
@@ -38,7 +38,7 @@ m.vote("4", "0")
 
 m.target("1", "F")
 m.target("2", "I")
-m.mafia_target("I")
+m.mafia_target("6","I")
 m.target("7", "I")
 
 m.vote("1", "0")
@@ -50,7 +50,7 @@ m.vote("4", "0")
 
 m.target("1", "E")
 m.target("2", "I")
-m.mafia_target("I")
+m.mafia_target("7","I")
 m.target("7", "I")
 
 m.vote("1", "0")
@@ -62,7 +62,7 @@ m.vote("4", "0")
 
 m.target("1", "D")
 m.target("2", "I")
-m.mafia_target("I")
+m.mafia_target("7","I")
 m.target("7", "I")
 
 m.vote("1", "0")
@@ -74,7 +74,7 @@ m.vote("4", "0")
 
 m.target("1", "C")
 m.target("2", "I")
-m.mafia_target("I")
+m.mafia_target("8","I")
 m.target("7", "I")
 
 m.vote("1", "0")
@@ -86,7 +86,7 @@ m.vote("4", "0")
 
 m.target("1", "B")
 m.target("2", "I")
-m.mafia_target("I")
+m.mafia_target("8","I")
 m.target("7", "I")
 
 m.vote("1", "0")
@@ -98,7 +98,7 @@ m.vote("4", "0")
 
 m.target("1", "A")
 m.target("2", "I")
-m.mafia_target("I")
+m.mafia_target("8","I")
 m.target("7", "I")
 
 print(m) # Day 9
@@ -112,7 +112,7 @@ m.vote("4", "0")
 
 m.target("1", "A")
 m.target("2", "I")
-m.mafia_target("I")
+m.mafia_target("6","I")
 m.target("7", "A")
 
 print(m) # Day 10
@@ -126,7 +126,7 @@ m.vote("4", "0")
 
 m.target("1", "I") 
 m.target("2", "B")
-m.mafia_target("B") #celeb
+m.mafia_target("8","B") #celeb
 m.target("7", "B")
 
 print(m) # Day 11
@@ -140,7 +140,7 @@ m.vote("7", "7")
 # Night 11 Kill Cop
 
 m.target("1", "F") # target gf
-m.mafia_target("A") #cop
+m.mafia_target("8","A") #cop
 
 print(m) # Day 12
 
@@ -150,7 +150,7 @@ m.vote("4", "6")
 
 # Night 12 Kill miller
 
-m.mafia_target("B") # celeb >miller< town gf
+m.mafia_target("8","B") # celeb >miller< town gf
 
 m.vote("3", "8")
 m.vote("5", "8")

@@ -1,7 +1,7 @@
 
 from newMRecord import MRecord
 
-import pymysql.connector
+import pymysql.cursors
 from time import strftime
 
 def getDateTime():
@@ -12,6 +12,7 @@ def getDateTime():
 class InsertRecord:
 
   def insert_fields(self, conn, fields, db):
+    print("Inserting into {}".format(db))
     nameStr = ",".join(fields)
     values = []
     for field in fields:
@@ -23,7 +24,7 @@ class InsertRecord:
       elif type(v) == bool:
         v = "1" if v else "0"
       values.append(v)
-    valueStr = ",".join(values)
+    valueStr = ",".join([str(v) for v in values])
 
     sql = "INSERT INTO {} ({}) VALUES ({})".format(
       db, nameStr, valueStr
@@ -35,7 +36,7 @@ class InsertRecord:
   def findRolesetID(self, conn, roleDict, retry=False):
     """Ensure roleset exists, return roleset_id"""
     condition = " AND ".join(
-      ["{}={}".format(k,roleDict[k]) for k in roleDict] +
+      ["{}={}".format("n"+k,roleDict[k]) for k in roleDict] +
       ["nPlayers={}".format(sum(roleDict.values()))]
     )
     sql = "SELECT roleset_id FROM Rolesets WHERE " + condition
@@ -46,20 +47,20 @@ class InsertRecord:
     if len(result) == 0:
       names = roleDict.keys()
       nameStr = ",".join(['n'+n for n in names])
-      valueStr = ",".join(roleDict[k] for k in names)
+      valueStr = ",".join(str(roleDict[k]) for k in names)
       sql = "INSERT INTO Rolesets ({}) VALUES ({})".format(nameStr,valueStr)
       with conn.cursor() as c:
         c.execute(sql,())
       conn.commit()
 
       if(not retry):
-        self.findRolesetID(conn, roleDict, True)
+        return self.findRolesetID(conn, roleDict, True)
       else:
         raise Exception(
           "Failed to add roleset, unable to find after tried to add")
 
     elif len(result) == 1:
-      return result[1]['roleset_id']
+      return result[0]['roleset_id']
     elif len(result) >= 2:
       raise Exception("Found multiple results for a roleset")
 
@@ -143,7 +144,7 @@ class Reveal(InsertRecord):
     self.datetime = getDateTime()
 
   def commit(self,conn):
-    self.insert_fields(conn,Reveal.fields,"Reveal")
+    self.insert_fields(conn,Reveal.fields,"Reveals")
 
 class Guilt(InsertRecord):
 
@@ -155,7 +156,7 @@ class Guilt(InsertRecord):
     self.kill_id = None
 
   def commit(self, conn):
-    if self.kill.k_id == None:
+    if self.kill.kill_id == None:
       #TODO: Oh noes
       pass
     self.kill_id = self.kill.kill_id
@@ -223,11 +224,12 @@ class Actor(InsertRecord):
     self.role = role
     
   def commit(self,conn):
-    self.insert_fields(self,Actor.fields,"Actors")
+    self.insert_fields(conn,Actor.fields,"Actors")
 
 class DBMRecord(MRecord):
 
-  def __init__(self):
+  def __init__(self, db="MRecords"):
+    self.db = db
     self.committable = []
 
     self.v_id = 1
@@ -239,6 +241,7 @@ class DBMRecord(MRecord):
     self.distracted_reveal_flag= []
 
   def create(self, g_id, players, roleDict):
+    print("Create: {} {} {}".format(g_id, players, roleDict))
 
     self.roleDict = roleDict
 
@@ -250,20 +253,25 @@ class DBMRecord(MRecord):
       self.committable.append(Actor(self.g_id,player.id,player.role))
 
   def start(self):
+    print("Start")
     self.game.datetime = getDateTime()
 
   def vote(self, voter_id, votee_id, day):
+    print("Vote: {} {} {}".format(voter_id, votee_id, day))
     v = Vote(self.v_id, self.g_id, voter_id, votee_id, day)
     self.committable.append(v)
     self.v_id += 1
 
   def mafia_target(self, p_id, target_id, night):
+    print("MTarget: {} {} {}".format(p_id, target_id, night))
     self.mtarget = MTarget(self.g_id, p_id, target_id, night)
 
   def target(self, p_id, target_id, night):
+    print("Target: {} {} {}".format(p_id, target_id, night))
     self.targets[p_id] = Target(self.g_id, p_id, target_id, night)
 
   def reveal(self, p_id, day, distracted):
+    print("Reveal: {} {} {}".format(p_id, day, distracted))
     if not p_id in self.reveal_flag and not (distracted and p_id in self.distracted_reveal_flag):
       r = Reveal(self.g_id, p_id, day, distracted)
       self.committable.append(r)
@@ -273,6 +281,7 @@ class DBMRecord(MRecord):
         self.distracted_reveal_flag.append(p_id)
 
   def elect(self, voter_ids, target_id, day, roles):
+    print("Elect: {} {} {} {}".format(voter_ids, target_id, day, roles))
     k = Kill(self.g_id, "elect", target_id, "Day", day, (not target_id == 0), roles)
     self.committable.append(k)
 
@@ -281,6 +290,7 @@ class DBMRecord(MRecord):
       self.committable.append(g)
 
   def murder(self, mafia_ids, target_id, night, successful, roles):
+    print("Murder: {} {} {} {} {}".format(mafia_ids, target_id, night, successful, roles))
     k = Kill(self.g_id, "murder", target_id, "Night", night, successful, roles)
     self.committable.append(k)
 
@@ -289,6 +299,7 @@ class DBMRecord(MRecord):
       self.committable.append(g)
 
   def day(self):
+    print("Day")
     self.committable.append(self.mtarget)
     self.mtarget = None
 
@@ -299,9 +310,10 @@ class DBMRecord(MRecord):
     self.distracted_reveal_flag = []
 
   def night(self):
-    pass
+    print("Night")
 
   def end(self, winner, phase, day):
+    print("End: {} {} {}".format(winner, phase, day))
     self.game.winner = winner
     self.game.end_phase = phase
     self.game.end_day = day
@@ -310,11 +322,12 @@ class DBMRecord(MRecord):
     self.committable.append(self.game)
 
   def archive(self):
+    print("Archive")
     conn = pymysql.connect(
       host="localhost",
       user="writer",
       password="password",
-      db="MRecords",
+      db=self.db,
       cursorclass=pymysql.cursors.DictCursor
     )
 

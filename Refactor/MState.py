@@ -355,7 +355,7 @@ class MState:
       return
     
     voters = [v for v in self.players if v.vote == player]
-    voter_ids = [int(v) for v in voters]
+    voter_ids = [int(v.id) for v in voters]
     num_voters = len(voters)
     num_players = len(self.players)
 
@@ -371,8 +371,7 @@ class MState:
     elif num_voters > num_players/2:
       self.mainComm.cast(
         "The vote to kill {} has passed".format(player.name))
-      self.__kill(player)
-      self.rec.elect(voter_ids, int(player.id), self.day, self.__roleDict())
+      self.__kill(player, voter_ids, "elect")
       self.__toNight()
 
     else:
@@ -381,10 +380,16 @@ class MState:
       self.mainComm.cast(msg.format(need, " " if need == 1 else "s ",
         player.name))
 
-  def __kill(self, player):
+  def __kill(self, player, guilty_ids, type):
     if player.role in MAFIA_ROLES:
       self.num_mafia -= 1
     self.players.remove(player)
+
+    if type == "elect":
+      self.rec.elect(guilty_ids, int(player.id), self.day, self.__roleDict())
+    elif type == "murder":
+      self.rec.murder(guilty_ids, int(player.id), self.day, True, self.__roleDict())
+
 
     if player.role == "IDIOT":
       ## TODO: IDIOT win rules!!!
@@ -455,8 +460,7 @@ class MState:
       else:
         msg = "Tragedy has struck! {} is dead!".format(self.mafiaTarget.name)
         self.mainComm.cast(msg)
-        self.__kill(self.mafiaTarget)
-        self.rec.murder(maf_ids, int(self.mafiaTarget.id), self.day, True, self.__roleDict())
+        self.__kill(self.mafiaTarget, maf_ids, "murder")
 
   def __resolveMilkyGift(self):
     for milky in self.players:
@@ -578,6 +582,7 @@ class MState:
         roleDict[role] += 1
       else:
         roleDict[role] = 1
+    return roleDict
 
   def __showRoles(self,roles=None):
     roleDict = self.__roleDict(roles)

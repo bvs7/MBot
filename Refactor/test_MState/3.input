@@ -9,14 +9,14 @@ m.vote("3","0")
 # Test targeting order: cop, doc, maf
 m.target("1","C")
 m.target("2","B")
-m.mafia_target("B")
+m.mafia_target("3","B")
 
 # Vote for nokill
 m.vote("1","0")
 m.vote("3","0")
 
 # Test targeting order: maf, cop, doc
-m.mafia_target("B")
+m.mafia_target("3","B")
 m.target("1","D")
 m.target("2","B")
 
@@ -26,7 +26,7 @@ m.vote("3","0")
 
 # Test targeting order: cop, maf, doc
 m.target("1","B")
-m.mafia_target("A")
+m.mafia_target("3","A")
 m.target("2","A")
 
 # Vote for nokill
@@ -35,7 +35,7 @@ m.vote("3","0")
 
 # Test targeting order: cop, maf, cop, doc
 m.target("1","C")
-m.mafia_target("D")
+m.mafia_target("3","D")
 m.target("1","D")
 m.target("2","D")
 
@@ -44,6 +44,6 @@ m.vote("1","0")
 m.vote("3","0")
 
 # Test no save and Maf win
-m.mafia_target("B")
+m.mafia_target("3","B")
 m.target("1","D")
 m.target("2","D")
