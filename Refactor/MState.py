@@ -3,7 +3,8 @@ from MTimer import MTimer
 
 
 class GameOverException(Exception):
-  pass
+  def __init__(self, g_id):
+    self.g_id = g_id
 
 class MPlayer:
   
@@ -69,7 +70,7 @@ class MState:
     # Log the creation of this game
     self.rec.create(self.id, self.players, self.__roleDict(roles.values()))
     
-  def startGame(self):
+  def start_game(self):
     
     # Add all players
     for player in self.players:
@@ -170,10 +171,10 @@ class MState:
     msg += "\n"+c+" No kill"
     self.mafiaComm.cast(msg)
 		
-  def target(self, p, target_option):
+  def target(self, p_id, target_option):
     """ Change p's target to players[target_option]. """
     try:
-      player = self.getPlayer(p)
+      player = self.getPlayer(p_id)
     except Exception as e:
       return
 			
@@ -200,25 +201,38 @@ class MState:
 
     self.__checkToDay()
 	
-  def send_options(self,prompt,p):
+  def send_options(self,p_id,prompt=None):
     """ Send list of options to player p with preface prompt. """
     try:
-      send_player = self.getPlayer(p)
+      p = self.getPlayer(p_id)
     except Exception as e:
       # TODO Error message/recovery?
       return
+    if prompt == None:
+      if p.role == "COP":
+        prompt = ("Use /target letter (i.e. /target C) "
+                 "to pick someone to investigate")
+      elif p.role == "DOCTOR":
+        prompt = ("Use /target letter (i.e. /target D) "
+                 "to pick someone to save")
+      elif p.role == "STRIPPER":
+        prompt = ("Use /target letter (i.e. /target A) "
+                 "to pick someone to distract")
+      elif p.role == "MILKY":
+        prompt = ("Use /target letter (i.e. /target B) "
+                 "to pick someone to milk")
     msg = prompt
     c = 'A'
     for player in self.players:
       msg += "\n"+c+" "+player.name
       c = chr(ord(c)+1)
     msg += "\n"+c+" No target"
-    self.mainComm.send(msg,send_player.id)
+    self.mainComm.send(msg,p.id)
       
-  def try_reveal(self, p):
+  def try_reveal(self, p_id):
     """Attempt to reveal. If not a CELEB or it's night or CELEB was stripped, fail"""
     try:
-      player = self.getPlayer(p)
+      player = self.getPlayer(p_id)
     except Exception as e:
       # TODO Error logging
       return
@@ -380,14 +394,14 @@ class MState:
       self.mainComm.cast(msg.format(need, " " if need == 1 else "s ",
         player.name))
 
-  def __kill(self, player, guilty_ids, type):
+  def __kill(self, player, guilty_ids, kill_type):
     if player.role in MAFIA_ROLES:
       self.num_mafia -= 1
     self.players.remove(player)
 
-    if type == "elect":
+    if kill_type == "elect":
       self.rec.elect(guilty_ids, int(player.id), self.day, self.__roleDict())
-    elif type == "murder":
+    elif kill_type == "murder":
       self.rec.murder(guilty_ids, int(player.id), self.day, True, self.__roleDict())
 
 
@@ -504,17 +518,17 @@ class MState:
     self.mafia_options()
     for p in self.players:
       if p.role == "COP":
-        self.send_options("Use /target letter (i.e. /target C) "
-                          "to pick someone to investigate",p.id)
+        self.send_options(p.id,"Use /target letter (i.e. /target C) "
+                          "to pick someone to investigate")
       elif p.role == "DOCTOR":
-        self.send_options("Use /target letter (i.e. /target D) "
-                          "to pick someone to save",p.id)
+        self.send_options(p.id,"Use /target letter (i.e. /target D) "
+                          "to pick someone to save")
       elif p.role == "STRIPPER":
-        self.send_options("Use /target letter (i.e. /target A) "
-                          "to pick someone to distract",p.id)
+        self.send_options(p.id,"Use /target letter (i.e. /target A) "
+                          "to pick someone to distract")
       elif p.role == "MILKY":
-        self.send_options("Use /target letter (i.e. /target B) "
-                          "to pick someone to milk",p.id)
+        self.send_options(p.id,"Use /target letter (i.e. /target B) "
+                          "to pick someone to milk")
 
     if "NIGHT" in self.__testRules("auto_timer"):
       self.timer = self.__standard_timer(5)
@@ -537,12 +551,14 @@ class MState:
       self.mainComm.cast("Town WINS")
       self.lobbyComm.cast("Town WINS")
       self.rec.end("Town",self.phase, self.day)
-      self.__endGame()
     elif self.num_mafia >= len(self.players)/2:
       self.mainComm.cast("Mafia WINS")
       self.lobbyComm.cast("Mafia WINS")
       self.rec.end("Mafia",self.phase, self.day)
-      self.__endGame()
+    else:
+      return
+    self.lobbyComm.cast(self.__revealRoles())
+    self.__endGame()
 
   def __endGame(self):
     for winner in self.idiot_winners:
@@ -556,7 +572,6 @@ class MState:
 
   def __revealRoles(self):
     """ Make a string of the original roles that the game started with. """
-    log("MState __revealRoles",4)
     r = ""
 
     savedRolesSortedIDs = sorted(self.savedRoles, key=(lambda x: ALL_ROLES.index(self.savedRoles[x])))

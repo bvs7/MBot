@@ -1,5 +1,5 @@
 m = MState(2,mainComm,mafiaComm,lobbyComm,{},{"1":"COP","2":"DOCTOR","3":"MAFIA"},rec)
-m.startGame()
+m.start_game()
 m.vote("1","0")
 m.vote("3","0")
 m.target("1","C")

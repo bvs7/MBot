@@ -1,6 +1,6 @@
-CREATE 1 1(TOWN) 2(TOWN) 3(MAFIA)
-START
-VOTE 1(TOWN) 2(TOWN)
-VOTE 3(MAFIA) 2(TOWN)
-KILL 2(TOWN)
-MAFIA_WINS
+CREATE 1
+START # Start game
+*
+* # last vote
+ELECT 2 # End of day 1, but kill
+END Mafia Day 1

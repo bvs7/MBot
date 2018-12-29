@@ -11,7 +11,7 @@ def loadFile(filename):
 
   return pattern
 
-TESTS = ["4"]
+TESTS = ["1","2","3"]
 test_folder = "test_MState/"
 output_log = "results.txt"
 
@@ -30,22 +30,21 @@ with open(output_log, 'w') as outf:
     begin_msg = "Beginning {} test\n".format(test)
     outf.write(begin_msg)
     print(begin_msg)
+    command_line = 0
     try:
-      command_line = 0
       for command in commands:
         command_line += 1
         if not command == "":
           print(command)
           exec(command)
-    except AssertionError as ae:
-      traceback.print_exc(file=outf)
-      outf.write("command line: {}".format(command_line))
     except GameOverException as e:
-      if rec.pattern:
-        outf.write("Extra lines in rec: {}".format(rec.pattern))
+      pass
+    finally:
+      outf.write(rec.log)
+      if rec.active:
+        outf.write("ERROR: {} INCOMPLETE".format(test))
       else:
-        outf.write("Game ended successfully\n")
-    else:
-      outf.write("{} successful\n".format(test))
+        outf.write("{} successful\n".format(test))
+
       
 

@@ -1,6 +1,6 @@
 # Test various night time activity orderings
 m = MState(3,mainComm,mafiaComm,lobbyComm,{},{"1":"COP","2":"DOCTOR","3":"MAFIA"},rec)
-m.startGame()
+m.start_game()
 
 # Vote for nokill
 m.vote("1","0")
