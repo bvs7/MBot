@@ -16,8 +16,8 @@ try:
     import groupy
     groupy_imported = True
     # Success. Load token
-    tokenfile = open("../.groupy.key")
-    token = tokenfile.read()
+    tokenfile = open(GROUPY_KEYFILE,'r')
+    token = tokenfile.read().strip()
     tokenfile.close()
 
     client = groupy.Client.from_token(token)
@@ -68,7 +68,7 @@ class MComm:
 class GroupComm(MComm):
 
     def __init__(self, group_id):
-
+        print(group_id)
         self.group = client.groups.get(group_id)
         self.savedNames = {}
 
@@ -112,8 +112,11 @@ class GroupComm(MComm):
                     dm.create(HELP_MSG)
                     global chats
                     chats = {}
+                    time.sleep(1)
                     for chat in client.chats.list_all():
+                        print(chat.other_user['id'])
                         chats[chat.other_user['id']] = chat
+                    time.sleep(1)
                 m_id = chats[player_id].post(text=msg).id
                 time.sleep(ACTION_DELAY)
                 return m_id
@@ -179,7 +182,7 @@ class GroupComm(MComm):
             self.group = client.groups.get(self.group.id)
             memberList = [m for m in self.group.members if m.user_id == player_id]
             for member in memberList:
-                if member.user_id != MODERATOR:
+                if not member.user_id in MODERATORS:
                     member.remove()
         except groupy.exceptions.GroupyError as e:
             log("Failed to remove player: {}".format(e))
@@ -194,7 +197,7 @@ class GroupComm(MComm):
             log("Failed to clear group: {}".format(e))
             return False
         for member in self.group.members:
-            if member.user_id != MODERATOR:
+            if not member.user_id in MODERATORS:
                 member.remove()
         log("CLEAR {}".format(self.group.name))
         return True

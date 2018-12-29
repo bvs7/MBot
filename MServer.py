@@ -82,7 +82,7 @@ class MServer:
         assert 'sender_id' in DM, "No sender_id in DM for do_DM"
         assert 'text' in DM, "No text in DM for do_DM"
         # Check that this is a valid command
-        if (not DM['sender_id'] == MODERATOR) and DM['text'][0:len(ACCESS_KW)] == ACCESS_KW:
+        if (not DM['sender_id'] in MODERATORS) and DM['text'][0:len(ACCESS_KW)] == ACCESS_KW:
             words = DM['text'][len(ACCESS_KW):].split()
 
             sender_id = DM['sender_id']
