@@ -1,6 +1,7 @@
 *.pyc
 outputs/*
 .groupy.key
+.vscode/*
 tests/*.logout
 data/*
 data/id
