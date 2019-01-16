@@ -723,7 +723,7 @@ class MState:
         # Check win conditions
         if self.num_mafia == 0:
             self.mainComm.cast("TOWN WINS")
-            self.lobbyComm.cast("TOWN_WINS")
+            self.lobbyComm.cast("TOWN WINS")
             self.record("TOWN WINS")
             self.__endGame("TOWN")
             return True

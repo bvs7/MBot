@@ -112,15 +112,16 @@ class GroupComm(MComm):
                     dm.create(HELP_MSG)
                     global chats
                     chats = {}
-                    time.sleep(1)
+   #                 time.sleep(1)
                     for chat in client.chats.list_all():
-                        print(chat.other_user['id'])
+                        print("DM Chat id: " + chat.other_user['id'])
                         chats[chat.other_user['id']] = chat
-                    time.sleep(1)
+                if not player_id in chats:
+                    raise Exception("Failed to create chat")
                 m_id = chats[player_id].post(text=msg).id
                 time.sleep(ACTION_DELAY)
                 return m_id
-            except groupy.exceptions.GroupyError as e:
+            except Exception as e:
                 print("Failed to send, try {}: {}".format(i,e))
                 time.sleep(RETRY_DELAY)
 
@@ -147,8 +148,8 @@ class GroupComm(MComm):
                 if m.user_id == member_id:
                     self.savedNames[member_id] = m.nickname
                     return m.nickname
-        except Exception:
-            pass
+        except Exception as e:
+            print("Error getting name: {}".format(e))
         print("Failed to get Name")
         return "__"
 
