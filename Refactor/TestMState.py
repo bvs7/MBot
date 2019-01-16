@@ -1,6 +1,8 @@
 from MComm import TestMComm
 from MRecord import TestMRecord
 from MState import MState, GameOverException
+from MTimer import MTimer, FastMTimer
+import time
 
 import traceback
 
@@ -11,7 +13,8 @@ def loadFile(filename):
 
   return pattern
 
-TESTS = ["1","2","3"]
+TESTS = ["1","2","3","4","time","time2"]
+TESTS = ['time2']
 test_folder = "test_MState/"
 output_log = "results.txt"
 

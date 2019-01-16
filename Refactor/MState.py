@@ -23,7 +23,7 @@ class MPlayer:
 
 class MState:
 
-  def __init__(self, id, mainComm, mafiaComm, lobbyComm, rules, roles, rec):
+  def __init__(self, id, mainComm, mafiaComm, lobbyComm, rules, roles, rec, MTimerClass=MTimer):
     """Create a mafia game.
     
     id -- The unique number
@@ -41,6 +41,7 @@ class MState:
     self.lobbyComm = lobbyComm
     self.rules = rules # TODO let this be default (None)
     self.rec = rec
+    self.MTimerClass=MTimerClass
     
     # Generate initial state
     self.day = 0
@@ -336,14 +337,14 @@ class MState:
     else:
       time = value
     alarms = {
-      0:self.__progress_phase,
-      20:self.__warning,
-      60:self.__warning,
-      5*60:self.__warning,
-      10*60:self.__warning,
-      15*60:self.__warning
+      0:[self.__progress_phase],
+      20:[self.__warning],
+      60:[self.__warning],
+      5*60:[self.__warning],
+      10*60:[self.__warning],
+      15*60:[self.__warning]
     }
-    return MTimer(time, alarms, self.id)
+    return self.MTimerClass(time, alarms, self.id)
 
   def __progress_phase(self):
     if self.phase == "Day":
@@ -352,6 +353,8 @@ class MState:
       self.__toDay()
 
   def __warning(self):
+    if self.timer == None:
+      return
     if self.timer.value == 15 * 60:
       self.mainComm.cast("Fifteen minutes remaining")
     if self.timer.value == 10 * 60:

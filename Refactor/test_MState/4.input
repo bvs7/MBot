@@ -1,7 +1,7 @@
 # Test a much larger game
 # COP, DOC, CELEB, MILLER, TOWN, MAFIA, STRIPPER, GODFATHER
 m = MState(4,mainComm,mafiaComm,lobbyComm,{},{"1":"COP", "2":"DOCTOR", "3":"CELEB", "4":"MILLER", "5":"TOWN", "6":"MAFIA", "7":"STRIPPER", "8":"GODFATHER"},rec)
-m.startGame()
+m.start_game()
 
 # Game should start in Night - nvmd haven't implemented rules yet
 m.vote("1", "0")

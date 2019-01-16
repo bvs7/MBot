@@ -191,6 +191,7 @@ class TestMComm(MComm):
         self.group_id = group_id
         self.idToName = {}
         self.silent = silent
+        self.acks = []
 
     def cast(self, msg):
         if not self.silent:
@@ -200,7 +201,7 @@ class TestMComm(MComm):
         pass
 
     def getAcks(self, message_id):
-        pass
+        return self.acks
 
     def send(self, msg, player_id):
         if not self.silent:

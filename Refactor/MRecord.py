@@ -98,7 +98,7 @@ class TestMRecord(MRecord):
     else:
       if self.next_line[0] == '***':
         self.__next_line()
-      if self.curr_line[0] == '***':
+      if self.curr_line != None and self.curr_line[0] == '***':
         self.log += "Matched line {}: ({}) {}\n".format(
           self.curr_line[1], self.curr_line[2], line
         )

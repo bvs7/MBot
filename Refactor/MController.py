@@ -2,6 +2,7 @@ from MInfo import *
 from MTimer import MTimer
 from MState import MState, GameOverException
 from MComm import MComm
+from MRecord import MRecords
 from DBMRecord import DBMRecord
 
 import time
@@ -22,7 +23,7 @@ import time
 
 class MController:
 
-  def __init__(self, lobby_id, group_ids, CommType=MComm):
+  def __init__(self, lobby_id, group_ids, CommType=MComm, RecordType=DBMRecord, TimerType=MTimer):
 
     # For now, single lobby, single game
 
@@ -30,33 +31,17 @@ class MController:
     self.rules = self.__load_rules()
 
     self.lobbyComm = CommType(lobby_id)
+    self.RecordType = RecordType
+    self.TimerType = TimerType
     self.start_timer = None
     self.start_message_ids = []
+
+    self.determined_roles = []
 
     self.availableComms = []
     for group_id in group_ids:
       self.availableComms.append(CommType(group_id))
-    
-    
-  def __init_commands(self):
-    self.global_commands = {
-      START_KW : self.start_command,
-      IN_KW    : self.in_command,
-      OUT_KW   : self.out_command,
-      WATCH_KW : self.watch_command,
-      RULE_KW  : self.rule_command,
-      STATS_KW : self.stats_command,
-      STATUS_KW: self.status_command,
-      HELP_KW  : self.help_command,
-      LEAVE_KW : self.leave_command,
-    }
-    self.mstate_commands ={
-      VOTE_KW  : self.vote_command,
-      TIMER_KW : self.timer_command,
-      UNTIMER_KW: self.untimer_command,
-      TARGET_KW: self.target_command,
 
-    }
 
   def command(self, keyword, group_id, message_id, member_id, data):
     """ If this is a DM, group id has a '+' in it, member_id is sender"""
@@ -106,7 +91,7 @@ class MController:
     alarms = {
       0 : self.__start_game,
     }
-    self.start_timer = MTimer(minutes*60, alarms)
+    self.start_timer = self.TimerType(minutes*60, alarms)
 
   def extend_command(self, group_id, message_id, member_id, data):
     if self.start_timer == None:
@@ -151,7 +136,6 @@ class MController:
     self.lobbyComm.cast(msg)
     
   def status_command(self, group_id, message_id, member_id, data):
-
     if group_id == self.lobbyComm.id:
       msg = ""
       if self.mstate == None:
@@ -190,7 +174,7 @@ class MController:
     elif words[1].lower() == "nokill":
       votee_id = "0"
     elif 'attachments' in data:
-      mentions = [a for a in data['attachments'] if a['type'] == 'mentions']
+      mentions = [a for a in data['attachments'] if a['type'] == 'mention']
       if (len(mentions) > 0 and 
           'user_ids' in mentions[0] and 
           len(mentions[0]['user_ids']) >= 1):
@@ -252,11 +236,12 @@ class MController:
     mainComm = self.availableComms.pop()
     mafiaComm = self.availableComms.pop()
 
+    game_id = self.__game_id()
     roles = self.__rolegen(next_ids)
 
     self.mstate = MState(
-      next_ids, mainComm, mafiaComm, self.lobbyComm,
-      self.rules, roles, DBMRecord()
+      game_id, mainComm, mafiaComm, self.lobbyComm,
+      self.rules, roles, self.RecordType()
     )
     self.mstate.start_game()
 
@@ -283,6 +268,14 @@ class MController:
     f.close()
     return rules
 
+  def __game_id(self):
+    return 1
+
   def __rolegen(self, p_ids):
+    if len(self.determined_roles) > 0:
+      roles = {}
+      for p_id in p_ids:
+        roles[p_id] = self.determined_roles.pop(0)
+      return roles
     return [] # TODO: implement
   

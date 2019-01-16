@@ -14,6 +14,8 @@ class MTimer:
         self.low_set_lim = low_set_lim
         
         self.lock = threading.Lock()
+
+        self.tick_time = 1
         
         self.timerThread = threading.Thread(name="Timer"+str(id), target=self.tick)
         self.timerThread.start()
@@ -38,7 +40,7 @@ class MTimer:
             time_elapsed = current_time - last_time
             last_time = current_time
             self.lock.release()
-            time.sleep(1 - time_elapsed)
+            time.sleep(max([self.tick_time - time_elapsed,0]))
             
     def addAlarms(self, alarms):
         with self.lock:
@@ -71,3 +73,8 @@ class MTimer:
     
     def __str__(self):
         return time.strftime("%H:%M:%S",time.gmtime(self.value))
+
+class FastMTimer(MTimer):
+    def __init__(self, value, alarms, low_set_lim=0):
+        super().__init__(value,alarms,low_set_lim)
+        self.tick_time = .01
