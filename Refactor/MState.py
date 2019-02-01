@@ -106,7 +106,7 @@ class MState:
     self.rec.start()
     
     if (self.__testRules("start_night") == "ON" or 
-       (self.__testRules("start_night") == "EVEN" and len(self.players%2==0)) ):
+       (self.__testRules("start_night") == "EVEN" and len(self.players)%2==0) ):
        self.__toNight()
        
        
@@ -138,7 +138,7 @@ class MState:
       return
     voter.vote = votee
     
-    self.rec.vote(int(voter.id), int(votee.id), self.day)
+    self.rec.vote(int(voter_id), None if votee_id==None else int(votee_id), self.day)
     
     self.__checkVotes(votee)
     
@@ -147,6 +147,7 @@ class MState:
     if not self.phase == "Night":
       self.mafiaComm.cast("You can only target during the night")
       return
+    # TODO: cleanse target_option
     target_number = ord(target_option)-ord('A')
     if target_number == len(self.players):
       target = self.null
@@ -280,7 +281,7 @@ class MState:
   def getPlayer(self, p):
     """ p can be player or id, either way returns the player object associated. """  
     if type(p) == MPlayer:
-      return p.id
+      return p
     elif type(p) == str:
       players = [player for player in self.players if player.id == p]
       if len(players) >= 1:
@@ -534,7 +535,7 @@ class MState:
                           "to pick someone to milk")
 
     if "NIGHT" in self.__testRules("auto_timer"):
-      self.timer = self.__standard_timer(5)
+      self.timer = self.__standard_timer(5*60)
       for player in self.players:
         player.timered = True
       self.mainComm.cast("Timer started: {}".format(self.timer))

@@ -188,14 +188,14 @@ class GroupComm(MComm):
 
 class TestMComm(MComm):
     def __init__(self,group_id,silent=False):
-        self.group_id = group_id
+        self.id = group_id
         self.idToName = {}
         self.silent = silent
         self.acks = []
 
     def cast(self, msg):
         if not self.silent:
-            print("CAST {}:{}".format(self.group_id,msg)) 
+            print("CAST {}:{}".format(self.id,msg)) 
 
     def ack(self, message_id):
         pass
@@ -225,4 +225,4 @@ class TestMComm(MComm):
             self.idToName[id] = id
 
     def __str__(self):
-        return "Comm({})".format(self.group_id)
+        return "Comm({})".format(self.id)

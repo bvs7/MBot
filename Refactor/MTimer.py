@@ -22,8 +22,8 @@ class MTimer:
         
     def tick(self):
         last_time = time.clock()
+        offset = 0
         while self.active:
-            
             self.lock.acquire()
             for value,actions in self.alarms.items():
                 if self.value == value:
@@ -36,11 +36,13 @@ class MTimer:
                 self.active = False
                 return
             self.value -= 1
+
             current_time = time.clock()
-            time_elapsed = current_time - last_time
+            offset = (self.tick_time + offset) - (current_time - last_time)
             last_time = current_time
             self.lock.release()
-            time.sleep(max([self.tick_time - time_elapsed,0]))
+            
+            time.sleep(max([self.tick_time + offset, 0]))
             
     def addAlarms(self, alarms):
         with self.lock:

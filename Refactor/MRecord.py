@@ -38,6 +38,44 @@ class MRecord:
   def archive(self):
     raise NotImplementedError()
 
+class PrintMRecord:
+  
+  def create(self, g_id, players, roleDict):
+    print("CREATE {}".format(g_id))
+
+  def start(self):
+    print("START")
+
+  def vote(self, voter_id, votee_id, day):
+    print("VOTE {} {}".format(voter_id, votee_id))
+
+  def mafia_target(self, p_id, target_id, night):
+    print("MTARGET {} {}".format(p_id, target_id))
+
+  def target(self, p_id, target_id, night):
+    print("TARGET {} {}".format(p_id, target_id))
+
+  def reveal(self, p_id, day, distracted):
+    print("REVEAL {} {}".format(p_id, distracted))
+
+  def elect(self, voter_ids, target_id, day, roles):
+    print("ELECT {}".format(target_id))
+
+  def murder(self, mafia_ids, target_id, night, successful, roles):
+    print("MURDER {} {}".format(target_id, 'success' if successful else 'failure'))
+
+  def day(self):
+    print("DAY")
+
+  def night(self):
+    print("NIGHT")
+
+  def end(self, winner, phase, day):
+    print("END {} {} {}".format(winner, phase, day))
+
+  def archive(self):
+    print("archive")
+
 class TestMRecord(MRecord):
 
   def __init__(self, pattern):

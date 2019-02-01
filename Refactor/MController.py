@@ -1,8 +1,8 @@
 from MInfo import *
 from MTimer import MTimer
 from MState import MState, GameOverException
-from MComm import MComm
-from MRecord import MRecords
+from MComm import MComm, GroupComm
+from MRecord import MRecord
 from DBMRecord import DBMRecord
 
 import time
@@ -23,7 +23,7 @@ import time
 
 class MController:
 
-  def __init__(self, lobby_id, group_ids, CommType=MComm, RecordType=DBMRecord, TimerType=MTimer):
+  def __init__(self, lobby_id, group_ids, CommType=GroupComm, RecordType=DBMRecord, TimerType=MTimer):
 
     # For now, single lobby, single game
 
@@ -43,12 +43,18 @@ class MController:
       self.availableComms.append(CommType(group_id))
 
 
-  def command(self, keyword, group_id, message_id, member_id, data):
+  def command(self, group_id, message_id, member_id, data):
     """ If this is a DM, group id has a '+' in it, member_id is sender"""
+
+    if "text" in data and len(data["text"]) > 0 and data["text"][0] == ACCESS_KW:
+      keyword = data["text"].split()[0][1:]
+    else:
+      return # Not a valid command format
+
     try:
       mname = keyword + "_command"
       if not hasattr(self, mname):
-        return
+        return # Not a valid command word
       method = getattr(self, mname)
       method(group_id, message_id, member_id, data)
     except GameOverException as goe:
@@ -75,21 +81,22 @@ class MController:
         minplayers = int(words[2])
       if len(words) >= 2:
         minutes = int(words[1])
-    except ValueError:
-      pass
+    except ValueError as e:
+      print(e)
 
     self.minplayers = minplayers
-    msg = ("Game will start in {} minute{} ({}). "
+    seconds = minutes * 60
+    msg = ("Game will start in {}:{:0>2d} (at {}). "
            "If there are at least {} players)" 
            " Like this to join.").format(
-             minutes, '' if minutes == 1 else 's',
-             time.strftime("%I:%M",time.localtime(time.time() + (minutes*60))),
+             seconds//60, seconds%60,
+             time.strftime("%I:%M",time.localtime(time.time() + (seconds))),
              minplayers
            )
 
     self.start_message_ids.append(self.lobbyComm.cast(msg))
     alarms = {
-      0 : self.__start_game,
+      0 : [self.__start_game],
     }
     self.start_timer = self.TimerType(minutes*60, alarms)
 
@@ -103,12 +110,12 @@ class MController:
     except ValueError as e:
       return
     self.start_timer.addTime(minutes*60)
-    if self.start_timer.getTime > 10: # If it isn't immediately starting...
-      minutes = self.start_timer.getTime() // 60
-      msg = ("Game will start in {} minute{} ({}). "
+    if self.start_timer.getTime() > 10: # If it isn't immediately starting...
+      seconds = self.start_timer.getTime()
+      msg = ("Game will start in {}:{:0>2d} (at {}). "
              "You can also like this message now.").format(
-               minutes, '' if minutes == 1 else 's',
-               time.strftime("%I%M" , time.localtime(time.time()+(minutes*60))),
+              seconds//60, seconds%60,
+               time.strftime("%I:%M" , time.localtime(time.time()+(seconds))),
              )
       self.start_message_ids.append(self.lobbyComm.cast(msg))
 
@@ -144,7 +151,8 @@ class MController:
         msg = str(self.mstate)
       if not self.start_timer == None:
         m = self.start_timer.getTime()
-        msg += "\nNew game starting within {} min".format(m//60)
+        msg += "\nNew game starting in {}:{:0>2d}".format(m//60, m%60)
+      self.lobbyComm.cast(msg)
     elif group_id == self.mstate.mainComm.id:
       self.mstate.mainComm.cast(str(self.mstate))
     
@@ -161,7 +169,8 @@ class MController:
     self.lobbyComm.cast("Unfortunately, rules cannot be changed for now")
 
   def vote_command(self, group_id, message_id, member_id, data):
-    if not self.mstate == None and self.mstate.mainComm.id == group_id:
+    if not self.mstate == None and not self.mstate.mainComm.id == group_id:
+      print("meh")
       return #TODO: Exception?
 
     voter_id = member_id
@@ -187,24 +196,31 @@ class MController:
     self.mstate.vote(voter_id, votee_id)
 
   def timer_command(self, group_id, message_id, member_id, data):
-    if not self.mstate == None and self.mstate.mainComm.id == group_id:
+    if not self.mstate == None and not self.mstate.mainComm.id == group_id:
       return #TODO: Exception?
     self.mstate.setTimer(member_id)
     
   def untimer_command(self, group_id, message_id, member_id, data):
-    if not self.mstate == None and self.mstate.mainComm.id == group_id:
+    if not self.mstate == None and not self.mstate.mainComm.id == group_id:
       return #TODO: Exception?
     self.mstate.unSetTimer(member_id)
     
   def target_command(self, group_id, message_id, member_id, data):
     if '+' in group_id and not data['sender_id'] == MODERATOR:
-      words = data['text'].strip()
+      words = data['text'].split()
       if len(words) < 2:
         return # TODO: Exception
       target_option = words[1]
       if not member_id in [p.id for p in self.mstate.players]:
         return # TODO: Exception
       self.mstate.target(member_id, target_option)
+    elif group_id == self.mstate.mafiaComm.id:
+      words = data['text'].split()
+      if len(words) < 2:
+        return # TODO: Exception
+      target_option = words[1]
+      self.mstate.mafia_target(member_id, target_option)
+
 
   def options_command(self, group_id, message_id, member_id, data):
     if '+' in group_id and not data['sender_id'] == MODERATOR:
@@ -277,5 +293,5 @@ class MController:
       for p_id in p_ids:
         roles[p_id] = self.determined_roles.pop(0)
       return roles
-    return [] # TODO: implement
+    return {} # TODO: implement
   

@@ -1,8 +1,11 @@
 
-from newMRecord import MRecord
+from MRecord import MRecord
 
-import pymysql.cursors
-from time import strftime
+try:
+  import pymysql.cursors
+  from time import strftime
+except ModuleNotFoundError as e:
+  print("failed to load mysql interface")
 
 def getDateTime():
   return strftime("%Y-%m-%d %H:%M:%S")
