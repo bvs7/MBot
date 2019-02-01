@@ -9,127 +9,58 @@ from MInfo import *
 from MComm import MComm, GroupComm
 from MState import MState
 from MController import MController
+from DBMRecord import DBMRecord
 
 
 class MServer:
 
-    def __init__(self, MCommType=MComm, #default MComm type
-                     MStateType=MState, # default MState type
-                     restart=True):
-        log("MServer init",3)
-        self.MCommType = MCommType
-        self.MStateType = MStateType
+  def __init__(self, MCommType=MComm, #default MComm type
+               MStateType=MState, # default MState type
+               restart=True):
+    self.MCommType = MCommType
+    self.MStateType = MStateType
 
-        self.ctrl = MController(self.MCommType(LOBBY_GROUP_ID), GROUP_IDS, GroupComm)
-        log("MServer start", 3)
+    self.ctrl = MController(LOBBY_GROUP_ID, GROUP_IDS)
 
-    def do_POST(self,post):
-        """Process a POST request from bots watching the chats"""
-        post_record = ""
-        if 'group_id' in post:
-            if post['group_id'] == LOBBY_GROUP_ID:
-                post_record += "LOBBY: "
-        if 'name' in post:
-            post_record += str(post['name']) + "|"
-        if 'text' in post:
-            post_record += post['text']
-        if not post_record == "":
-            print(post_record)
+  def do_POST(self,post):
 
-        # Check that this is a command
-        if post['text'][0:len(ACCESS_KW)] == ACCESS_KW:
+    group_id = None
+    message_id = None
+    sender_id = None
 
-            # Check if this was posted by the DM bot
-            if '+' in post['group_id']:
-                return self.do_DM(post)
+    if 'group_id' in post:
+      group_id = post['group_id']
+    if 'id' in post:
+      message_id = post['id']
+    if 'sender_id' in post:
+      sender_id = post['sender_id']
 
-            try:
-                words = post['text'][len(ACCESS_KW):].split()
-                player_id = post['user_id']
-                message_id = post['id']
-                group_id = post['group_id']
-            except KeyError as e:
-                log("KeyError:" + str(e))
-                return
-
-            if group_id == self.ctrl.lobbyComm.group.id:
-                if words[0] in self.ctrl.LOBBY_OPS:
-                    return self.ctrl.LOBBY_OPS[words[0]](player_id,words,message_id)
-            for mstate in self.ctrl.mstates:
-                if group_id == mstate.mainComm.group.id:
-                    if words[0] in self.ctrl.MAIN_OPS:
-
-                        # CHECK FOR A VOTE
-                        if words[0] == VOTE_KW:
-                            if len(words) < 2: # shouldn't happen?
-                                votee = None
-                            else:
-                                if words[1].lower() == "me":
-                                    votee = player_id
-                                elif words[1].lower() == "none":
-                                    votee = None
-                                elif words[1].lower() == "nokill":
-                                    votee = "0"
-                                elif 'attachments' in post:
-                                    mentions = [a for a in post['attachments'] if a['type'] == 'mentions']
-                                    if len(mentions) > 0 and 'user_ids' in mentions[0] and len(mentions[0]['user_ids']) >= 1:
-                                        votee = mentions[0]['user_ids'][0]
-                            try:
-                                player_id = (player_id, votee)
-                            except:
-                                return False
-
-                        return self.ctrl.MAIN_OPS[words[0]](mstate,player_id,words,message_id)
-                elif group_id == mstate.mafiaComm.group.id:
-                    if words[0] in self.ctrl.MAFIA_OPS:
-                        return self.ctrl.MAFIA_OPS[words[0]](mstate,player_id,words,message_id)
-
-    def do_DM(self,DM):
-        """Process a DM from a player"""
-        log("MServer do_DM",3)
-        assert 'sender_id' in DM, "No sender_id in DM for do_DM"
-        assert 'text' in DM, "No text in DM for do_DM"
-        # Check that this is a valid command
-        if (not DM['sender_id'] in MODERATORS) and DM['text'][0:len(ACCESS_KW)] == ACCESS_KW:
-            words = DM['text'][len(ACCESS_KW):].split()
-
-            sender_id = DM['sender_id']
-
-            if len(words) > 0:
-                try:
-                    result = self.ctrl.DM_OPS[words[0]](sender_id,words)
-                except KeyError as e:
-                    log("Invalid DM keyword: {}".format(words[0]))
-                    return False
-                return result
+    self.ctrl.command(group_id, message_id, sender_id, post)
 
 if __name__ == "__main__":
-    mserver = MServer(GroupComm)
+  mserver = MServer(GroupComm)
 
 class MainHandler(BaseHandler):
 
   def do_POST(self):
     try:
-        length = int(self.headers['Content-Length'])
-        content = self.rfile.read(length).decode('utf-8')
-        post = json.loads(content)
+      length = int(self.headers['Content-Length'])
+      content = self.rfile.read(length).decode('utf-8')
+      post = json.loads(content)
     except Exception as e:
-        post = {}
-        log("failed to load content")
+      post = {}
+      log("failed to load content")
 
-  #  try:
+
     mserver.do_POST(post)
-#    except Exception as e:
- #       log(e)
     return
 
 if __name__ == "__main__":
+  server = HTTPServer((ADDRESS,int(PORT)), MainHandler)
 
-    server = HTTPServer((ADDRESS,int(PORT)), MainHandler)
+  serverThread = threading.Thread(name="Server Thread", target=server.serve_forever)
 
-    serverThread = threading.Thread(name="Server Thread", target=server.serve_forever)
+  serverThread.start()
 
-    serverThread.start()
-
-    while True:
-        pass
+  while True:
+    pass

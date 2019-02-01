@@ -3,7 +3,8 @@
 # This class provides an interface for the program to communicate with a group
 #   whether it be GroupMe or any other means to be added.
 
-# An new GroupComm object is created for each group used to communicate with
+# A new GroupComm object is created for each group used to communicate with
+# Notably, all GroupComm objects have a self.group_id, usable by outside classes
 
 import random
 import time
@@ -16,8 +17,8 @@ try:
     import groupy
     groupy_imported = True
     # Success. Load token
-    tokenfile = open(GROUPY_KEYFILE,'r')
-    token = tokenfile.read().strip()
+    tokenfile = open("../../.groupy.key")
+    token = tokenfile.read()
     tokenfile.close()
 
     client = groupy.Client.from_token(token)
@@ -26,15 +27,14 @@ try:
     chats = {}
     for chat in client.chats.list_all():
         chats[chat.other_user['id']] = chat
-
+    
 except Exception as e:
     print("Failed to load groupy: {}".format(e))
 
 
-RETRY_TIMES = 10
+RETRY_TIMES = 6
 RETRY_DELAY = 10
 NAME_REPLACE_RATIO = 0.2
-ACTION_DELAY = 1
 
 
 """ A test class that performs the basic functionality for an MComm
@@ -68,15 +68,15 @@ class MComm:
 class GroupComm(MComm):
 
     def __init__(self, group_id):
-        print(group_id)
+
         self.group = client.groups.get(group_id)
+        self.id = group_id
         self.savedNames = {}
 
     def cast(self, msg):
         for i in range(RETRY_TIMES):
             try:
                 m_id = self.group.post(msg).id
-                time.sleep(ACTION_DELAY)
                 return m_id
             except groupy.exceptions.GroupyError as e:
                 print("Failed to cast, try {}: {}".format(i,e))
@@ -108,82 +108,61 @@ class GroupComm(MComm):
         for i in range(RETRY_TIMES):
             try:
                 if not player_id in chats:
-                    dm = groupy.api.messages.DirectMessages(client.session, player_id)
-                    dm.create(HELP_MSG)
-                    global chats
-                    chats = {}
-   #                 time.sleep(1)
-                    for chat in client.chats.list_all():
-                        print("DM Chat id: " + chat.other_user['id'])
-                        chats[chat.other_user['id']] = chat
-                if not player_id in chats:
-                    raise Exception("Failed to create chat")
+                    chats[player_id] = groupy.api.chats.Chat(client.chats, other_user=player_id)
                 m_id = chats[player_id].post(text=msg).id
-                time.sleep(ACTION_DELAY)
                 return m_id
-            except Exception as e:
+            except groupy.exceptions.GroupyError as e:
                 print("Failed to send, try {}: {}".format(i,e))
                 time.sleep(RETRY_DELAY)
 
     def setTitle(self, new_title):
         msg = "TITLE "+self.group.name+"->"
-        try:
-            self.group.update(name=new_title)
-            msg += self.group.name
-        except Exception as e:
-            print(e)
+        self.group.update(name=new_title)
+        msg += self.group.name
 
         log(msg)
         return True
 
     # TODO: just process name change mesages
     def getName(self,member_id):
-        try:
-            r = random.random()
-            if member_id in self.savedNames and r > NAME_REPLACE_RATIO:
-                return self.savedNames[member_id]
-            # Update group
-            self.group.refresh_from_server()
-            for m in self.group.members:
-                if m.user_id == member_id:
-                    self.savedNames[member_id] = m.nickname
-                    return m.nickname
-        except Exception as e:
-            print("Error getting name: {}".format(e))
+        replace = random.random() < NAME_REPLACE_RATIO
+        if member_id in self.savedNames and not replace:
+            return self.savedNames[member_id]
+        # Update group
+        self.group.refresh_from_server()
+        self.__refreshNames(member_id)
+        if member_id in self.savedNames:
+            return self.savedNames[member_id]
         print("Failed to get Name")
         return "__"
 
+    def __refreshNames(self, member_id=None):
+        self.group.refresh_from_server()
+        if type(member_id) == str:
+            member_id = [member_id]
+        if not member_id == None:
+            for m in self.group.members:
+                if m.user_id in member_id:
+                    self.savedNames[member_id] = m.nickname
+
     def add(self, player_id, nickname=None):
-        for i in range(RETRY_TIMES):
-            try:
 
-                if type(player_id) == str:
-                    player_id = [player_id]
+        if type(player_id) == str:
+            player_id = [player_id]
 
-                if nickname == None:
-                    if len(player_id) == 1:
-                        nickname = chats[player_id[0]].other_user["name"]
-                nickname = None
-
-                users = []
-                for p_id in player_id:
-                    self.group.memberships.add(nickname, user_id=p_id);
-                    if nickname != None:
-                        self.savedNames[p_id] = nickname
-                    else:
-                        self.getName(p_id)
-                time.sleep(ACTION_DELAY)
-                return
-            except groupy.exceptions.GroupyError as e:
-                print("Failed to add, try {}: {}".format(i,e))
-                time.sleep(RETRY_DELAY)
+        for p_id in player_id:
+            self.group.memberships.add(nickname, user_id=p_id)
+            if nickname != None:
+                self.savedNames[p_id] = nickname
+            else:
+                self.getName(p_id)
 
     def remove(self, player_id):
         try:
             self.group = client.groups.get(self.group.id)
             memberList = [m for m in self.group.members if m.user_id == player_id]
             for member in memberList:
-                if not member.user_id in MODERATORS:
+                if member.user_id != MODERATOR:
                     member.remove()
         except groupy.exceptions.GroupyError as e:
             log("Failed to remove player: {}".format(e))
@@ -198,10 +177,52 @@ class GroupComm(MComm):
             log("Failed to clear group: {}".format(e))
             return False
         for member in self.group.members:
-            if not member.user_id in MODERATORS:
+            if member.user_id != MODERATOR:
                 member.remove()
         log("CLEAR {}".format(self.group.name))
         return True
 
     def __str__(self):
         return "[{}, {}]".format(self.group.name,self.group.id)
+
+
+class TestMComm(MComm):
+    def __init__(self,group_id,silent=False):
+        self.id = group_id
+        self.idToName = {}
+        self.silent = silent
+        self.acks = []
+
+    def cast(self, msg):
+        if not self.silent:
+            print("CAST {}:{}".format(self.id,msg)) 
+
+    def ack(self, message_id):
+        pass
+
+    def getAcks(self, message_id):
+        return self.acks
+
+    def send(self, msg, player_id):
+        if not self.silent:
+            print("SEND {}:{}".format(player_id,msg))        
+
+    def setTitle(self, new_title):
+        pass        
+
+    def getName(self,member_id):
+        return member_id
+
+    def add(self, player_id, player_name):
+        self.idToName[player_id] = player_name
+
+    def remove(self, player_id):
+        _ = self.idToName.pop(player_id, "___")
+
+    def clear(self, saveList=[]):
+        self.idToName = {}
+        for id in saveList:
+            self.idToName[id] = id
+
+    def __str__(self):
+        return "Comm({})".format(self.id)

@@ -1,0 +1,156 @@
+# Test a much larger game
+# COP, DOC, CELEB, MILLER, TOWN, MAFIA, STRIPPER, GODFATHER
+m = MState(4,mainComm,mafiaComm,lobbyComm,{},{"1":"COP", "2":"DOCTOR", "3":"CELEB", "4":"MILLER", "5":"TOWN", "6":"MAFIA", "7":"STRIPPER", "8":"GODFATHER"},rec)
+m.start_game()
+
+# Game should start in Night - nvmd haven't implemented rules yet
+m.vote("1", "0")
+m.vote("2", "0")
+m.vote("3", "0")
+m.vote("4", "0")
+
+
+m.target("1", "H")
+m.target("2", "E")
+m.mafia_target("6","E")
+m.target("7", "C")
+
+m.try_reveal("3")
+m.vote("1", "0")
+m.vote("2", "0")
+m.vote("3", "0")
+m.vote("4", "0")
+
+# Night 2
+
+m.target("1", "G")
+m.target("2", "I")
+m.mafia_target("6","I")
+m.target("7", "I")
+
+m.try_reveal("3")
+m.vote("1", "0")
+m.vote("2", "0")
+m.vote("3", "0")
+m.vote("4", "0")
+
+# Night 3
+
+m.target("1", "F")
+m.target("2", "I")
+m.mafia_target("6","I")
+m.target("7", "I")
+
+m.vote("1", "0")
+m.vote("2", "0")
+m.vote("3", "0")
+m.vote("4", "0")
+
+# Night 4
+
+m.target("1", "E")
+m.target("2", "I")
+m.mafia_target("7","I")
+m.target("7", "I")
+
+m.vote("1", "0")
+m.vote("2", "0")
+m.vote("3", "0")
+m.vote("4", "0")
+
+# Night 5
+
+m.target("1", "D")
+m.target("2", "I")
+m.mafia_target("7","I")
+m.target("7", "I")
+
+m.vote("1", "0")
+m.vote("2", "0")
+m.vote("3", "0")
+m.vote("4", "0")
+
+# Night 6
+
+m.target("1", "C")
+m.target("2", "I")
+m.mafia_target("8","I")
+m.target("7", "I")
+
+m.vote("1", "0")
+m.vote("2", "0")
+m.vote("3", "0")
+m.vote("4", "0")
+
+# Night 7
+
+m.target("1", "B")
+m.target("2", "I")
+m.mafia_target("8","I")
+m.target("7", "I")
+
+m.vote("1", "0")
+m.vote("2", "0")
+m.vote("3", "0")
+m.vote("4", "0")
+
+# Night 8
+
+m.target("1", "A")
+m.target("2", "I")
+m.mafia_target("8","I")
+m.target("7", "I")
+
+print(m) # Day 9
+
+m.vote("1", "0")
+m.vote("2", "0")
+m.vote("3", "0")
+m.vote("4", "0")
+
+# Night 9
+
+m.target("1", "A")
+m.target("2", "I")
+m.mafia_target("6","I")
+m.target("7", "A")
+
+print(m) # Day 10
+
+m.vote("1", "0")
+m.vote("2", "0")
+m.vote("3", "0")
+m.vote("4", "0")
+
+# Night 10 Kill DOC and strip
+
+m.target("1", "I") 
+m.target("2", "B")
+m.mafia_target("8","B") #celeb
+m.target("7", "B")
+
+print(m) # Day 11
+
+m.vote("1", "7") # Vote for stripper
+m.vote("3", "7")
+m.vote("4", "7")
+print(m) # Day 11 mid
+m.vote("7", "7")
+
+# Night 11 Kill Cop
+
+m.target("1", "F") # target gf
+m.mafia_target("8","A") #cop
+
+print(m) # Day 12
+
+m.vote("5", "6") # Vote for maf
+m.vote("3", "6")
+m.vote("4", "6")
+
+# Night 12 Kill miller
+
+m.mafia_target("8","B") # celeb >miller< town gf
+
+m.vote("3", "8")
+m.vote("5", "8")

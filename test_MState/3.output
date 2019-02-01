@@ -1,0 +1,60 @@
+CREATE 3 #1(COP) 2(DOCTOR) 3(MAFIA)
+START
+
+# 1 Test Order cop doc maf
+#VOTE 1 0 #1(COP) 0(_)
+#VOTE 3 0 #3(MAFIA) 0(_)
+#NOKILL
+*** #nokill day 1
+NIGHT
+TARGET 1 3 #1(COP) 3(MAFIA)
+TARGET 2 2 #2(DOCTOR) 2(DOCTOR)
+* # MTARGET 2(DOCTOR)
+DAY #2
+* # Failed murder
+# 2 Test Order maf cop doc
+#VOTE 1(COP) 0(_)
+#VOTE 3(MAFIA) 0(_)
+#NOKILL
+*** #nokill day 2
+NIGHT
+MTARGET 3 2 #2(DOCTOR)
+TARGET 1 0 #1(COP) 0(_)
+TARGET 2 2 #2(DOCTOR) 2(DOCTOR)
+DAY #3
+* #SAVE 2(DOCTOR) 2(DOCTOR)
+
+# 3 Test Order cop maf doc
+VOTE 1 0 #1(COP) 0(_)
+VOTE 3 0 #3(MAFIA) 0(_)
+* #NOKILL
+NIGHT
+TARGET 1 2 #1(COP) 2(DOCTOR)
+MTARGET 3 1 #1(COP)
+TARGET 2 1 #2(DOCTOR) 1(COP)
+DAY #4
+* #SAVE 2(DOCTOR) 1(COP)
+
+# Test Order cop maf cop doc
+VOTE 1 0 #1(COP) 0(_)
+VOTE 3 0 #3(MAFIA) 0(_)
+* #NOKILL
+NIGHT
+TARGET 1 3 #1(COP) 3(MAFIA)
+MTARGET 3 0 #0(_)
+TARGET 1 0 #1(COP) 0(_)
+TARGET 2 0 #2(DOCTOR) 0(_)
+*** # Day 5
+VOTE 1 0 #1(COP) 0(_)
+VOTE 3 0 #3(MAFIA) 0(_)
+* #NOKILL
+NIGHT #5
+
+# Test no save and maf win
+MTARGET 3 2 #2(DOCTOR)
+TARGET 1 0 #1(COP) 0(_)
+TARGET 2 0 #2(DOCTOR) 0(_)
+
+DAY #6
+MURDER 2 success
+END Mafia Night 5

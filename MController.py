@@ -1,503 +1,297 @@
-# Actions that can be taken by the Group
-
-"""
-Form of OPS:
-LOBBY       (player_id,words,message_id)
-MAIN/MAFIA  (mstate,player_id,words,message_id)
-DM          (sender_id,words)
-"""
+from MInfo import *
+from MTimer import MTimer
+from MState import MState, GameOverException
+from MComm import MComm, GroupComm
+from MRecord import MRecord
+from DBMRecord import DBMRecord
 
 import time
-import threading
-from MInfo import *
-from MState import MState, Preferences
-from MComm import MComm
-import MRecords
+
+
+# Has a function for every possible command
+# Each command fn has a standard form
+# These commands form an interface that controls the overall operation of the app
+
+# command(group_id, message_id, member_id, data)
+
+# group_id is the id of the group that the message was sent to.
+# member_id is the id of the player who sent the message
+# message_id is the id of the message sent
+# data will contain any other necessary information for the command to process.
+
+# The server program will process requests and port them into the correct command fn
 
 class MController:
 
-    def __init__(self,lobbyComm,group_ids,CommType=MComm, determined=False):
+  def __init__(self, lobby_id, group_ids, CommType=GroupComm, RecordType=DBMRecord, TimerType=MTimer):
 
-        # Current Games
-        self.mstates = []
+    # For now, single lobby, single game
 
-        self.lobbyComm = lobbyComm # MComm lobby
+    self.mstate = None 
+    self.rules = self.__load_rules()
 
-        self.pref = self.load_rules()
+    self.lobbyComm = CommType(lobby_id)
+    self.RecordType = RecordType
+    self.TimerType = TimerType
+    self.start_timer = None
+    self.start_message_ids = []
 
-        self.availComms = []
-        for group_id in group_ids:
-            self.availComms.append(CommType(group_id))
+    self.determined_roles = []
 
-        self.determined = determined
-
-        self.time_left = 0
-        self.timer_on = False
-        self.callback = None
-        self.start_message_id = ""
-        self.minplayers = 25
-
-        # Ids of players to be added to next game
-        self.nextIds = []
-
-        self.init_OPS()
-
-        self.timerThread = threading.Thread(target=self.timer_thread)
-        self.timerThread.start()
-
-    def init_OPS(self):
-        self.LOBBY_OPS={ HELP_KW   : self.LOBBY_help  ,
-                         STATUS_KW : self.LOBBY_status,
-                         START_KW  : self.LOBBY_start ,
-                         IN_KW     : self.LOBBY_in    ,
-                         OUT_KW    : self.LOBBY_out   ,
-                         WATCH_KW  : self.LOBBY_watch ,
-                         RULE_KW   : self.LOBBY_rule  ,
-                         RULES_KW  : self.LOBBY_rule  ,
-                         STATS_KW  : self.LOBBY_stats ,
-                         }
-        # Main OPS
-        self.MAIN_OPS ={ VOTE_KW   : self.MAIN_vote  ,
-                         STATUS_KW : self.MAIN_status,
-                         HELP_KW   : self.MAIN_help  ,
-                         LEAVE_KW  : self.MAIN_leave ,
-                         TIMER_KW  : self.MAIN_timer ,
-                         UNTIMER_KW: self.MAIN_untimer,
-                         }
-
-        # Mafia OPS
-        self.MAFIA_OPS={ HELP_KW   : self.MAFIA_help   ,
-                         TARGET_KW : self.MAFIA_target ,
-                         OPTS_KW   : self.MAFIA_options,
-                         }
-
-        self.DM_OPS =  { HELP_KW   : self.DM_help  ,
-                         STATUS_KW : self.DM_status,
-                         OPTS_KW   : self.DM_options,
-                         TARGET_KW : self.DM_target  ,
-                         REVEAL_KW : self.DM_reveal,
-                         STATS_KW  : self.DM_stats,
-                         }
-
-    # LOBBY ACTIONS
-    # TODO: use a word for more specific help
-    def LOBBY_help(self, player_id=None, words=[], message_id=None):
-        self.lobbyComm.ack(message_id)
-        if len(words) > 1:
-            if words[1] in LOBBY_HELP_MSGS:
-                self.lobbyComm.cast(LOBBY_HELP_MSGS[words[1]])
-                return True
-            elif words[1] in ALL_HELP_MSGS:
-                self.lobbyComm.cast(ALL_HELP_MSGS[words[1]])
-                return True
-            else:
-                self.lobbyComm.cast("No help for '"+words[1]+"'")
-                return True
-        else:
-            self.lobbyComm.cast(LOBBY_HELP_MSGS[""])
-        return True
-
-    # TODO: Select a game for more status
-
-    def LOBBY_status(self, player_id=None,words=[], message_id=None):
-        self.lobbyComm.ack(message_id)
-
-        msg = self.__get_status()
-        self.lobbyComm.cast(msg)
-        return True
-
-    def __get_status(self):
-        if len(self.mstates) == 0:
-            msg = "No Games"
-        elif len(self.mstates) == 1:
-            msg = str(self.mstates[0])
-        elif len(self.mstates) > 1:
-            msg = "Current Games\n"
-            for m in self.mstates:
-                msg += "{}: {} {}; {} Players\n".format(
-                    m.id, m.time, m.day, len(m.players) )
-        if self.timer_on:
-            m = self.time_left//60
-            msg += "\nNew Game starting within {} minute{}".format(m,'s' if m == 1 else '')
-        return msg
-
-    # TODO: have LOBBY like the /in to acknowledge
-    def LOBBY_in(self, player_id,words=[], message_id=None):
-        self.lobbyComm.ack(message_id)
-
-        # Add to next list
-        if player_id not in self.nextIds:
-            self.nextIds.append(player_id)
-            msg = "{} added to next game:".format(self.lobbyComm.getName(player_id))
-        else:
-            msg = "You are already in the next game"
-        for p_id in self.nextIds:
-            msg += "\n" + self.lobbyComm.getName(p_id)
-        self.lobbyComm.cast(msg)
-        return True
-
-    def LOBBY_out(self, player_id,words=[], message_id=None):
-        self.lobbyComm.ack(message_id)
-
-        # try to remove from list:
-        if player_id in self.nextIds:
-            self.nextIds.remove(player_id)
-            self.lobbyComm.cast(
-                "{} removed from next game".format(self.lobbyComm.getName(player_id)))
-        else:
-            self.lobbyComm.cast(
-                "{} wasn't in the next game".format(self.lobbyComm.getName(player_id)))
-        return True
+    self.availableComms = []
+    for group_id in group_ids:
+      self.availableComms.append(CommType(group_id))
 
 
-    def LOBBY_start(self, player_id=None, words=[], message_id=None):
-        self.lobbyComm.ack(message_id)
+  def command(self, group_id, message_id, member_id, data):
+    """ If this is a DM, group id has a '+' in it, member_id is sender"""
 
-        minutes = 1
-        minplayers = 3
-        if len(words) > 2:
-            try:
-                minutes = int(words[1])
-                minplayers = int(words[2])
-                if minutes < 1:
-                    minutes = 1
-            except ValueError:
-                pass
-        elif len(words) > 1:
-            try:
-                minutes = int(words[1])
-                if minutes < 1:
-                    minutes = 1
-            except ValueError:
-                pass
+    if "text" in data and len(data["text"]) > 0 and data["text"][0] == ACCESS_KW:
+      keyword = data["text"].split()[0][1:]
+    else:
+      return # Not a valid command format
 
-        self.minplayers = minplayers
-        msg = ("Game will start in {} minute{} ({}). (If there are at least {} players)"
-               " Like this to join.").format(minutes, '' if minutes==1 else 's',
-                                             time.strftime("%I:%M",time.localtime(time.time()+(minutes*60))),
-                                             minplayers)
-        self.start_message_id = self.lobbyComm.cast(msg)
-        self.start_timer(minutes, self.start_game)
-        return True
-
-    def start_game(self):
-
-        toAdd = self.lobbyComm.getAcks(self.start_message_id)
-
-        for member_id in toAdd:
-            if not member_id in self.nextIds:
-                self.nextIds.append(member_id)
-
-        if len(self.nextIds) >= 3 and len(self.nextIds) >= self.minplayers:
-            if len(self.availComms) >= 2:
-                self.lobbyComm.cast("Starting Game")
-                mainComm = self.availComms.pop()
-                mafiaComm = self.availComms.pop()
-                mstate = MState(self.nextIds,mainComm,mafiaComm,self.lobbyComm,
-                                preferences=self.pref,
-                                final=self.mstate_final, determined = self.determined)
-                self.mstates.append(mstate)
-                self.nextIds.clear()
-            else:
-                self.lobbyComm.cast("Too many games")
-        else:
-            self.lobbyComm.cast("Not enough players to start a game")
-            self.nextIds.clear()
-        return True
-
-    def mstate_final(self,mstate):
-        self.availComms.append(mstate.mainComm)
-        self.availComms.append(mstate.mafiaComm)
-        self.lobbyComm.cast(mstate.roleString)
-        self.mstates.remove(mstate)
-
-    def LOBBY_watch(self, player_id,words=[], message_id=None):
-        self.lobbyComm.ack(message_id)
-
-        if len(self.mstates) == 0:
-            self.lobbyComm.cast("No game to watch")
-            return True
-        if len(self.mstates) == 1:
-            return self.mstates[0].mainComm.add(player_id, self.lobbyComm.getName(player_id))
-
-        if words[1].isnumeric() and int(words[1]) < len(self.mstates):
-            return self.mstates[int(words[1])].mainComm.add(player_id, self.lobbyComm.getName(player_id))
-        else:
-            msg = "Watch which game? (use /watch [#]):\n"
-            for m in self.mstates:
-                msg += "{}: {} {}; {} players\n".format(
-                    m.game_num, m.time, m.day, len(m.players) )
-            self.lobbyComm.cast(msg)
-            return True
-
-    def LOBBY_rule(self, player_id=None,words=[], message_id=None):
-
-        self.lobbyComm.ack(message_id)
-
-        if len(words)<3: # Not enough to specify rule
-            msg = "To change a rule, use /rule [rule] [setting]"
-            for rule in self.pref.book:
-                msg += "\n{}: {}".format(rule,self.pref.book[rule])
-            self.lobbyComm.cast(msg)
-            return True
-
-        if words[1] in RULE_BOOK:
-            if words[2] in RULE_BOOK[words[1]]:
-                self.pref.book[words[1]] = words[2]
-                self.save_rules()
-                self.lobbyComm.cast("Changed {} to {}".format(words[1],words[2]))
-                return True
-            else:
-                self.lobbyComm.cast("\"{}\" not a valid setting for {}".format(words[2],words[1]))
-                return False
-        else:
-            self.lobbyComm.cast("\"{}\" not a valid rule, use '/help rules' for help".format(words[1]))
-            return False
-
-    def save_rules(self):
-        f = open(RULES_FILE_PATH, 'w')
-        for rule in self.pref.book:
-            f.write(rule+"|"+self.pref.book[rule]+"\n")
-        f.close()
-        return True
-
-    def load_rules(self):
-        pref = Preferences()
-        f = open(RULES_FILE_PATH, 'r')
-        line = f.readline()
-        while '\n' in line:
-            words = line.strip().split("|")
-            pref.book[words[0]] = words[1]
-            line = f.readline()
-        f.close()
-        return pref
-
-    def LOBBY_stats(self, player_id, words, message_id):
-        self.lobbyComm.ack(message_id)
-
-        msg = CALLBACK_URL + ":" + STATS_PORT
-
-        self.lobbyComm.cast(msg)
-        return True
-
-
-    # MAIN ACTIONS
-
-    def MAIN_help(self,mstate, player_id=None,words=[], message_id=None):
-        mstate.mainComm.ack(message_id)
-        if len(words) > 1:
-            if words[1] in MAIN_HELP_MSGS:
-                mstate.mainComm.cast(MAIN_HELP_MSGS[words[1]])
-                return True
-            elif words[1] in ALL_HELP_MSGS:
-                mstate.mainComm.cast(ALL_HELP_MSGS[words[1]])
-                return True
-            else:
-                mstate.mainComm.cast("No help for '"+words[1]+"'")
-                return True
-        else:
-            mstate.mainComm.cast(MAIN_HELP_MSGS[""])
-        return True
-
-    def MAIN_status(self,mstate,player_id=None,words=[], message_id=None):
-        mstate.mainComm.ack(message_id)
-
-        mstate.mainComm.cast(str(mstate))
-        return True
-
-    def MAIN_vote(self,mstate,player_ids,words=[], message_id=None):
-        # where player_ids is a tuple of voter, votee
-        mstate.mainComm.ack(message_id)
-
-        voter = player_ids[0]
-        votee = player_ids[1]
-
-        return mstate.vote(voter,votee)
-
-    def MAIN_leave(self, mstate, player_id, words=[], message_id=None):
-        mstate.mainComm.ack(message_id)
-
-        if player_id in [player.id for player in mstate.players]:
-            mstate.mainComm.cast("You can't leave, aren't you playing?")
-        else:
-            mstate.mainComm.remove(player_id)
-        return True
-
-    def MAIN_timer(self,mstate,player_id,words=[], message_id=None):
-        mstate.mainComm.ack(message_id)
-        result = False
-        for player in mstate.players:
-            if player.id == player_id:
-                result = mstate.setTimer(player_id)
-        return result
+    try:
+      mname = keyword + "_command"
+      if not hasattr(self, mname):
+        return # Not a valid command word
+      method = getattr(self, mname)
+      method(group_id, message_id, member_id, data)
+    except GameOverException as goe:
+      if self.mstate == None:
+        pass # Exception
+      mstate = self.mstate
+      self.availableComms.append(mstate.mafiaComm)
+      self.availableComms.append(mstate.mainComm)
+      self.mstate = None
     
-    def MAIN_untimer(self,mstate,player_id,words=[], message_id=None):
-        mstate.mainComm.ack(message_id)
-        result = False
-        for player in mstate.players: #Ensure that only players can timer
-            if player.id == player_id:
-                result = mstate.unSetTimer(player_id)
-        return result
 
-    # MAFIA ACTIONS
-    def MAFIA_help(self,mstate,player_id=None,words=[], message_id=None):
-        mstate.mafiaComm.ack(message_id)
-        if len(words) > 1:
-            if words[1] in MAFIA_HELP_MSGS:
-                mstate.mafiaComm.cast(MAFIA_HELP_MSGS[words[1]])
-                return True
-            elif words[1] in ALL_HELP_MSGS:
-                mstate.mafiaComm.cast(ALL_HELP_MSGS[words[1]])
-                return True
-            else:
-                mstate.mafiaComm.cast("No help for '"+words[1]+"'")
-                return True
-        else:
-            mstate.mafiaComm.cast(MAFIA_HELP_MSGS[""])
-        return True
+  def start_command(self, group_id, message_id, member_id, data):
+    if not self.start_timer == None:
+      self.start_timer.halt()
+    self.start_message_ids = []
+    # Every lobby has its own controller? No, but for now ok
 
-    def MAFIA_target(self,mstate,player_id=None,words=[], message_id=None):
-        mstate.mafiaComm.ack(message_id)
+    # TODO: Add those in current start to interrupting start
+    minutes = 1
+    minplayers = 3
+    words = data['text'].split()
+    try:
+      if len(words) >= 3:
+        minplayers = int(words[2])
+      if len(words) >= 2:
+        minutes = int(words[1])
+    except ValueError as e:
+      print(e)
 
-        for player in mstate.players:
-            if player.id == player_id and player.role in MAFIA_ROLES:
+    self.minplayers = minplayers
+    seconds = minutes * 60
+    msg = ("Game will start in {}:{:0>2d} (at {}). "
+           "If there are at least {} players)" 
+           " Like this to join.").format(
+             seconds//60, seconds%60,
+             time.strftime("%I:%M",time.localtime(time.time() + (seconds))),
+             minplayers
+           )
 
-                try:
-                    return mstate.mafiaTarget(words[1][0])
-                except Exception as e:
-                    log("Invalid Mafia Target {}".format(e))
-        return False
+    self.start_message_ids.append(self.lobbyComm.cast(msg))
+    alarms = {
+      0 : [self.__start_game],
+    }
+    self.start_timer = self.TimerType(minutes*60, alarms)
 
-    def MAFIA_options(self,mstate,player_id=None,words=[], message_id=None):
-        mstate.mafiaComm.ack(message_id)
-
-        return mstate.mafia_options()
-
-    # DM ACTIONS
-
-    def __DM_get_mstate(self,words,sender_id):
-        sender_mstates = []
-        for mstate in self.mstates:
-            if sender_id in [p.id for p in mstate.players]:
-                sender_mstates.append(mstate)
-
-        m = None
-
-        if len(sender_mstates) == 0:
-            #self.lobbyComm.sendDM(LOBBY_HELP_MESSAGE,sender_id)
-            return None
-        elif len(sender_mstates) == 1:
-            m = sender_mstates[0]
-        elif len(sender_mstates) > 1:
-            if words[1].isnumeric():
-                for mstate in sender_mstates:
-                    if mstate.id == int(words[1]):
-                        m = mstate
-            if m == None:
-                return None
-        return m
-
-    def DM_help(self,sender_id,words):
-        if len(words) > 1:
-            if words[1] in DM_HELP_MSGS:
-                self.lobbyComm.send(DM_HELP_MSGS[words[1]], sender_id)
-                return True
-            elif words[1] in ALL_HELP_MSGS:
-                self.lobbyComm.send(ALL_HELP_MSGS[words[1]], sender_id)
-                return True
-            else:
-                self.lobbyComm.send("No help for '"+words[1]+"'", sender_id)
-                return True
-        else:
-            self.lobbyComm.send(DM_HELP_MSGS[""], sender_id)
-        return True
-
-    def DM_status(self,sender_id,words):
-        m = self.__DM_get_mstate(words,sender_id)
-
-        if m == None:
-            self.lobbyComm.send(self.__get_status(),sender_id)
-            return True
-
-        m.mainComm.send(str(m),sender_id)
-        return True
-
-    def DM_target(self,sender_id,words):
-        m = self.__DM_get_mstate(words,sender_id)
-
-        if m == None:
-            return True
-
-        player = m.getPlayer(sender_id)
-        if not player.role in TARGET_ROLES:
-            return True
-
-        if len(words) >= 2 and words[1].isalpha():
-            return m.target(sender_id,words[1][0])
-        if len(words) >= 3 and words[2].isalpha():
-            return m.target(sender_id,words[2][0])
-
-        return self.DM_options(words,sender_id)
-
-    def DM_options(self,sender_id,words):
-        m = self.__DM_get_mstate(words,sender_id)
-
-        if m == None:
-            return True
-
-        player = m.getPlayer(sender_id)
-        if not player.role in TARGET_ROLES:
-            return True
-        prompt = ""
-        if player.role == "DOCTOR":
-            prompt = "Use /target letter (i.e. /target D) to pick someone to save"
-        elif player.role == "COP":
-            prompt = "Use /target letter (i.e. /target A) to pick someone to investigate"
-        elif player.role == "STRIPPER":
-            prompt = "Use /target letter (i.e. /target C) to pick someone to distract"
-        m.send_options(prompt,sender_id)
-        return True
-
-    def DM_stats(self,sender_id,words):
-        if len(words) > 1:
-            if words[1] == "winrate" or words[1] == "record":
-                counted_roles = TOWN_ROLES + MAFIA_ROLES
-                if len(words) > 2 and words[2] == "Town":
-                    counted_roles = TOWN_ROLES
-                if len(words) > 2 and words[2] == "Mafia":
-                    counted_roles = MAFIA_ROLES
-                if len(words) > 2 and words[2] in TOWN_ROLES + MAFIA_ROLES + ROGUE_ROLES:
-                    counted_roles = words[2]
-                (won,tot) = MRecords.getWinRatio(sender_id,counted_roles)
-                if words[1] == "winrate":
-                    if tot == 0:
-                        tot = 1
-                    msg = "{} Win Rate: {}%".format(self.lobbyComm.getName(sender_id),int(won/tot*100))
-                elif words[1] == "record":
-                    msg = "{} Record: {} Games, {} Won, {} Lost".format(self.lobbyComm.getName(sender_id),tot,won,tot-won)
-                self.lobbyComm.send(msg, sender_id)
-        return True
-
-    def DM_reveal(self,sender_id,words):
-        m = self.__DM_get_mstate(words,sender_id)
-
-        if m == None:
-            return True
-
-        player = m.getPlayer(sender_id)
-        return m.try_reveal(sender_id)
+  def extend_command(self, group_id, message_id, member_id, data):
+    if self.start_timer == None:
+      self.lobbyComm.cast("No game is starting")
+      return
+    words = data['text'].split()
+    try:
+      minutes = int(words[1])
+    except ValueError as e:
+      return
+    self.start_timer.addTime(minutes*60)
+    if self.start_timer.getTime() > 10: # If it isn't immediately starting...
+      seconds = self.start_timer.getTime()
+      msg = ("Game will start in {}:{:0>2d} (at {}). "
+             "You can also like this message now.").format(
+              seconds//60, seconds%60,
+               time.strftime("%I:%M" , time.localtime(time.time()+(seconds))),
+             )
+      self.start_message_ids.append(self.lobbyComm.cast(msg))
 
 
-    def start_timer(self, minutes, callback):
-        self.time_left = minutes * 60
-        self.timer_on = True
-        self.callback = callback
+  def in_command(self, group_id, message_id, member_id, data):
+    self.lobbyComm.cast("Unfortunately, /in doesn't work right now")
 
-    def timer_thread(self):
-        while True:
-            time.sleep(1)
-            if self.timer_on:
-                self.time_left -= 1
-                if self.time_left <= 0:
-                    self.callback()
-                    self.timer_on = False
+  def out_command(self, group_id, message_id, member_id, data):
+    self.lobbyComm.cast("Unfortunately, /out doesn't work right now")
+    
+  def watch_command(self, group_id, message_id, member_id, data):
+    self.lobbyComm.ack(message_id)
+
+    if self.mstate == None:
+      self.lobbyComm.cast("No game to watch")
+      return
+    self.mstate.mainComm.add(member_id, self.lobbyComm.getName(member_id))
+    
+  def rule_command(self, group_id, message_id, member_id, data):
+    self.lobbyComm.cast("Unfortunately, rules cannot be changed for now")
+    
+  def stats_command(self, group_id, message_id, member_id, data):
+    self.lobbyComm.ack(message_id)
+    msg = CALLBACK_URL + ":" + STATS_PORT
+    self.lobbyComm.cast(msg)
+    
+  def status_command(self, group_id, message_id, member_id, data):
+    if group_id == self.lobbyComm.id:
+      msg = ""
+      if self.mstate == None:
+        msg = "No games"
+      else:
+        msg = str(self.mstate)
+      if not self.start_timer == None:
+        m = self.start_timer.getTime()
+        msg += "\nNew game starting in {}:{:0>2d}".format(m//60, m%60)
+      self.lobbyComm.cast(msg)
+    elif group_id == self.mstate.mainComm.id:
+      self.mstate.mainComm.cast(str(self.mstate))
+    
+  def leave_command(self, group_id, message_id, member_id, data):
+    if group_id == self.lobbyComm.id:
+      self.lobbyComm.remove(member_id)
+    elif group_id == self.mstate.mainComm.id:
+      if member_id in [p.id for p in self.mstate.players]:
+        self.mstate.mainComm.cast("You can't leave, aren't you playing?")
+      else:
+        self.mstate.mainComm.remove(member_id)
+    
+  def help_command(self, group_id, message_id, member_id, data):
+    self.lobbyComm.cast("Unfortunately, rules cannot be changed for now")
+
+  def vote_command(self, group_id, message_id, member_id, data):
+    if not self.mstate == None and not self.mstate.mainComm.id == group_id:
+      print("meh")
+      return #TODO: Exception?
+
+    voter_id = member_id
+    # Get mentioned votee
+    words = data['text'].split()
+    if len(words) < 2:
+      votee_id = None
+    elif words[1].lower() == "me":
+      votee_id = voter_id
+    elif words[1].lower() == "nokill":
+      votee_id = "0"
+    elif 'attachments' in data:
+      mentions = [a for a in data['attachments'] if a['type'] == 'mention']
+      if (len(mentions) > 0 and 
+          'user_ids' in mentions[0] and 
+          len(mentions[0]['user_ids']) >= 1):
+        votee_id = mentions[0]['user_ids'][0]
+      else:
+        votee_id = None
+    else:
+      votee_id = None
+    self.mstate.mainComm.ack(message_id)
+    self.mstate.vote(voter_id, votee_id)
+
+  def timer_command(self, group_id, message_id, member_id, data):
+    if not self.mstate == None and not self.mstate.mainComm.id == group_id:
+      return #TODO: Exception?
+    self.mstate.setTimer(member_id)
+    
+  def untimer_command(self, group_id, message_id, member_id, data):
+    if not self.mstate == None and not self.mstate.mainComm.id == group_id:
+      return #TODO: Exception?
+    self.mstate.unSetTimer(member_id)
+    
+  def target_command(self, group_id, message_id, member_id, data):
+    if '+' in group_id and not data['sender_id'] == MODERATOR:
+      words = data['text'].split()
+      if len(words) < 2:
+        return # TODO: Exception
+      target_option = words[1]
+      if not member_id in [p.id for p in self.mstate.players]:
+        return # TODO: Exception
+      self.mstate.target(member_id, target_option)
+    elif group_id == self.mstate.mafiaComm.id:
+      words = data['text'].split()
+      if len(words) < 2:
+        return # TODO: Exception
+      target_option = words[1]
+      self.mstate.mafia_target(member_id, target_option)
+
+
+  def options_command(self, group_id, message_id, member_id, data):
+    if '+' in group_id and not data['sender_id'] == MODERATOR:
+      if not member_id in [p.id for p in self.mstate.players]:
+        return # TODO: Exception
+      self.mstate.send_options(member_id)
+
+  def reveal_command(self, group_id, message_id, member_id, data):
+    if '+' in group_id and not data['sender_id'] == MODERATOR:
+      if not member_id in [p.id for p in self.mstate.players]:
+        return # TODO: Exception
+      self.mstate.try_reveal(member_id)
+
+  def __start_game(self):
+    next_ids = []
+    for start_message_id in self.start_message_ids:
+      next_ids_add = self.lobbyComm.getAcks(start_message_id)
+      for p_id in next_ids_add:
+        if not p_id in next_ids:
+          next_ids.append(p_id)
+
+    if len(next_ids) < 3 or len(next_ids) < self.minplayers:
+      self.lobbyComm.cast("Not enough players to start a game")
+      return # TODO: Exception
+    if len(self.availableComms) < 2:
+      self.lobbyComm.cast("Not enough unused chats to start")
+      return # TODO: Exception
+    self.lobbyComm.cast("Starting Game")
+    mainComm = self.availableComms.pop()
+    mafiaComm = self.availableComms.pop()
+
+    game_id = self.__game_id()
+    roles = self.__rolegen(next_ids)
+
+    self.mstate = MState(
+      game_id, mainComm, mafiaComm, self.lobbyComm,
+      self.rules, roles, self.RecordType()
+    )
+    self.mstate.start_game()
+
+    self.start_timer = None
+    self.minplayers = 3
+    self.start_message_ids = []
+
+
+  def __save_rules(self):
+    f = open(RULES_FILE_PATH, 'w')
+    for rule in self.rules:
+        f.write(rule+"|"+self.rules[rule]+"\n")
+    f.close()
+    return True
+
+  def __load_rules(self):
+    rules = {}
+    f = open(RULES_FILE_PATH, 'r')
+    line = f.readline()
+    while '\n' in line:
+        words = line.strip().split("|")
+        rules[words[0]] = words[1]
+        line = f.readline()
+    f.close()
+    return rules
+
+  def __game_id(self):
+    return 1
+
+  def __rolegen(self, p_ids):
+    if len(self.determined_roles) > 0:
+      roles = {}
+      for p_id in p_ids:
+        roles[p_id] = self.determined_roles.pop(0)
+      return roles
+    return {} # TODO: implement
+  
