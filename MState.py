@@ -3,8 +3,8 @@ from MTimer import MTimer
 
 
 class GameOverException(Exception):
-  def __init__(self, g_id):
-    self.g_id = g_id
+  def __init__(self, lobby):
+    self.lobby = lobby
 
 class MPlayer:
   
@@ -147,7 +147,10 @@ class MState:
     if not self.phase == "Night":
       self.mafiaComm.cast("You can only target during the night")
       return
-    # TODO: cleanse target_option
+    
+    if target_option == None:
+      return
+
     target_number = ord(target_option)-ord('A')
     if target_number == len(self.players):
       target = self.null
@@ -165,6 +168,8 @@ class MState:
     
   def mafia_options(self):
     """ Send the mafia's options to the mafia chat. """
+    if self.phase != "Night":
+      return
     msg = "Use /target letter (i.e. /target B) to select someone to kill:"
     c = 'A'
     for player in self.players:
@@ -223,6 +228,8 @@ class MState:
       elif p.role == "MILKY":
         prompt = ("Use /target letter (i.e. /target B) "
                  "to pick someone to milk")
+    if prompt == None:
+      return # TODO: make sure options aren't sent if no need to target
     msg = prompt
     c = 'A'
     for player in self.players:
@@ -331,6 +338,18 @@ class MState:
     else:
       self.timer.addTime(SET_TIMER_VALUE)
       self.mainComm.cast("Timer extended: {}".format(self.timer))
+
+  def tryLeaveMain(self, player_id):
+    if player_id in [p.id for p in self.players]:
+      self.mainComm.cast("You can't leave, aren't you playing?")
+    else:
+      self.mainComm.remove(player_id)
+
+  def tryLeaveMafia(self, player_id):
+    if player_id in [p.id for p in self.players]:
+      self.mafiaComm.cast("You can't leave, aren't you playing?")
+    else:
+      self.mafiaComm.remove(player_id)
 
   def __standard_timer(self, value=None):
     if value == None:
@@ -572,7 +591,7 @@ class MState:
 
     self.lobbyComm.cast("GG, here were the roles:" + self.__revealRoles())
 
-    raise GameOverException(self.id)
+    raise GameOverException(self.lobbyComm)
 
   def __revealRoles(self):
     """ Make a string of the original roles that the game started with. """

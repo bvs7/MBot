@@ -1,6 +1,0 @@
-CREATE 1
-START # Start game
-*
-* # last vote
-ELECT 2 # End of day 1, but kill
-END Mafia Day 1

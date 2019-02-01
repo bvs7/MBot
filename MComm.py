@@ -60,7 +60,7 @@ class MComm:
         raise NotImplementedError("MComm add")
     def remove(self, player_id):
         raise NotImplementedError("MComm remove")
-    def clear(self, saveList=[]):
+    def clear(self, saveList=[]): # TODO: get rid of clear?
         raise NotImplementedError("MComm clear")
     def __str__(self):
         raise NotImplementedError("MComm str")
@@ -162,7 +162,7 @@ class GroupComm(MComm):
             self.group = client.groups.get(self.group.id)
             memberList = [m for m in self.group.members if m.user_id == player_id]
             for member in memberList:
-                if member.user_id != MODERATOR:
+                if not member.user_id in MODERATORS:
                     member.remove()
         except groupy.exceptions.GroupyError as e:
             log("Failed to remove player: {}".format(e))
@@ -177,10 +177,22 @@ class GroupComm(MComm):
             log("Failed to clear group: {}".format(e))
             return False
         for member in self.group.members:
-            if member.user_id != MODERATOR:
+            if not member.user_id in MODERATORS:
                 member.remove()
         log("CLEAR {}".format(self.group.name))
         return True
+
+    @staticmethod
+    def static_send(msg, player_id):
+        for i in range(RETRY_TIMES):
+            try:
+                if not player_id in chats:
+                    chats[player_id] = groupy.api.chats.Chat(client.chats, other_user=player_id)
+                m_id = chats[player_id].post(text=msg).id
+                return m_id
+            except groupy.exceptions.GroupyError as e:
+                print("Failed to send, try {}: {}".format(i,e))
+                time.sleep(RETRY_DELAY)
 
     def __str__(self):
         return "[{}, {}]".format(self.group.name,self.group.id)
@@ -188,35 +200,42 @@ class GroupComm(MComm):
 
 class TestMComm(MComm):
     def __init__(self,group_id,silent=False):
+        self.log = []
         self.id = group_id
         self.idToName = {}
         self.silent = silent
         self.acks = []
 
     def cast(self, msg):
+        action = "CAST {}:{}".format(self.id, msg)
+        self.log.append(action)
         if not self.silent:
-            print("CAST {}:{}".format(self.id,msg)) 
+            print(action) 
 
     def ack(self, message_id):
-        pass
+        self.log.append("ACK {}:{}".format(self.id, message_id))
 
     def getAcks(self, message_id):
         return self.acks
 
     def send(self, msg, player_id):
+        action = "SEND {}:{}".format(player_id,msg)
+        self.log.append(action)
         if not self.silent:
-            print("SEND {}:{}".format(player_id,msg))        
+            print(action)        
 
     def setTitle(self, new_title):
-        pass        
+        self.log.append("TITLE {}:{}".format(self.id, new_title)) 
 
     def getName(self,member_id):
         return member_id
 
     def add(self, player_id, player_name):
+        self.log.append("ADD {}:{}".format(self.id, player_id))
         self.idToName[player_id] = player_name
 
     def remove(self, player_id):
+        self.log.append("REMOVE {}:{}".format(self.id, player_id))
         _ = self.idToName.pop(player_id, "___")
 
     def clear(self, saveList=[]):

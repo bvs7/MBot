@@ -1,53 +1,27 @@
-from MComm import TestMComm
-from MRecord import TestMRecord
-from MState import MState, GameOverException
-from MTimer import MTimer, FastMTimer
-import time
+class MState:
 
-import traceback
-
-def loadFile(filename):
-  with open(filename, 'r') as f:
-    pattern = f.readlines()
-    pattern = [line.strip() for line in pattern]
-
-  return pattern
-
-TESTS = ["1","2","3","4","time","time2"]
-TESTS = ['time2']
-test_folder = "test_MState/"
-output_log = "results.txt"
-
-mainComm = TestMComm("main")
-mafiaComm = TestMComm("mafia")
-lobbyComm = TestMComm("lobby")
-for i in range(15):
-  lobbyComm.add(str(i),str(i))
-
-with open(output_log, 'w') as outf:
-  for test in TESTS:
-    commands = loadFile(test_folder + test+".input")
-    patterns = loadFile(test_folder + test+".output")
-
-    rec = TestMRecord(patterns)
-    begin_msg = "Beginning {} test\n".format(test)
-    outf.write(begin_msg)
-    print(begin_msg)
-    command_line = 0
-    try:
-      for command in commands:
-        command_line += 1
-        if not command == "":
-          print(command)
-          exec(command)
-    except GameOverException as e:
-      pass
-    finally:
-      outf.write(rec.log)
-      if rec.active:
-        outf.write("ERROR: {} INCOMPLETE".format(test))
-      else:
-        outf.write("{} successful\n".format(test))
-
+  def __init__(self, id, mainComm, mafiaComm, lobbyComm, rules, roles, rec, MTimerClass=MTimer):
+    
+  def start_game(self):
+       
+  def vote(self, voter_id, votee_id):
+    
+  def mafia_target(self, p_id, target_option):
+    
+  def mafia_options(self):
+		
+  def target(self, p_id, target_option):
+	
+  def send_options(self,p_id,prompt=None):
       
+  def try_reveal(self, p_id):
 
+  def reveal(self,p):
+		
+  def revealTeam(self,p):
+      
+  def getPlayer(self, p):
+			
+  def setTimer(self, player_id):
+
+  def unSetTimer(self, player_id):

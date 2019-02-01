@@ -1,8 +1,7 @@
 # Main info module
 
-# TODO: CALLBACK_URL in info
+# TODO: Reorganize this. Make it much cleaner
 
-import pickle    # For loading vars
 import os
 
 DEBUG = 4

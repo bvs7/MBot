@@ -24,6 +24,7 @@ class MServer:
 
   def do_POST(self,post):
 
+    # TODO: check if this is a valid command, then parse?
     group_id = None
     message_id = None
     sender_id = None
