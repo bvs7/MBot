@@ -22,6 +22,7 @@ class MTimer:
         
     def tick(self):
         last_time = time.clock()
+        time.sleep(self.tick_time)
         offset = 0
         while self.active:
             self.lock.acquire()

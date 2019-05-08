@@ -24,7 +24,16 @@ class MServer:
 
   def do_POST(self,post):
 
-    # TODO: check if this is a valid command, then parse?
+    if 'text' in post:
+      text = post['text']
+    else:
+      return
+    
+    if len(text) >= len(ACCESS_KW) and text[0:len(ACCESS_KW)] == ACCESS_KW:
+      keyword = text.split()[0][1:]
+    else:
+      return
+
     group_id = None
     message_id = None
     sender_id = None
@@ -36,7 +45,7 @@ class MServer:
     if 'sender_id' in post:
       sender_id = post['sender_id']
 
-    self.ctrl.command(group_id, message_id, sender_id, post)
+    self.ctrl.command(keyword, group_id, message_id, sender_id, post)
 
 if __name__ == "__main__":
   mserver = MServer(GroupComm)

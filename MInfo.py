@@ -50,6 +50,8 @@ TEAMS = ["Town", "Mafia", "Rogue"]
 # Roles that target at night
 TARGET_ROLES = ["DOCTOR","COP","STRIPPER","MILKY"]
 
+GIVE_ROLE = "You are {}" # player role
+
 ROLE_EXPLAIN= {
     "MAFIA" : ("The MAFIA is part of the mafia chat to talk "
                "privately with their co-conspirators. During the day, they try not "
@@ -91,105 +93,21 @@ ROLE_EXPLAIN= {
                 "that they are a normal townsperson. Don't milk yourself!"),
     }
 
-# ROLE GENERATION
+START_GAME_MESSAGE_MAIN = (
+  "Dawn. Of the game and of this new day. You have learned that scum "
+  "reside in this town... A scum you must purge. Kill Someone!\nPlayers:\n{}")
+       
+START_GAME_MESSAGE_MAFIA = "Heyo this is maf chat get it done chaos yeah\nYour Team:\n"
 
-BASE_SCORE = -7
+ONLY_VOTE_DAY = "You can only vote during the Day"
+SAME_VOTE = "Yes that is your vote, {}"
 
-ROLE_SCORES = {
-    "MAFIA"     : -3,
-    "GODFATHER" : -3,
-    "DOCTOR"    :  4,
-    "COP"       :  3,
-    "TOWN"      :  2,
-    "IDIOT"     : -1,
-    "CELEB"     :  2,
-    "MILLER"    :  0,
-    "STRIPPER"  : -5,
-    "MILKY"     :  2,
-}
+ONLY_TARGET_NIGHT = "You can only target during the night"
+TARGET_SUCCESSFUL = "It is done, targeted {}"
 
-SCORE_ROLES = ("known_roles","reveal_on_death","")
+MAFIA_TARGET_PROMPT = "Use /target letter (i.e. /target B) to select someone to kill:"
 
-SCORE_MATRIX ={
-    "BASE" : -80,
-    "TOWN"      : {"BASE":20, "TOWN":0, "COP":0, "DOCTOR":0, "CELEB":0, "MILLER":0,
-                   "MAFIA":0, "GODFATHER":0, "STRIPPER":0, "IDIOT":0, "MILKY":0,
-                   "known_roles"    :{"ON":0,"TEAM":0,"OFF":0},
-                   "reveal_on_death":{"ON":0,"TEAM":0,"OFF":0},
-                   "standard_roles" :{"COP_DOC":0,"OFF":0},},
-    "COP"       : {"BASE":30, "TOWN":0, "COP":5, "DOCTOR":5, "CELEB":0, "MILLER":-5,
-                   "MAFIA":0, "GODFATHER":-5, "STRIPPER":-5, "IDIOT":0, "MILKY":0,
-                   "known_roles"    :{"ON":0,"TEAM":0,"OFF":0},
-                   "reveal_on_death":{"ON":0,"TEAM":0,"OFF":-10},
-                   "standard_roles" :{"COP_DOC":0,"OFF":0},},
-    "DOCTOR"    : {"BASE":40, "TOWN":0, "COP":0, "DOCTOR":5, "CELEB":0, "MILLER":0,
-                   "MAFIA":0, "GODFATHER":0, "STRIPPER":-10, "IDIOT":0, "MILKY":0,
-                   "known_roles"    :{"ON":0,"TEAM":0,"OFF":0},
-                   "reveal_on_death":{"ON":0,"TEAM":0,"OFF":0},
-                   "standard_roles" :{"COP_DOC":0,"OFF":0},},
-    "CELEB"     : {"BASE":25, "TOWN":0, "COP":0, "DOCTOR":5, "CELEB":10, "MILLER":0,
-                   "MAFIA":0, "GODFATHER":0, "STRIPPER":-5, "IDIOT":0, "MILKY":0,
-                   "known_roles"    :{"ON":0,"TEAM":0,"OFF":0},
-                   "reveal_on_death":{"ON":0,"TEAM":0,"OFF":0},
-                   "standard_roles" :{"COP_DOC":0,"OFF":0},},
-    "MILLER"    : {"BASE":0, "TOWN":0, "COP":0, "DOCTOR":0, "CELEB":0, "MILLER":0,
-                   "MAFIA":0, "GODFATHER":0, "STRIPPER":0, "IDIOT":0, "MILKY":0,
-                   "known_roles"    :{"ON":10,"TEAM":-5,"OFF":-5},
-                   "reveal_on_death":{"ON":5,"TEAM":5,"OFF":0},
-                   "standard_roles" :{"COP_DOC":0,"OFF":0},},
-    "MAFIA"     : {"BASE":-35,"TOWN":0, "COP":0, "DOCTOR":0, "CELEB":0, "MILLER":0,
-                   "MAFIA":0, "GODFATHER":0, "STRIPPER":0, "IDIOT":0, "MILKY":0,
-                   "known_roles"    :{"ON":0,"TEAM":0,"OFF":0},
-                   "reveal_on_death":{"ON":0,"TEAM":0,"OFF":0},
-                   "standard_roles" :{"COP_DOC":0,"OFF":0},},
-    "GODFATHER" : {"BASE":-40,"TOWN":0, "COP":0, "DOCTOR":0, "CELEB":0, "MILLER":0,
-                   "MAFIA":0, "GODFATHER":0, "STRIPPER":0, "IDIOT":0, "MILKY":0,
-                   "known_roles"    :{"ON":0,"TEAM":-20,"OFF":-20},
-                   "reveal_on_death":{"ON":0,"TEAM":0,"OFF":0},
-                   "standard_roles" :{"COP_DOC":0,"OFF":0},},
-    "STRIPPER"  : {"BASE":-30,"TOWN":0, "COP":-10, "DOCTOR":-10, "CELEB":-5, "MILLER":0,
-                   "MAFIA":0, "GODFATHER":0, "STRIPPER":0, "IDIOT":0, "MILKY":0,
-                   "known_roles"    :{"ON":0,"TEAM":-10,"OFF":-10},
-                   "reveal_on_death":{"ON":5,"TEAM":0,"OFF":0},
-                   "standard_roles" :{"COP_DOC":0,"OFF":0},},
-    "IDIOT"     : {"BASE":-20,"TOWN":0, "COP":0, "DOCTOR":0, "CELEB":0, "MILLER":0,
-                   "MAFIA":0, "GODFATHER":0, "STRIPPER":0, "IDIOT":0, "MILKY":0,
-                   "known_roles"    :{"ON":10,"TEAM":10,"OFF":0},
-                   "reveal_on_death":{"ON":0,"TEAM":0,"OFF":0},
-                   "standard_roles" :{"COP_DOC":0,"OFF":0},},
-    "MILKY"     : {"BASE":25, "TOWN":0, "COP":0, "DOCTOR":0, "CELEB":0, "MILLER":0,
-                   "MAFIA":0, "GODFATHER":0, "STRIPPER":0, "IDIOT":0, "MILKY":0,
-                   "known_roles"    :{"ON":0,"TEAM":0,"OFF":0},
-                   "reveal_on_death":{"ON":0,"TEAM":0,"OFF":0},
-                   "standard_roles" :{"COP_DOC":0,"OFF":0},},
-    "known_roles" :{"ON":20,"TEAM":0,"OFF":-20},
-    "reveal_on_death":{"ON":0,"TEAM":0,"OFF":-20},
-    "standard_roles" :{"COP_DOC":0,"OFF":0},
-}
-
-ALL_WEIGHTS = (
-    ("COP", "DOCTOR", "CELEB", "MILLER", "TOWN", "MAFIA", "GODFATHER", "STRIPPER"),
-    ( 10,    10,       10,      10,       80,     30,      5,           5)
-)
-
-# Probability of town roles being chosen
-TOWN_WEIGHTS = (
-    ("TOWN", "DOCTOR", "COP", "CELEB", "MILLER", "MILKY"),
-    ( 65,     10,       10,    15,      5,        5)
-)
-
-# Probability of anti-town roles being chosen
-MAFIA_WEIGHTS = (
-    ("MAFIA", "IDIOT", "GODFATHER", "STRIPPER"),
-    ( 75,      5,       10,          10),
-)
-
-ROLE_WEIGHTS =[
-    ["TOWN", "DOCTOR", "COP", "CELEB", "MILLER", "MILKY"],
-    [ 100,    10,       10,    10,      5,        5],
-    ["MAFIA", "IDIOT", "GODFATHER", "STRIPPER"],
-    [ 90,      5,       5,           10],
-]
+MILK_SELF_RESPONSE = "Ewwww please don't milk yourself in front of me"
 
 # Rulebook
 RULE_BOOK = {
